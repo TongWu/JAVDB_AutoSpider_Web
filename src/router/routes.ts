@@ -59,6 +59,34 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/settings',
+    component: () => import('@/components/settings/SettingsLayout.vue'),
+    meta: { requiresAuth: true },
+    redirect: '/settings/config',
+    children: [
+      {
+        path: 'config',
+        name: 'settings-config',
+        component: () => import('@/pages/settings/SettingsConfigPage.vue'),
+      },
+      {
+        path: 'auth',
+        name: 'settings-auth',
+        component: () => import('@/pages/settings/SettingsAuthPage.vue'),
+      },
+      {
+        path: 'capabilities',
+        name: 'settings-capabilities',
+        component: () => import('@/pages/settings/SettingsCapabilitiesPage.vue'),
+      },
+      {
+        path: 'appearance',
+        name: 'settings-appearance',
+        component: () => import('@/pages/settings/SettingsAppearancePage.vue'),
+      },
+    ],
+  },
+  {
     path: '/onboarding',
     name: 'onboarding',
     component: () => import('@/pages/OnboardingPage.vue'),

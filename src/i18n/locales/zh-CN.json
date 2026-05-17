@@ -361,6 +361,46 @@
       "ignoreHistory": "忽略历史"
     }
   },
+  "settings": {
+    "subtitle": "配置、身份认证、运行时能力以及外观设置。",
+    "config": {
+      "save": "保存",
+      "discard": "撤销",
+      "saved": "配置已保存。",
+      "discarded": "已撤销待保存的修改。",
+      "dirtyHint": "{n} 项未保存的修改",
+      "sections": {
+        "core": "核心",
+        "qbittorrent": "qBittorrent",
+        "javdb": "JavDB",
+        "proxy": "代理",
+        "pikpak": "PikPak",
+        "rclone": "Rclone",
+        "smtp": "SMTP",
+        "notifications": "通知",
+        "advanced": "高级"
+      }
+    },
+    "auth": {
+      "username": "用户名",
+      "role": "角色",
+      "tokenStatus": "令牌",
+      "active": "有效",
+      "inactive": "无效",
+      "passwordNote": "修改密码目前是服务端操作。请在主机上执行密码重置 CLI 命令。",
+      "signOut": "退出登录"
+    },
+    "capabilities": {
+      "refresh": "刷新"
+    },
+    "appearance": {
+      "theme": "主题",
+      "themeLight": "浅色",
+      "themeDark": "深色",
+      "themeSystem": "跟随系统",
+      "language": "语言"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "友好名称（如 clash-home）",
     "httpPlaceholder": "http://127.0.0.1:7890",

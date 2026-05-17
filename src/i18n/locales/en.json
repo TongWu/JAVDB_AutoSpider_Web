@@ -361,6 +361,46 @@
       "ignoreHistory": "Ignore History"
     }
   },
+  "settings": {
+    "subtitle": "Configuration, authentication, runtime capabilities, and appearance.",
+    "config": {
+      "save": "Save",
+      "discard": "Discard",
+      "saved": "Config saved.",
+      "discarded": "Pending changes discarded.",
+      "dirtyHint": "{n} unsaved change(s)",
+      "sections": {
+        "core": "Core",
+        "qbittorrent": "qBittorrent",
+        "javdb": "JavDB",
+        "proxy": "Proxy",
+        "pikpak": "PikPak",
+        "rclone": "Rclone",
+        "smtp": "SMTP",
+        "notifications": "Notifications",
+        "advanced": "Advanced"
+      }
+    },
+    "auth": {
+      "username": "Username",
+      "role": "Role",
+      "tokenStatus": "Token",
+      "active": "Active",
+      "inactive": "Inactive",
+      "passwordNote": "Password change is currently a server-side operation. Run the password reset CLI on the host to change credentials.",
+      "signOut": "Sign out"
+    },
+    "capabilities": {
+      "refresh": "Refresh"
+    },
+    "appearance": {
+      "theme": "Theme",
+      "themeLight": "Light",
+      "themeDark": "Dark",
+      "themeSystem": "Match system",
+      "language": "Language"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "Friendly name (e.g. clash-home)",
     "httpPlaceholder": "http://127.0.0.1:7890",

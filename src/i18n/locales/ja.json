@@ -361,6 +361,46 @@
       "ignoreHistory": "履歴無視"
     }
   },
+  "settings": {
+    "subtitle": "設定・認証・ランタイム機能・外観の管理。",
+    "config": {
+      "save": "保存",
+      "discard": "破棄",
+      "saved": "設定を保存しました。",
+      "discarded": "保留中の変更を破棄しました。",
+      "dirtyHint": "{n} 件の未保存変更",
+      "sections": {
+        "core": "コア",
+        "qbittorrent": "qBittorrent",
+        "javdb": "JavDB",
+        "proxy": "プロキシ",
+        "pikpak": "PikPak",
+        "rclone": "Rclone",
+        "smtp": "SMTP",
+        "notifications": "通知",
+        "advanced": "詳細"
+      }
+    },
+    "auth": {
+      "username": "ユーザー名",
+      "role": "ロール",
+      "tokenStatus": "トークン",
+      "active": "有効",
+      "inactive": "無効",
+      "passwordNote": "パスワード変更は現在サーバー側操作です。ホストで CLI のパスワードリセットを実行してください。",
+      "signOut": "サインアウト"
+    },
+    "capabilities": {
+      "refresh": "更新"
+    },
+    "appearance": {
+      "theme": "テーマ",
+      "themeLight": "ライト",
+      "themeDark": "ダーク",
+      "themeSystem": "システムに合わせる",
+      "language": "言語"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "フレンドリー名（例：clash-home）",
     "httpPlaceholder": "http://127.0.0.1:7890",
