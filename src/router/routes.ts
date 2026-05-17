@@ -59,6 +59,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/browse',
+    name: 'browse',
+    component: () => import('@/pages/BrowsePage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/settings',
     component: () => import('@/components/settings/SettingsLayout.vue'),
     meta: { requiresAuth: true },

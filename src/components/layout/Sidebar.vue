@@ -108,6 +108,7 @@ function onSelect(key: string) {
   else if (key === 'run') void router.push('/run')
   else if (key === 'tasks') void router.push('/tasks')
   else if (key === 'sessions') void router.push('/sessions')
+  else if (key === 'browse') void router.push('/browse')
   else if (key === 'settings') void router.push('/settings')
   else if (key === 'config') void router.push('/settings/config')
   else if (key === 'auth') void router.push('/settings/auth')
