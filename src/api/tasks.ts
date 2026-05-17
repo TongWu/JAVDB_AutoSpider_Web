@@ -71,8 +71,10 @@ export async function apiGetTask(jobId: string): Promise<TaskItem> {
 
 export interface StreamChunk {
   offset?: number
+  next_offset?: number
   lines?: string[]
-  log?: string  // some BE versions return raw text
+  log?: string
+  chunk?: string
   done?: boolean
   status?: string
   [key: string]: unknown

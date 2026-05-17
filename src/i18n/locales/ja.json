@@ -267,6 +267,8 @@
       "started": "開始日時",
       "ended": "終了日時",
       "duration": "所要時間",
+      "kind": "種類",
+      "url": "URL",
       "sessionId": "セッション ID",
       "error": "エラー"
     },
@@ -290,6 +292,14 @@
     "drawer": {
       "untitled": "タスク詳細",
       "logs": "ログ"
+    },
+    "param": {
+      "dryRun": "ドライラン",
+      "pages": "ページ",
+      "phase": "フェーズ",
+      "proxy": "プロキシ",
+      "ignoreDate": "日付無視",
+      "ignoreHistory": "履歴無視"
     }
   },
   "proxyPool": {

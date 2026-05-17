@@ -267,6 +267,8 @@
       "started": "开始时间",
       "ended": "结束时间",
       "duration": "耗时",
+      "kind": "类型",
+      "url": "URL",
       "sessionId": "会话 ID",
       "error": "错误"
     },
@@ -290,6 +292,14 @@
     "drawer": {
       "untitled": "任务详情",
       "logs": "日志"
+    },
+    "param": {
+      "dryRun": "试运行",
+      "pages": "页码",
+      "phase": "阶段",
+      "proxy": "代理",
+      "ignoreDate": "忽略日期",
+      "ignoreHistory": "忽略历史"
     }
   },
   "proxyPool": {

@@ -53,7 +53,7 @@ const columns = computed<DataTableColumns<TaskItem>>(() => [
   {
     title: t('tasks.col.started'),
     key: 'started_at',
-    render: (row) => formatRelative(row.started_at as string | undefined),
+    render: (row) => formatRelative((row.started_at ?? row.created_at) as string | undefined),
   },
   {
     title: t('tasks.col.duration'),

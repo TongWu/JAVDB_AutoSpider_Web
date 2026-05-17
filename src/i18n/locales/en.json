@@ -267,6 +267,8 @@
       "started": "Started",
       "ended": "Ended",
       "duration": "Duration",
+      "kind": "Kind",
+      "url": "URL",
       "sessionId": "Session ID",
       "error": "Error"
     },
@@ -290,6 +292,14 @@
     "drawer": {
       "untitled": "Task detail",
       "logs": "Logs"
+    },
+    "param": {
+      "dryRun": "Dry Run",
+      "pages": "Pages",
+      "phase": "Phase",
+      "proxy": "Proxy",
+      "ignoreDate": "Ignore Date",
+      "ignoreHistory": "Ignore History"
     }
   },
   "proxyPool": {

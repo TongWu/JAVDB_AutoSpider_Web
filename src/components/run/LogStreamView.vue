@@ -85,7 +85,7 @@ function lineClass(line: string): string {
   line-height: 1.55;
   padding: 12px;
   background: var(--n-code-color, #1a1820);
-  color: var(--n-text-color-base);
+  color: #d4d4d4;
   border-radius: 8px;
 }
 .log-line { white-space: pre-wrap; word-break: break-word; }

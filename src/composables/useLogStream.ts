@@ -18,12 +18,15 @@ export function useLogStream(jobId: () => string) {
     if (s.done) return
     try {
       const chunk = await apiGetTaskStream(id, s.offset)
-      const newOffset = typeof chunk.offset === 'number' ? chunk.offset : s.offset
+      const newOffset = chunk.next_offset ?? chunk.offset ?? s.offset
       let newLines: string[] = []
       if (Array.isArray(chunk.lines)) {
         newLines = chunk.lines
-      } else if (typeof chunk.log === 'string' && chunk.log.length > 0) {
-        newLines = chunk.log.split('\n').filter((l) => l.length > 0)
+      } else {
+        const raw = chunk.log ?? chunk.chunk ?? ''
+        if (raw.length > 0) {
+          newLines = raw.split('\n').filter((l) => l.length > 0)
+        }
       }
       if (newLines.length > 0) runs.appendLines(id, newLines, newOffset)
       if (chunk.status) runs.updateStream(id, { status: chunk.status })
