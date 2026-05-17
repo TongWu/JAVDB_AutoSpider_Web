@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, defineAsyncComponent, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NCard } from 'naive-ui'
 import { useOnboardingStore } from '@/stores/onboarding'
 import WizardStepper from '@/components/onboarding/WizardStepper.vue'
-import StepWelcome from '@/components/onboarding/StepWelcome.vue'
+
+const StepWelcome = defineAsyncComponent(() => import('@/components/onboarding/StepWelcome.vue'))
+const StepJavdbSession = defineAsyncComponent(() => import('@/components/onboarding/StepJavdbSession.vue'))
+// Steps 3-5 added in later tasks; fall back to Welcome as placeholder
+const StepPlaceholder = defineAsyncComponent(() => import('@/components/onboarding/StepWelcome.vue'))
 
 const { t } = useI18n()
 const ob = useOnboardingStore()
@@ -16,6 +20,13 @@ onMounted(() => {
 })
 
 const step = computed(() => ob.currentStep)
+const StepComponent = computed(() => {
+  switch (step.value) {
+    case 1: return StepWelcome
+    case 2: return StepJavdbSession
+    default: return StepPlaceholder
+  }
+})
 </script>
 
 <template>
@@ -30,13 +41,7 @@ const step = computed(() => ob.currentStep)
     <WizardStepper :current="step" />
 
     <NCard class="step-card">
-      <component
-        :is="
-          step === 1 ? StepWelcome :
-          /* placeholder for steps 2..5 — real impl lands in Task C2-C4 */
-          StepWelcome
-        "
-      />
+      <component :is="StepComponent" />
     </NCard>
 
     <footer class="footer">

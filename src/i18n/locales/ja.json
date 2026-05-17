@@ -39,6 +39,7 @@
     "submit": "送信",
     "back": "戻る",
     "continue": "続ける",
+    "skip": "スキップ",
     "retry": "再試行",
     "loading": "読み込み中...",
     "ok": "OK",
@@ -113,9 +114,30 @@
     "footer": "ステップ {current} / {total} · 設定からいつでもオンボーディングを再実行できます",
     "welcome": {
       "title": "AutoSpider へようこそ",
-      "body": "コンソールの設定を行います。数分で完了します。",
+      "body": "コンソールの設定を始めましょう。数分で完了します — ほとんどの手順はスキップできます。",
+      "pipeline": "  Spider  →  Storage  →  qBittorrent  →  Notifications\n  ⤷ JavDB     SQLite/D1     downloads        Email/optional",
+      "bullet1": "アドホックスクレイプ用に JavDB セッションを設定",
+      "bullet2": "自動ダウンロードのために qBittorrent を接続",
+      "bullet3": "オプション：プロキシ・PikPak・Rclone・メール — 後で設定可能",
       "configureNow": "今すぐ設定",
-      "later": "後で行う"
+      "later": "後で設定する"
+    },
+    "javdbSession": {
+      "title": "JavDB に接続",
+      "body": "AutoSpider は詳細ページや俳優リストをスクレイプするために認証済みセッションが必要です。既存の Cookie を貼り付けるか、認証情報でサインインしてください。",
+      "tabCookie": "Cookie を貼り付け",
+      "tabCredentials": "認証情報でサインイン",
+      "cookieLabel": "_jdb_session Cookie の値",
+      "cookiePlaceholder": "javdb の _jdb_session Cookie をここに貼り付け…",
+      "cookieHint": "ブラウザで javdb.com を開く → DevTools → Application → Cookies → _jdb_session の値をコピー。",
+      "testButton": "接続テスト",
+      "testPassed": "接続に成功しました",
+      "testFailed": "接続に失敗しました",
+      "loginPassed": "サインインに成功しました",
+      "loginFailed": "サインインに失敗しました",
+      "cookieRequired": "最初に Cookie の値を貼り付けてください",
+      "credentialsRequired": "ユーザー名とパスワードは必須です",
+      "notTestedYet": "先に接続をテストするかスキップしてください"
     }
   }
 }

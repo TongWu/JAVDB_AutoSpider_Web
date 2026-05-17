@@ -39,6 +39,7 @@
     "submit": "Submit",
     "back": "Back",
     "continue": "Continue",
+    "skip": "Skip",
     "retry": "Retry",
     "loading": "Loading...",
     "ok": "OK",
@@ -113,9 +114,30 @@
     "footer": "Step {current} of {total} · You can re-run onboarding from Settings",
     "welcome": {
       "title": "Welcome to AutoSpider",
-      "body": "Let's get your console configured. This will take a couple of minutes.",
+      "body": "Let's get your console configured. This will take a couple of minutes — most steps are skippable.",
+      "pipeline": "  Spider  →  Storage  →  qBittorrent  →  Notifications\n  ⤷ JavDB     SQLite/D1     downloads        Email/optional",
+      "bullet1": "Configure javdb session for ad-hoc scrapes",
+      "bullet2": "Connect qBittorrent for automatic downloads",
+      "bullet3": "Optional: proxy, PikPak, Rclone, email — set up later",
       "configureNow": "Configure now",
       "later": "I'll do it later"
+    },
+    "javdbSession": {
+      "title": "Connect to JavDB",
+      "body": "AutoSpider needs an authenticated session to scrape detail pages and actor lists. Either paste an existing cookie or sign in with credentials below.",
+      "tabCookie": "Paste cookie",
+      "tabCredentials": "Sign in with credentials",
+      "cookieLabel": "_jdb_session cookie value",
+      "cookiePlaceholder": "Paste your javdb _jdb_session cookie here…",
+      "cookieHint": "Open javdb.com in your browser → DevTools → Application → Cookies → copy _jdb_session value.",
+      "testButton": "Test connection",
+      "testPassed": "Connection successful",
+      "testFailed": "Connection failed",
+      "loginPassed": "Signed in successfully",
+      "loginFailed": "Sign-in failed",
+      "cookieRequired": "Paste a cookie value first",
+      "credentialsRequired": "Username and password are required",
+      "notTestedYet": "Test the connection or skip first"
     }
   }
 }

@@ -39,6 +39,7 @@
     "submit": "提交",
     "back": "返回",
     "continue": "继续",
+    "skip": "跳过",
     "retry": "重试",
     "loading": "加载中...",
     "ok": "确定",
@@ -113,9 +114,30 @@
     "footer": "第 {current} 步，共 {total} 步 · 可在设置中重新运行向导",
     "welcome": {
       "title": "欢迎使用 AutoSpider",
-      "body": "花几分钟把控制台配置好。",
+      "body": "花几分钟把控制台配置好。多数步骤都可以跳过。",
+      "pipeline": "  爬虫  →  存储  →  qBittorrent  →  通知\n  ⤷ JavDB     SQLite/D1     下载         邮件/可选",
+      "bullet1": "配置 JavDB 会话以支持自定义 URL 抓取",
+      "bullet2": "连接 qBittorrent 实现自动下载",
+      "bullet3": "可选：代理、PikPak、Rclone、邮件 — 稍后设置",
       "configureNow": "立即配置",
-      "later": "稍后再说"
+      "later": "稍后处理"
+    },
+    "javdbSession": {
+      "title": "连接 JavDB",
+      "body": "AutoSpider 需要已登录的会话才能抓取详情页和演员列表。请粘贴现有 Cookie 或使用账号密码登录。",
+      "tabCookie": "粘贴 Cookie",
+      "tabCredentials": "用账号密码登录",
+      "cookieLabel": "_jdb_session Cookie 值",
+      "cookiePlaceholder": "在此粘贴 javdb _jdb_session Cookie…",
+      "cookieHint": "在浏览器中打开 javdb.com → 开发者工具 → Application → Cookies → 复制 _jdb_session 的值。",
+      "testButton": "测试连接",
+      "testPassed": "连接成功",
+      "testFailed": "连接失败",
+      "loginPassed": "登录成功",
+      "loginFailed": "登录失败",
+      "cookieRequired": "请先粘贴 Cookie 值",
+      "credentialsRequired": "用户名和密码不能为空",
+      "notTestedYet": "请先测试连接或跳过此步骤"
     }
   }
 }
