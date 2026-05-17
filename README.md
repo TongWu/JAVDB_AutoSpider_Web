@@ -20,47 +20,58 @@ Plan A (backend prerequisites — onboarding, sessions, capabilities, system_sta
 
 **Design spec:** [docs/superpowers/specs/2026-05-16-frontend-rewrite-design.md (main repo)](https://github.com/TongWu/JAVDB_AutoSpider_CICD/blob/main/docs/superpowers/specs/2026-05-16-frontend-rewrite-design.md)
 
-## Quick start (5 commands)
+## Quick start
+
+This repo contains only the frontend. The backend lives in the [main repo](https://github.com/TongWu/JAVDB_AutoSpider_CICD); its Docker image is pulled from GHCR. All shared settings (admin credentials, JavDB cookie, qB URL, storage backend, etc.) come from the main repo's `config.py` — there's no separate `.env.api` to maintain.
 
 ```bash
+# 1. Clone both repos as siblings, or nested as you prefer
+git clone https://github.com/TongWu/JAVDB_AutoSpider_CICD.git
 git clone https://github.com/TongWu/JAVDB_AutoSpider_Web.git
 cd JAVDB_AutoSpider_Web
-cp .env.api.example .env.api    # ships ADMIN_PASSWORD=changeme — CHANGE BEFORE prod
-docker compose up -d            # pulls the BE image from GHCR, builds FE
-open http://localhost:5173      # login: admin / changeme
+
+# 2. Create the main repo's config.py (one-time)
+cp ../JAVDB_AutoSpider_CICD/config.py.example ../JAVDB_AutoSpider_CICD/config.py
+# edit ../JAVDB_AutoSpider_CICD/config.py:
+#   - ADMIN_PASSWORD: change from 'changeme' if exposing to internet
+#   - API_SECRET_KEY: paste a >=32-char random string (e.g. `openssl rand -hex 32`)
+#   - JAVDB_SESSION_COOKIE: paste your javdb _jdb_session value
+#   - QB_URL / QB_USERNAME / QB_PASSWORD: your qBittorrent
+#   - other integrations as needed (SMTP / PikPak / Rclone)
+
+# 3. If you cloned the repos in non-default layout, point at the main repo's config.py:
+#   echo "CONFIG_PY_PATH=../JAVDB_AutoSpider_CICD/config.py" > .env
+# (default ../config.py works when the FE repo lives inside the main repo's directory)
+
+# 4. Boot
+docker compose up -d
+open http://localhost:5173                # login: admin / changeme (default in config.py.example)
 ```
 
-The shipped default credentials are `admin` / `changeme`. **Change `ADMIN_PASSWORD` in `.env.api` before exposing the service publicly.**
+The default `admin / changeme` credentials ship in `config.py.example`. **Change `ADMIN_PASSWORD` before exposing the service publicly.**
 
-You can also leave `ADMIN_PASSWORD` blank in non-production mode; the BE will generate a random ephemeral password at startup and print it to its logs:
+You can also leave `ADMIN_PASSWORD` blank in `config.py` (non-production mode); the BE will generate a random ephemeral password at startup and print it to:
 
 ```bash
 docker compose logs api | grep -i "ephemeral admin password"
 ```
 
-The admin username defaults to `admin` (override via `ADMIN_USERNAME`).
+The admin username defaults to `admin` (override via `ADMIN_USERNAME` in `config.py`).
 
 Stop with `docker compose down`. Reset state with `docker compose down -v` (drops `api-reports` and `api-logs` volumes).
 
-### Updating `.env.api` after first start
+### Updating `config.py` after first start
 
-Docker Compose does NOT re-read `.env.api` on `docker compose up -d` if the container already exists. After changing any value in `.env.api`:
+Docker Compose mounts `config.py` read-only at runtime. Just edit the file; the BE picks up the new values on next read (most are read at startup, so restart the API container for changes to take effect):
 
 ```bash
-docker compose down
-docker compose up -d
+docker compose restart api
 ```
 
-Or, to recreate just the API container without losing the FE/build cache:
+To verify the BE container sees your config:
 
 ```bash
-docker compose rm -sf api && docker compose up -d api
-```
-
-Verify the new env actually landed in the container:
-
-```bash
-docker compose exec api env | grep -E "^(ADMIN_|API_SECRET_KEY)"
+docker compose exec api python -c "import config; print(config.ADMIN_USERNAME)"
 ```
 
 ## Deployment topologies
