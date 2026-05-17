@@ -28,6 +28,10 @@ All in `.env.api`:
 |----------|---------|--------------|
 | `STORAGE_BACKEND` | `sqlite` | `sqlite` (local files) or `dual` (mirror to D1). For `d1` you need Cloudflare D1 credentials — see main repo's docs. |
 | `API_SECRET_KEY` | (must set) | HS256 signing key for JWT. >= 32 chars. |
+| `ADMIN_USERNAME` | `admin` | Admin login username. |
+| `ADMIN_PASSWORD` | (must set in prod) | Admin password. In non-production, leave blank to get an ephemeral random password printed to `docker compose logs api`. |
+| `READONLY_USERNAME` | `readonly` | (optional) Readonly login username. |
+| `READONLY_PASSWORD` | empty | (optional) Set to enable a readonly user. Leave blank to disable readonly login entirely. |
 | `INGESTION_MODE` | `local` | `local` runs the spider in-process. Use `github` to dispatch GitHub Actions workflows instead (see [deploy-github-mode.md](deploy-github-mode.md)). |
 | `JAVDB_SESSION_COOKIE` | empty | Paste the `_jdb_session` cookie. If unset, use `JAVDB_USERNAME` + `JAVDB_PASSWORD` for headless login. |
 | `QB_URL` | empty | qBittorrent Web UI URL. Required for magnet downloads. |

@@ -25,10 +25,21 @@ Plan A (backend prerequisites — onboarding, sessions, capabilities, system_sta
 ```bash
 git clone https://github.com/TongWu/JAVDB_AutoSpider_Web.git
 cd JAVDB_AutoSpider_Web
-cp .env.api.example .env.api    # edit to set API_SECRET_KEY etc.
+cp .env.api.example .env.api    # edit: API_SECRET_KEY (>=32 chars) + ADMIN_PASSWORD
 docker compose up -d            # pulls the BE image from GHCR, builds FE
-open http://localhost:5173      # default login: admin / changeme
+open http://localhost:5173
 ```
+
+There is **no default password**. The backend either:
+
+- uses what you set in `ADMIN_PASSWORD` in `.env.api` (the recommended path), or
+- generates a random ephemeral password at startup if `ADMIN_PASSWORD` is unset AND the BE is running in non-production mode. The generated value is printed to the API container's logs:
+
+  ```bash
+  docker compose logs api | grep -i "ephemeral admin password"
+  ```
+
+The admin username defaults to `admin` (override via `ADMIN_USERNAME`).
 
 Stop with `docker compose down`. Reset state with `docker compose down -v` (drops `api-reports` and `api-logs` volumes).
 
