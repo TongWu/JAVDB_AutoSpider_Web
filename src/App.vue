@@ -6,6 +6,7 @@ import { useUiStore } from '@/stores/ui'
 import { usePreferredDark } from '@vueuse/core'
 import { lightTheme as lightOverrides, darkTheme as darkOverrides } from '@/theme'
 import AppShell from '@/components/layout/AppShell.vue'
+import CapabilitiesGate from '@/components/CapabilitiesGate.vue'
 
 const route = useRoute()
 const ui = useUiStore()
@@ -33,10 +34,12 @@ const layout = computed(() => (route.meta.layout === 'blank' ? 'blank' : 'shell'
   >
     <NMessageProvider>
       <NDialogProvider>
-        <AppShell v-if="layout === 'shell'">
-          <RouterView />
-        </AppShell>
-        <RouterView v-else />
+        <CapabilitiesGate>
+          <AppShell v-if="layout === 'shell'">
+            <RouterView />
+          </AppShell>
+          <RouterView v-else />
+        </CapabilitiesGate>
       </NDialogProvider>
     </NMessageProvider>
   </NConfigProvider>

@@ -5,46 +5,65 @@ import { NMenu } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import type { MenuOption } from 'naive-ui'
 import { useUiStore } from '@/stores/ui'
+import { useCapabilitiesStore } from '@/stores/capabilities'
 
 const { t } = useI18n()
 const router = useRouter()
 const ui = useUiStore()
+const cap = useCapabilitiesStore()
 
-const options = computed<MenuOption[]>(() => [
-  { label: t('nav.home'), key: 'home', icon: () => '🏠' },
-  { label: t('nav.run'), key: 'run', icon: () => '⚡' },
-  {
-    label: t('nav.activity'),
-    key: 'activity',
-    icon: () => '📋',
-    children: [
-      { label: t('nav.tasks'), key: 'tasks' },
-      { label: t('nav.sessions'), key: 'sessions' },
-    ],
-  },
-  { label: t('nav.browse'), key: 'browse', icon: () => '🌐' },
-  {
-    label: t('nav.data'),
-    key: 'data',
-    icon: () => '🗃️',
-    children: [
-      { label: t('nav.movies'), key: 'movies' },
-      { label: t('nav.torrents'), key: 'torrents' },
-    ],
-  },
-  {
+const options = computed<MenuOption[]>(() => {
+  const ghTier = cap.data?.gh_actions?.tier ?? null
+  const features = cap.data?.features ?? null
+
+  const items: MenuOption[] = [
+    { label: t('nav.home'), key: 'home', icon: () => '🏠' },
+    { label: t('nav.run'), key: 'run', icon: () => '⚡' },
+    {
+      label: t('nav.activity'),
+      key: 'activity',
+      icon: () => '📋',
+      children: [
+        { label: t('nav.tasks'), key: 'tasks' },
+        { label: t('nav.sessions'), key: 'sessions' },
+      ],
+    },
+    { label: t('nav.browse'), key: 'browse', icon: () => '🌐' },
+    {
+      label: t('nav.data'),
+      key: 'data',
+      icon: () => '🗃️',
+      children: [
+        { label: t('nav.movies'), key: 'movies' },
+        { label: t('nav.torrents'), key: 'torrents' },
+      ],
+    },
+  ]
+
+  // Operations group: always shown; individual children hidden by feature flags
+  const opsChildren: MenuOption[] = [
+    { label: t('nav.qbittorrent'), key: 'qbittorrent' },
+  ]
+  if (!features || features.pikpak) {
+    opsChildren.push({ label: t('nav.pikpak'), key: 'pikpak' })
+  }
+  if (!features || features.rclone) {
+    opsChildren.push({ label: t('nav.rclone'), key: 'rclone' })
+  }
+  if (!features || features.smtp) {
+    opsChildren.push({ label: t('nav.email'), key: 'email' })
+  }
+  opsChildren.push({ label: t('nav.cleanup'), key: 'cleanup' })
+
+  items.push({
     label: t('nav.operations'),
     key: 'operations',
     icon: () => '⚙️',
-    children: [
-      { label: t('nav.qbittorrent'), key: 'qbittorrent' },
-      { label: t('nav.pikpak'), key: 'pikpak' },
-      { label: t('nav.rclone'), key: 'rclone' },
-      { label: t('nav.email'), key: 'email' },
-      { label: t('nav.cleanup'), key: 'cleanup' },
-    ],
-  },
-  {
+    children: opsChildren,
+  })
+
+  // Diagnostics: always shown
+  items.push({
     label: t('nav.diagnostics'),
     key: 'diagnostics',
     icon: () => '🔍',
@@ -53,18 +72,23 @@ const options = computed<MenuOption[]>(() => [
       { label: t('nav.parseTester'), key: 'parseTester' },
       { label: t('nav.javdbSession'), key: 'javdbSession' },
     ],
-  },
-  {
-    label: t('nav.githubActions'),
-    key: 'githubActions',
-    icon: () => '🚀',
-    children: [
-      { label: t('nav.runs'), key: 'runs' },
-      { label: t('nav.workflows'), key: 'workflows' },
-      { label: t('nav.secrets'), key: 'secrets' },
-    ],
-  },
-  {
+  })
+
+  // GitHub Actions group: hidden when tier === 'none'
+  if (ghTier === null || ghTier !== 'none') {
+    items.push({
+      label: t('nav.githubActions'),
+      key: 'githubActions',
+      icon: () => '🚀',
+      children: [
+        { label: t('nav.runs'), key: 'runs' },
+        { label: t('nav.workflows'), key: 'workflows' },
+        { label: t('nav.secrets'), key: 'secrets' },
+      ],
+    })
+  }
+
+  items.push({
     label: t('nav.settings'),
     key: 'settings',
     icon: () => '🔧',
@@ -74,8 +98,10 @@ const options = computed<MenuOption[]>(() => [
       { label: t('nav.capabilities'), key: 'capabilities' },
       { label: t('nav.appearance'), key: 'appearance' },
     ],
-  },
-])
+  })
+
+  return items
+})
 
 function onSelect(key: string) {
   if (key === 'home') void router.push('/')

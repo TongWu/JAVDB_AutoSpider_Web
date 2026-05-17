@@ -79,6 +79,18 @@
       "retry": "重新连接"
     }
   },
+  "home": {
+    "greeting": "晚上好 👋",
+    "runDaily": "启动每日任务",
+    "recentRuns": "最近运行记录",
+    "noRunsYet": "暂无运行记录",
+    "stat": {
+      "running": "运行中",
+      "today": "今日",
+      "failed": "失败",
+      "pending": "待提交会话"
+    }
+  },
   "theme": {
     "light": "浅色",
     "dark": "深色",

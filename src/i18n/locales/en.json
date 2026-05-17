@@ -79,6 +79,18 @@
       "retry": "Retry connection"
     }
   },
+  "home": {
+    "greeting": "Good evening 👋",
+    "runDaily": "Run daily",
+    "recentRuns": "Recent runs",
+    "noRunsYet": "No runs yet",
+    "stat": {
+      "running": "Running",
+      "today": "Today",
+      "failed": "Failed",
+      "pending": "Pending sessions"
+    }
+  },
   "theme": {
     "light": "Light",
     "dark": "Dark",
