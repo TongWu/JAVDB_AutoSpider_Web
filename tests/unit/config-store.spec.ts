@@ -89,7 +89,10 @@ describe('config store', () => {
   it('orderedSections puts known sections first', async () => {
     const config = useConfigStore()
     await config.fetch()
-    expect(config.orderedSections).toEqual(['core', 'qbittorrent', 'advanced'])
+    // Sample meta declares sections "qbittorrent", "core", "advanced". The
+    // canonical SECTION_ORDER lists qbittorrent and advanced (known); "core"
+    // is not a BE-emitted section name and falls through to the tail.
+    expect(config.orderedSections).toEqual(['qbittorrent', 'advanced', 'core'])
   })
 
   it('save is a no-op when nothing is dirty', async () => {

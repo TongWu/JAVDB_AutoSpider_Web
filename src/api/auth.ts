@@ -21,3 +21,28 @@ export async function apiRefresh(refreshToken: string): Promise<RefreshResponse>
 export async function apiLogout(): Promise<void> {
   await http.post('/api/auth/logout')
 }
+
+// `/api/auth/change-password` was added after the last openapi.json snapshot,
+// so we hand-type the request/response shapes until `api.gen.ts` is regenerated.
+export interface ChangePasswordRequest {
+  current_password: string
+  new_password: string
+}
+
+export interface ChangePasswordResponse {
+  status: 'ok'
+}
+
+export async function apiChangePassword(
+  currentPassword: string,
+  newPassword: string,
+): Promise<ChangePasswordResponse> {
+  const { data } = await http.post<ChangePasswordResponse>(
+    '/api/auth/change-password',
+    {
+      current_password: currentPassword,
+      new_password: newPassword,
+    } as ChangePasswordRequest,
+  )
+  return data
+}

@@ -8,16 +8,59 @@ import {
   type ConfigValues,
 } from '@/api/config'
 
-// Section order for the Config tab. Unknown sections fall through to the end.
+// BE returns raw section labels like "QBITTORRENT CONFIGURATION"; we normalise
+// them into stable i18n keys here so both ordering and translation lookups
+// agree on a single canonical form.
+const BE_SECTION_TO_KEY: Record<string, string> = {
+  'GIT CONFIGURATION': 'git',
+  'QBITTORRENT CONFIGURATION': 'qbittorrent',
+  'SMTP CONFIGURATION': 'smtp',
+  'PROXY CONFIGURATION': 'proxy',
+  'JAVDB LOGIN CONFIGURATION': 'javdb',
+  'CLOUDFLARE BYPASS CONFIGURATION': 'cfBypass',
+  'SPIDER CONFIGURATION': 'spider',
+  'REQUEST TIMING CONFIGURATION': 'timing',
+  'LOGGING CONFIGURATION': 'logging',
+  'PARSING CONFIGURATION': 'parsing',
+  'FILE PATHS': 'paths',
+  'PIKPAK CONFIGURATION': 'pikpak',
+  'QBITTORRENT FILE FILTER CONFIGURATION': 'qbFileFilter',
+  'RCLONE CONFIGURATION': 'rclone',
+  'STORAGE MODE': 'storage',
+  'D1 / CLOUDFLARE CONFIGURATION': 'd1',
+  'MOVIE CLAIM CONFIGURATION': 'movieClaim',
+  'RUNNER REGISTRY CONFIGURATION': 'runnerRegistry',
+  'DEDUP CONFIGURATION': 'dedup',
+  'API CONSOLE / BACKEND': 'apiConsole',
+}
+
+export function normalizeSectionKey(raw: string): string {
+  if (BE_SECTION_TO_KEY[raw]) return BE_SECTION_TO_KEY[raw]
+  return raw.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '') || 'advanced'
+}
+
+// Display order for normalized section keys. Anything missing falls through.
 const SECTION_ORDER = [
-  'core',
+  'apiConsole',
   'qbittorrent',
+  'qbFileFilter',
   'javdb',
   'proxy',
+  'cfBypass',
+  'spider',
+  'timing',
+  'parsing',
   'pikpak',
   'rclone',
+  'dedup',
   'smtp',
-  'notifications',
+  'storage',
+  'd1',
+  'movieClaim',
+  'runnerRegistry',
+  'paths',
+  'logging',
+  'git',
   'advanced',
 ]
 
@@ -45,7 +88,7 @@ export const useConfigStore = defineStore('config', () => {
   const groupedFields = computed<Record<string, ConfigMetaField[]>>(() => {
     const groups: Record<string, ConfigMetaField[]> = {}
     for (const field of meta.value) {
-      const sec = field.section || 'advanced'
+      const sec = normalizeSectionKey(field.section || '')
       if (!groups[sec]) groups[sec] = []
       groups[sec].push(field)
     }

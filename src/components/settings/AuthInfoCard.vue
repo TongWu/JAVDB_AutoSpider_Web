@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { NCard, NDescriptions, NDescriptionsItem, NTag, NAlert, NSpace, NButton } from 'naive-ui'
+import { NCard, NDescriptions, NDescriptionsItem, NTag, NSpace, NButton } from 'naive-ui'
 import { useAuthStore } from '@/stores/auth'
+import ChangePasswordDialog from './ChangePasswordDialog.vue'
 
 const { t } = useI18n()
 const router = useRouter()
@@ -15,6 +16,8 @@ const roleType = computed((): 'success' | 'info' | 'default' => {
   if (auth.role === 'readonly') return 'info'
   return 'default'
 })
+
+const showChangePassword = ref(false)
 
 async function signOut(): Promise<void> {
   await auth.logout()
@@ -38,12 +41,13 @@ async function signOut(): Promise<void> {
       </NDescriptionsItem>
     </NDescriptions>
 
-    <NAlert type="info" :show-icon="true" style="margin-top: 16px;">
-      {{ t('settings.auth.passwordNote') }}
-    </NAlert>
-
-    <NSpace style="margin-top: 16px;" justify="end">
+    <NSpace style="margin-top: 16px;" justify="space-between">
+      <NButton @click="showChangePassword = true">
+        {{ t('settings.auth.changePassword.open') }}
+      </NButton>
       <NButton type="error" @click="signOut">{{ t('settings.auth.signOut') }}</NButton>
     </NSpace>
+
+    <ChangePasswordDialog v-model:show="showChangePassword" />
   </NCard>
 </template>
