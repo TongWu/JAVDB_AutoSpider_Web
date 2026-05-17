@@ -45,7 +45,8 @@
     "ok": "确定",
     "yes": "是",
     "no": "否",
-    "delete": "删除"
+    "delete": "删除",
+    "dismiss": "忽略"
   },
   "login": {
     "title": "登录 AutoSpider",
@@ -91,6 +92,24 @@
       "today": "今日",
       "failed": "失败",
       "pending": "待提交会话"
+    },
+    "hints": {
+      "smtp": {
+        "title": "邮件通知未配置",
+        "body": "任务报错时可在收件箱收到告警邮件。在设置 → 配置 → SMTP 中配置。"
+      },
+      "pikpak": {
+        "title": "PikPak 集成未配置",
+        "body": "配置 PikPak 账号以将旧种子镜像到 PikPak 云盘。在设置 → 配置 → PikPak 中配置。"
+      },
+      "rclone": {
+        "title": "Rclone 未配置",
+        "body": "配置 Rclone 实现自动去重和云同步。设置 → 配置 → Rclone。"
+      },
+      "proxy": {
+        "title": "代理未配置",
+        "body": "如果需要代理才能访问 javdb，请在设置 → 配置 → 代理中配置。"
+      }
     }
   },
   "theme": {
@@ -173,6 +192,18 @@
       "testPassed": "代理可用",
       "testFailed": "代理测试失败",
       "testFirst": "请先测试代理或切换为「不使用」"
+    },
+    "firstRun": {
+      "title": "试跑第一次任务",
+      "body": "选择一种方式开始。两种都会触发真实运行，不会有破坏性操作。",
+      "runNowTitle": "立即跑一次每日任务",
+      "runNowBody": "对 javdb 前 3 页触发每日爬虫，大约需要几分钟。完成后会跳转到任务页面实时查看进度。",
+      "runNowButton": "立即跑（3 页）",
+      "skipTitle": "先看看再说",
+      "skipBody": "先跳过测试运行，随便逛逛。以后随时可以在「运行」页面启动任务。",
+      "skipButton": "先看看再说",
+      "runFailed": "无法启动每日任务",
+      "completeFailed": "无法将向导标记为已完成"
     }
   },
   "proxyPool": {

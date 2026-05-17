@@ -9,8 +9,7 @@ const StepWelcome = defineAsyncComponent(() => import('@/components/onboarding/S
 const StepJavdbSession = defineAsyncComponent(() => import('@/components/onboarding/StepJavdbSession.vue'))
 const StepQbittorrent = defineAsyncComponent(() => import('@/components/onboarding/StepQbittorrent.vue'))
 const StepProxy = defineAsyncComponent(() => import('@/components/onboarding/StepProxy.vue'))
-// Step 5 added in later task; fall back to Welcome as placeholder
-const StepPlaceholder = defineAsyncComponent(() => import('@/components/onboarding/StepWelcome.vue'))
+const StepFirstRun = defineAsyncComponent(() => import('@/components/onboarding/StepFirstRun.vue'))
 
 const { t } = useI18n()
 const ob = useOnboardingStore()
@@ -28,7 +27,8 @@ const StepComponent = computed(() => {
     case 2: return StepJavdbSession
     case 3: return StepQbittorrent
     case 4: return StepProxy
-    default: return StepPlaceholder
+    case 5: return StepFirstRun
+    default: return StepWelcome
   }
 })
 </script>

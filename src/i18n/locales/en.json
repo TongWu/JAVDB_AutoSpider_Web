@@ -45,7 +45,8 @@
     "ok": "OK",
     "yes": "Yes",
     "no": "No",
-    "delete": "Delete"
+    "delete": "Delete",
+    "dismiss": "Dismiss"
   },
   "login": {
     "title": "Sign in to AutoSpider",
@@ -91,6 +92,24 @@
       "today": "Today",
       "failed": "Failed",
       "pending": "Pending sessions"
+    },
+    "hints": {
+      "smtp": {
+        "title": "Email notifications not configured",
+        "body": "Get failure alerts in your inbox when a run errors out. Configure in Settings → Config → SMTP."
+      },
+      "pikpak": {
+        "title": "PikPak integration not configured",
+        "body": "Set up PikPak credentials to mirror older torrents to PikPak cloud. Configure in Settings → Config → PikPak."
+      },
+      "rclone": {
+        "title": "Rclone not configured",
+        "body": "Configure Rclone for automatic deduplication and cloud sync. Settings → Config → Rclone."
+      },
+      "proxy": {
+        "title": "Proxy not configured",
+        "body": "If you need a proxy to reach javdb, configure it under Settings → Config → Proxy."
+      }
     }
   },
   "theme": {
@@ -173,6 +192,18 @@
       "testPassed": "Proxy reachable",
       "testFailed": "Proxy test failed",
       "testFirst": "Test the proxy or switch to 'None'"
+    },
+    "firstRun": {
+      "title": "Try your first ingestion",
+      "body": "Choose how you'd like to start. Either launches a real run; nothing is destructive.",
+      "runNowTitle": "Run a daily ingestion now",
+      "runNowBody": "Triggers the daily spider against the first 3 pages of javdb. Takes a couple of minutes. We'll jump to the Tasks page so you can watch it run.",
+      "runNowButton": "Run daily (3 pages)",
+      "skipTitle": "Explore the console first",
+      "skipBody": "Skip the test run for now and take a look around. You can launch ingestion any time from the Run page.",
+      "skipButton": "Skip and explore",
+      "runFailed": "Could not start the daily run",
+      "completeFailed": "Could not mark setup as complete"
     }
   },
   "proxyPool": {
