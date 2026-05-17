@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { NSpace, NButton, NCard, NAlert, useMessage } from 'naive-ui'
 import { useOnboardingStore } from '@/stores/onboarding'
 import { apiTriggerDaily } from '@/api/tasks'
+import { extractErrorMessage } from '@/api/errors'
 
 const router = useRouter()
 const { t } = useI18n()
@@ -28,7 +29,7 @@ async function runTestDaily() {
       void router.replace('/tasks')
     }
   } catch (err) {
-    errorMsg.value = err instanceof Error ? err.message : String(err)
+    errorMsg.value = extractErrorMessage(err)
     message.error(t('onboarding.firstRun.runFailed'))
     runningTest.value = false
   }
@@ -41,7 +42,7 @@ async function skipAndExplore() {
     await ob.completeOnboarding()
     void router.replace('/')
   } catch (err) {
-    errorMsg.value = err instanceof Error ? err.message : String(err)
+    errorMsg.value = extractErrorMessage(err)
     message.error(t('onboarding.firstRun.completeFailed'))
     completing.value = false
   }

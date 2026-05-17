@@ -7,6 +7,7 @@ import RunCard from '@/components/run/RunCard.vue'
 import { useRunsStore } from '@/stores/runs'
 import { apiTriggerDaily, apiTriggerAdhoc } from '@/api/tasks'
 import { apiSubmitSpiderJob } from '@/api/jobs'
+import { extractErrorMessage } from '@/api/errors'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -29,6 +30,7 @@ async function onSubmit(mode: RunMode, payload: RunFormSubmitPayload) {
         url: payload.url,
         phase: payload.phase,
         use_proxy: payload.useProxy,
+        no_proxy: payload.noProxy,
         ignore_history: payload.ignoreHistory,
         ignore_release_date: payload.ignoreReleaseDate,
         max_movies_phase1: payload.maxMoviesPhase1,
@@ -45,6 +47,7 @@ async function onSubmit(mode: RunMode, payload: RunFormSubmitPayload) {
         start_page: payload.startPage,
         end_page: payload.endPage,
         use_proxy: payload.useProxy,
+        no_proxy: payload.noProxy,
         dry_run: payload.dryRun,
       })
       jobId = resp.job_id
@@ -52,6 +55,7 @@ async function onSubmit(mode: RunMode, payload: RunFormSubmitPayload) {
       const resp = await apiTriggerAdhoc({
         url: payload.url!,
         use_proxy: payload.useProxy,
+        no_proxy: payload.noProxy,
         dry_run: payload.dryRun,
         ignore_release_date: payload.ignoreReleaseDate ?? false,
       })
@@ -66,7 +70,7 @@ async function onSubmit(mode: RunMode, payload: RunFormSubmitPayload) {
     runs.startStream(jobId)
     activeJobs.value = { ...activeJobs.value, [mode]: { jobId, usedAdvanced: payload.useAdvanced } }
   } catch (err) {
-    errorMsg.value = err instanceof Error ? err.message : String(err)
+    errorMsg.value = extractErrorMessage(err)
     message.error(t('run.submitFailed'))
   }
 }

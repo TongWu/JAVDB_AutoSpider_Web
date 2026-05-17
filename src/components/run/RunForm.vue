@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NSpace, NButton, NSwitch, NInputNumber, NInput, NCollapse, NCollapseItem,
-  NCheckbox, NDivider,
+  NCheckbox, NDivider, NSelect,
 } from 'naive-ui'
 import { useCapabilitiesStore } from '@/stores/capabilities'
 
@@ -15,13 +15,14 @@ export interface RunFormSubmitPayload {
   useAdvanced: boolean
   // Standard
   dryRun: boolean
-  useProxy: boolean | null
+  useProxy: boolean
+  noProxy: boolean
   startPage?: number
   endPage?: number
   url?: string
   ignoreReleaseDate?: boolean
   // Advanced (SpiderJobPayload subset)
-  phase?: 1 | 2
+  phase?: 'all' | '1' | '2'
   ignoreHistory?: boolean
   maxMoviesPhase1?: number | null
   maxMoviesPhase2?: number | null
@@ -46,7 +47,7 @@ const url = ref('')
 const ignoreReleaseDate = ref(false)
 
 const useAdvanced = ref(false)
-const phase = ref<1 | 2>(1)
+const phase = ref<'all' | '1' | '2'>('all')
 const ignoreHistory = ref(false)
 const maxMoviesPhase1 = ref<number | null>(null)
 const maxMoviesPhase2 = ref<number | null>(null)
@@ -59,20 +60,23 @@ const submitting = ref(false)
 
 const showWhereToggle = computed(() => cap.data?.ingestion_mode === 'dual')
 
-function proxyValue(): boolean | null {
-  if (useProxyTri.value === 'on') return true
-  if (useProxyTri.value === 'off') return false
-  return null
+function proxyValues(): { use_proxy: boolean; no_proxy: boolean } {
+  if (useProxyTri.value === 'on') return { use_proxy: true, no_proxy: false }
+  if (useProxyTri.value === 'off') return { use_proxy: false, no_proxy: true }
+  // 'auto': don't force-override — send both false so BE uses config.py defaults
+  return { use_proxy: false, no_proxy: false }
 }
 
 function onSubmit() {
   if (props.mode === 'adhoc' && !url.value.trim()) return
   submitting.value = true
+  const { use_proxy, no_proxy } = proxyValues()
   emit('submit', {
     where: where.value,
     useAdvanced: useAdvanced.value,
     dryRun: dryRun.value,
-    useProxy: proxyValue(),
+    useProxy: use_proxy,
+    noProxy: no_proxy,
     startPage: props.mode === 'daily' ? startPage.value : undefined,
     endPage: props.mode === 'daily' ? endPage.value : undefined,
     url: props.mode === 'adhoc' ? url.value.trim() : undefined,
@@ -154,7 +158,14 @@ defineExpose({ reset() { submitting.value = false } })
           <div class="row2">
             <div>
               <label class="label">{{ t('run.advanced.phase') }}</label>
-              <NInputNumber v-model:value="phase" :min="1" :max="2" />
+              <NSelect
+                v-model:value="phase"
+                :options="[
+                  { label: t('run.advanced.phaseAll'), value: 'all' },
+                  { label: 'Phase 1', value: '1' },
+                  { label: 'Phase 2', value: '2' },
+                ]"
+              />
             </div>
             <NSpace align="center" size="small">
               <NSwitch v-model:value="ignoreHistory" />

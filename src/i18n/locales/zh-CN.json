@@ -240,6 +240,7 @@
     },
     "advanced": {
       "phase": "阶段",
+      "phaseAll": "全部阶段",
       "ignoreHistory": "忽略历史记录",
       "maxMoviesPhase1": "阶段 1 最大影片数",
       "maxMoviesPhase2": "阶段 2 最大影片数",

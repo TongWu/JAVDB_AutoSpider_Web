@@ -8,6 +8,7 @@ import {
   apiOnboardingComplete,
   apiDismissHint,
 } from '@/api/onboarding'
+import { http } from '@/api/client'
 
 export type OnboardingStep = 1 | 2 | 3 | 4 | 5
 export type ComponentName = 'javdb' | 'qb' | 'proxy' | 'smtp'
@@ -33,6 +34,8 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   )
   const loading = ref(false)
   const error = ref<unknown>(null)
+  // Snapshot of GET /api/config for pre-populating onboarding step fields
+  const configSnapshot = ref<Record<string, unknown> | null>(null)
 
   const isCompleted = computed(() => status.value?.completed ?? false)
 
@@ -65,6 +68,12 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     return ((stepValues.value[`step${step}`] ?? {})[key] as T | undefined) ?? fallback
   }
 
+  async function fetchConfigSnapshot(): Promise<Record<string, unknown>> {
+    const { data } = await http.get<Record<string, unknown>>('/api/config')
+    configSnapshot.value = data
+    return data
+  }
+
   async function runTest(component: ComponentName): Promise<OnboardingTestResponse> {
     const result = await apiOnboardingTest(component)
     testResults.value = { ...testResults.value, [component]: result }
@@ -92,7 +101,9 @@ export const useOnboardingStore = defineStore('onboarding', () => {
     loading,
     error,
     isCompleted,
+    configSnapshot,
     fetchStatus,
+    fetchConfigSnapshot,
     setCurrentStep,
     setStepValue,
     getStepValue,

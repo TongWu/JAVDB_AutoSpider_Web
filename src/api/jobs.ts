@@ -2,8 +2,9 @@ import { http } from './client'
 
 export interface SpiderJobPayload {
   url?: string
-  phase?: 1 | 2
-  use_proxy?: boolean | null
+  phase?: 'all' | '1' | '2'
+  use_proxy?: boolean
+  no_proxy?: boolean
   use_cf_bypass?: boolean | null
   use_cookie?: boolean
   ignore_history?: boolean

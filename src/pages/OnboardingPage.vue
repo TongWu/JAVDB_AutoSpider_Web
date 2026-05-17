@@ -18,6 +18,8 @@ onMounted(() => {
   if (!ob.status) {
     void ob.fetchStatus()
   }
+  // Pre-load runtime config once so step components can populate defaults
+  void ob.fetchConfigSnapshot()
 })
 
 const step = computed(() => ob.currentStep)

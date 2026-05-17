@@ -240,6 +240,7 @@
     },
     "advanced": {
       "phase": "フェーズ",
+      "phaseAll": "全フェーズ",
       "ignoreHistory": "履歴を無視",
       "maxMoviesPhase1": "フェーズ 1 最大動画数",
       "maxMoviesPhase2": "フェーズ 2 最大動画数",

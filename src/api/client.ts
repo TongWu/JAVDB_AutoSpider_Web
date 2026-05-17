@@ -1,5 +1,13 @@
 import axios, { AxiosError, AxiosHeaders, type AxiosRequestConfig } from 'axios'
 
+// Extend AxiosRequestConfig to allow per-request opt-out of the global error toast.
+// Usage: http.post(url, data, { skipErrorToast: true } as AxiosRequestConfig & { skipErrorToast?: boolean })
+declare module 'axios' {
+  interface AxiosRequestConfig {
+    skipErrorToast?: boolean
+  }
+}
+
 type QueuedRequest = {
   config: AxiosRequestConfig
   resolve: (value: unknown) => void
@@ -51,6 +59,32 @@ function readCsrfCookie(): string | null {
   const match = document.cookie.match(/(?:^|;\s*)csrf_token=([^;]+)/)
   return match ? decodeURIComponent(match[1]) : null
 }
+
+// === Global error toast (non-401) ======================================
+// Shows a NaiveUI message for 4xx/5xx responses unless the request opted out
+// via config.skipErrorToast = true (used by forms that render their own error UI).
+http.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const cfg = error.config as (AxiosRequestConfig & { _retried?: boolean }) | undefined
+    const status = error.response?.status
+    // 401 is handled by the refresh queue below — skip it here
+    if (status && status !== 401 && !cfg?.skipErrorToast) {
+      const { useMessage } = await import('naive-ui')
+      try {
+        const msg = useMessage()
+        const data = error.response?.data as { detail?: unknown; error?: { message?: string } } | null
+        let text = `HTTP ${status}`
+        if (data?.error?.message) text = data.error.message
+        else if (typeof data?.detail === 'string') text = data.detail
+        msg.error(text, { duration: 4000 })
+      } catch {
+        // Outside of NaiveUI context (e.g. unit tests) — ignore
+      }
+    }
+    throw error
+  },
+)
 
 // === 401 single-flight refresh queue ===================================
 let refreshing: Promise<string> | null = null

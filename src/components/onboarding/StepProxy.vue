@@ -5,6 +5,7 @@ import {
   NSpace, NButton, NRadioGroup, NRadio, NInput, NCheckbox, NCheckboxGroup, NAlert, useMessage,
 } from 'naive-ui'
 import { useOnboardingStore } from '@/stores/onboarding'
+import { http } from '@/api/client'
 import ProxyPoolEditor, { type ProxyEntry } from '@/components/ProxyPoolEditor.vue'
 
 type ProxyMode = 'none' | 'single' | 'pool'
@@ -13,10 +14,35 @@ const { t } = useI18n()
 const ob = useOnboardingStore()
 const message = useMessage()
 
-const mode = ref<ProxyMode>(ob.getStepValue<ProxyMode>(4, 'mode', 'none'))
-const singleUrl = ref<string>(ob.getStepValue<string>(4, 'singleUrl', ''))
+/** Return empty string if the value is a mask placeholder (e.g. "***"). */
+function unmask(val: unknown): string {
+  if (typeof val !== 'string') return ''
+  if (/^\*+$/.test(val.trim())) return ''
+  return val
+}
+
+// Derive proxy mode from config snapshot if not set in session-store
+function resolveMode(): ProxyMode {
+  const stored = ob.getStepValue<string>(4, 'mode', '')
+  if (stored === 'single' || stored === 'pool' || stored === 'none') return stored
+  const snapshotMode = unmask(ob.configSnapshot?.PROXY_MODE).toLowerCase()
+  if (snapshotMode === 'single') return 'single'
+  if (snapshotMode === 'pool') return 'pool'
+  return 'none'
+}
+
+const mode = ref<ProxyMode>(resolveMode())
+const singleUrl = ref<string>(
+  ob.getStepValue<string>(4, 'singleUrl', '') ||
+  unmask(ob.configSnapshot?.PROXY_HTTP),
+)
 const pool = ref<ProxyEntry[]>(ob.getStepValue<ProxyEntry[]>(4, 'pool', []))
-const modules = ref<string[]>(ob.getStepValue<string[]>(4, 'modules', ['spider']))
+const modules = ref<string[]>(
+  ob.getStepValue<string[]>(4, 'modules', []) ||
+  (Array.isArray(ob.configSnapshot?.PROXY_MODULES)
+    ? (ob.configSnapshot!.PROXY_MODULES as string[])
+    : ['spider']),
+)
 const testing = ref(false)
 
 watch(mode, (v) => ob.setStepValue(4, 'mode', v))
@@ -42,6 +68,17 @@ function onModulesChange(next: (string | number)[]) {
 async function runTest() {
   testing.value = true
   try {
+    // Persist current proxy settings before running the test
+    await http.put(
+      '/api/config',
+      {
+        PROXY_MODE: mode.value,
+        PROXY_HTTP: singleUrl.value || '',
+        PROXY_POOL: pool.value,
+        PROXY_MODULES: modules.value,
+      },
+      { skipErrorToast: true },
+    )
     await ob.runTest('proxy')
   } catch (err) {
     console.error(err)
@@ -125,7 +162,7 @@ function next() {
     <div class="actions">
       <NButton @click="back">{{ t('common.back') }}</NButton>
       <NSpace>
-        <NButton text @click="skip">{{ t('common.skip') }}</NButton>
+        <NButton tertiary @click="skip">{{ t('common.skip') }}</NButton>
         <NButton type="primary" :disabled="!canContinue" @click="next">
           {{ t('common.continue') }}
         </NButton>

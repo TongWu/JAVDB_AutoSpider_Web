@@ -7,7 +7,8 @@ import { http } from './client'
 export interface DailyTaskPayload {
   start_page?: number
   end_page?: number
-  use_proxy?: boolean | null
+  use_proxy?: boolean
+  no_proxy?: boolean
   dry_run?: boolean
 }
 
@@ -26,7 +27,8 @@ export async function apiTriggerDaily(payload: DailyTaskPayload): Promise<Trigge
 
 export interface AdhocTaskPayload {
   url: string
-  use_proxy?: boolean | null
+  use_proxy?: boolean
+  no_proxy?: boolean
   dry_run?: boolean
   ignore_release_date?: boolean
 }

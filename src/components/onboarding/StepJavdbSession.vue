@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NTabs, NTabPane, NSpace, NButton, NInput,
@@ -7,6 +7,7 @@ import {
 } from 'naive-ui'
 import { useOnboardingStore } from '@/stores/onboarding'
 import { http } from '@/api/client'
+import { extractErrorMessage } from '@/api/errors'
 
 const { t } = useI18n()
 const ob = useOnboardingStore()
@@ -14,8 +15,21 @@ const message = useMessage()
 
 const activeTab = ref<'cookie' | 'credentials'>('cookie')
 
-// Cookie path
-const cookie = ref<string>(ob.getStepValue<string>(2, 'cookie', ''))
+/** Return empty string if the value is a mask placeholder (e.g. "***", "****"). */
+function unmask(val: unknown): string {
+  if (typeof val !== 'string') return ''
+  if (/^\*+$/.test(val.trim())) return ''
+  return val
+}
+
+// Cookie path — pre-populate from session-store first, fall back to config snapshot
+const cookie = ref<string>(
+  ob.getStepValue<string>(2, 'cookie', '') ||
+  unmask(ob.configSnapshot?.JAVDB_SESSION_COOKIE),
+)
+// Keep cookie in session-store in sync
+watch(cookie, (v) => ob.setStepValue(2, 'cookie', v))
+
 const testingCookie = ref(false)
 
 async function testCookie() {
@@ -26,6 +40,8 @@ async function testCookie() {
   testingCookie.value = true
   try {
     ob.setStepValue(2, 'cookie', cookie.value.trim())
+    // Persist to config.py before testing so BE reads the new value
+    await http.put('/api/config', { JAVDB_SESSION_COOKIE: cookie.value.trim() }, { skipErrorToast: true })
     await ob.runTest('javdb')
   } catch (err) {
     console.error(err)
@@ -34,9 +50,14 @@ async function testCookie() {
   }
 }
 
-// Credentials path
-const username = ref<string>(ob.getStepValue<string>(2, 'cred_username', ''))
+// Credentials path — pre-populate username (but NOT password) from config snapshot
+const username = ref<string>(
+  ob.getStepValue<string>(2, 'cred_username', '') ||
+  unmask(ob.configSnapshot?.JAVDB_USERNAME),
+)
+// Password: never prefill from server (always masked), but restore session-store value
 const password = ref<string>(ob.getStepValue<string>(2, 'cred_password', ''))
+
 const loggingIn = ref(false)
 const credentialsError = ref<string | null>(null)
 const credentialsOk = ref(false)
@@ -48,21 +69,30 @@ async function signIn() {
   }
   loggingIn.value = true
   credentialsError.value = null
+  credentialsOk.value = false
   try {
     ob.setStepValue(2, 'cred_username', username.value)
     ob.setStepValue(2, 'cred_password', password.value)
-    // POST /api/login/refresh — drives a fresh headless login on the BE
-    const { data } = await http.post('/api/login/refresh', {
-      username: username.value,
-      password: password.value,
-    })
-    credentialsOk.value = !!(data?.ok ?? data?.success ?? data?.status === 'ok')
-    if (!credentialsOk.value) {
-      credentialsError.value = String(data?.message ?? t('onboarding.javdbSession.loginFailed'))
+    // 1. Save credentials to config.py so the BE headless login can read them
+    await http.put(
+      '/api/config',
+      { JAVDB_USERNAME: username.value, JAVDB_PASSWORD: password.value },
+      { skipErrorToast: true },
+    )
+    // 2. Drive the headless login — takes no body, reads from config.py
+    const { data } = await http.post<{ status?: string; output?: string }>(
+      '/api/login/refresh',
+      undefined,
+      { skipErrorToast: true },
+    )
+    const ok = data?.status === 'ok' || data?.status === 'success'
+    credentialsOk.value = ok
+    if (!ok) {
+      credentialsError.value = data?.output ?? t('onboarding.javdbSession.loginFailed')
     }
   } catch (err) {
     credentialsOk.value = false
-    credentialsError.value = err instanceof Error ? err.message : String(err)
+    credentialsError.value = extractErrorMessage(err)
   } finally {
     loggingIn.value = false
   }
@@ -164,7 +194,7 @@ function next() {
     <div class="actions">
       <NButton @click="back">{{ t('common.back') }}</NButton>
       <NSpace>
-        <NButton text @click="skip">{{ t('common.skip') }}</NButton>
+        <NButton tertiary @click="skip">{{ t('common.skip') }}</NButton>
         <NButton type="primary" :disabled="!anySuccess" @click="next">
           {{ t('common.continue') }}
         </NButton>

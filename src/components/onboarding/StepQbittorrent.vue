@@ -3,16 +3,34 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSpace, NButton, NInput, NCheckbox, NAlert, useMessage } from 'naive-ui'
 import { useOnboardingStore } from '@/stores/onboarding'
+import { http } from '@/api/client'
+import { extractErrorMessage } from '@/api/errors'
 
 const { t } = useI18n()
 const ob = useOnboardingStore()
 const message = useMessage()
 
-const qbUrl = ref<string>(ob.getStepValue<string>(3, 'qbUrl', ''))
-const qbUsername = ref<string>(ob.getStepValue<string>(3, 'qbUsername', ''))
+/** Return empty string if the value is a mask placeholder (e.g. "***"). */
+function unmask(val: unknown): string {
+  if (typeof val !== 'string') return ''
+  if (/^\*+$/.test(val.trim())) return ''
+  return val
+}
+
+// Pre-populate from session-store first, fall back to config snapshot.
+// QB_PASSWORD is sensitive — never prefill from server, but restore session-store value.
+const qbUrl = ref<string>(
+  ob.getStepValue<string>(3, 'qbUrl', '') ||
+  unmask(ob.configSnapshot?.QB_URL),
+)
+const qbUsername = ref<string>(
+  ob.getStepValue<string>(3, 'qbUsername', '') ||
+  unmask(ob.configSnapshot?.QB_USERNAME),
+)
 const qbPassword = ref<string>(ob.getStepValue<string>(3, 'qbPassword', ''))
 const allowSelfSigned = ref<boolean>(ob.getStepValue<boolean>(3, 'allowSelfSigned', false))
 const testing = ref(false)
+const testError = ref<string | null>(null)
 
 async function runTest() {
   if (!qbUrl.value.trim()) {
@@ -20,14 +38,25 @@ async function runTest() {
     return
   }
   testing.value = true
+  testError.value = null
   try {
     ob.setStepValue(3, 'qbUrl', qbUrl.value.trim())
     ob.setStepValue(3, 'qbUsername', qbUsername.value)
     ob.setStepValue(3, 'qbPassword', qbPassword.value)
     ob.setStepValue(3, 'allowSelfSigned', allowSelfSigned.value)
+    // Persist to config.py before running the test
+    await http.put(
+      '/api/config',
+      {
+        QB_URL: qbUrl.value.trim(),
+        QB_USERNAME: qbUsername.value,
+        QB_PASSWORD: qbPassword.value,
+      },
+      { skipErrorToast: true },
+    )
     await ob.runTest('qb')
   } catch (err) {
-    console.error(err)
+    testError.value = extractErrorMessage(err)
   } finally {
     testing.value = false
   }
@@ -86,7 +115,15 @@ function next() {
       </NSpace>
 
       <NAlert
-        v-if="result"
+        v-if="testError"
+        type="error"
+        :title="t('onboarding.qbittorrent.testFailed')"
+      >
+        {{ testError }}
+      </NAlert>
+
+      <NAlert
+        v-else-if="result"
         :type="testOk ? 'success' : 'error'"
         :title="testOk ? t('onboarding.qbittorrent.testPassed') : t('onboarding.qbittorrent.testFailed')"
       >
@@ -97,7 +134,7 @@ function next() {
     <div class="actions">
       <NButton @click="back">{{ t('common.back') }}</NButton>
       <NSpace>
-        <NButton text @click="skip">{{ t('common.skip') }}</NButton>
+        <NButton tertiary @click="skip">{{ t('common.skip') }}</NButton>
         <NButton type="primary" :disabled="!testOk" @click="next">
           {{ t('common.continue') }}
         </NButton>
