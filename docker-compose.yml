@@ -21,10 +21,12 @@ services:
       timeout: 5s
       retries: 3
       start_period: 20s
-    # Override individual config.py values via env if needed (CI / secret mgr):
-    # environment:
-    #   API_SECRET_KEY: ${API_SECRET_KEY:-}
-    #   ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    # Override individual config.py values via env if needed (CI / secret mgr).
+    # TEST_MODE=1 enables /api/test/reset used by Playwright fixtures.
+    environment:
+      API_SECRET_KEY: ${API_SECRET_KEY:-}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+      TEST_MODE: ${TEST_MODE:-}
 
   web:
     build:

@@ -42,9 +42,29 @@ jobs:
       - name: Boot BE via compose
         env:
           GHCR_OWNER: TongWu
+          # TEST_MODE=1 enables /api/test/reset so fixtures can clear state.
+          # Pass it via shell env; docker-compose.yml exposes it under
+          # `environment: TEST_MODE: ${TEST_MODE:-}` on the api service.
+          TEST_MODE: "1"
+          API_SECRET_KEY: "ci-test-secret-key-at-least-32-chars-long"
+          ADMIN_USERNAME: "admin"
+          ADMIN_PASSWORD: "changeme"
+          STORAGE_BACKEND: "sqlite"
+          INGESTION_MODE: "local"
         run: |
-          cp .env.api.example .env.api
-          docker compose -f docker-compose.yml up -d api
+          # Generate a minimal config.py so the BE can start without the real
+          # main-repo config.py (which is not available in this repo's CI).
+          cat > config.py <<'EOF'
+          # Auto-generated for CI — do not commit
+          API_SECRET_KEY = "ci-test-secret-key-at-least-32-chars-long"
+          ADMIN_USERNAME = "admin"
+          ADMIN_PASSWORD = "changeme"
+          STORAGE_BACKEND = "sqlite"
+          INGESTION_MODE = "local"
+          TEST_MODE = True
+          EOF
+          CONFIG_PY_PATH="$(pwd)/config.py" \
+            docker compose -f docker-compose.yml up -d api
           # wait for /api/health
           for i in 1 2 3 4 5 6 7 8 9 10; do
             if curl -fsS http://127.0.0.1:8100/api/health > /dev/null; then
