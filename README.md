@@ -25,23 +25,43 @@ Plan A (backend prerequisites — onboarding, sessions, capabilities, system_sta
 ```bash
 git clone https://github.com/TongWu/JAVDB_AutoSpider_Web.git
 cd JAVDB_AutoSpider_Web
-cp .env.api.example .env.api    # edit: API_SECRET_KEY (>=32 chars) + ADMIN_PASSWORD
+cp .env.api.example .env.api    # ships ADMIN_PASSWORD=changeme — CHANGE BEFORE prod
 docker compose up -d            # pulls the BE image from GHCR, builds FE
-open http://localhost:5173
+open http://localhost:5173      # login: admin / changeme
 ```
 
-There is **no default password**. The backend either:
+The shipped default credentials are `admin` / `changeme`. **Change `ADMIN_PASSWORD` in `.env.api` before exposing the service publicly.**
 
-- uses what you set in `ADMIN_PASSWORD` in `.env.api` (the recommended path), or
-- generates a random ephemeral password at startup if `ADMIN_PASSWORD` is unset AND the BE is running in non-production mode. The generated value is printed to the API container's logs:
+You can also leave `ADMIN_PASSWORD` blank in non-production mode; the BE will generate a random ephemeral password at startup and print it to its logs:
 
-  ```bash
-  docker compose logs api | grep -i "ephemeral admin password"
-  ```
+```bash
+docker compose logs api | grep -i "ephemeral admin password"
+```
 
 The admin username defaults to `admin` (override via `ADMIN_USERNAME`).
 
 Stop with `docker compose down`. Reset state with `docker compose down -v` (drops `api-reports` and `api-logs` volumes).
+
+### Updating `.env.api` after first start
+
+Docker Compose does NOT re-read `.env.api` on `docker compose up -d` if the container already exists. After changing any value in `.env.api`:
+
+```bash
+docker compose down
+docker compose up -d
+```
+
+Or, to recreate just the API container without losing the FE/build cache:
+
+```bash
+docker compose rm -sf api && docker compose up -d api
+```
+
+Verify the new env actually landed in the container:
+
+```bash
+docker compose exec api env | grep -E "^(ADMIN_|API_SECRET_KEY)"
+```
 
 ## Deployment topologies
 
