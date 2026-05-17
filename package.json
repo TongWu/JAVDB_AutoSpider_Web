@@ -17,7 +17,7 @@
     "test:unit": "vitest run",
     "test:unit:watch": "vitest",
     "test:contract": "vitest run --config vitest.contract.config.ts",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
     "gen:api-types": "node scripts/fetch-openapi.mjs"
   },
   "dependencies": {
