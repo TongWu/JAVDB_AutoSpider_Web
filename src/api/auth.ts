@@ -1,21 +1,13 @@
 import { http } from './client'
+import type { RequestBodyFor, ResponseFor } from './_typed'
 
-export interface LoginResponse {
-  access_token: string
-  refresh_token: string
-  csrf_token: string
-  role: 'admin' | 'readonly'
-  expires_in: number
-  username: string
-}
-
-export interface RefreshResponse {
-  access_token: string
-  expires_in: number
-}
+export type LoginPayload = RequestBodyFor<'/api/auth/login', 'post'>
+export type LoginResponse = ResponseFor<'/api/auth/login', 'post'>
+// refresh endpoint carries the token via cookie/header in the schema, not request body
+export type RefreshResponse = ResponseFor<'/api/auth/refresh', 'post'>
 
 export async function apiLogin(username: string, password: string): Promise<LoginResponse> {
-  const { data } = await http.post<LoginResponse>('/api/auth/login', { username, password })
+  const { data } = await http.post<LoginResponse>('/api/auth/login', { username, password } as LoginPayload)
   return data
 }
 

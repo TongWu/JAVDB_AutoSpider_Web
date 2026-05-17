@@ -1,10 +1,7 @@
 import { http } from './client'
+import type { ResponseFor } from './_typed'
 
-export interface HealthResponse {
-  status: string
-  rust_core_available: boolean
-  [key: string]: unknown
-}
+export type HealthResponse = ResponseFor<'/api/health', 'get'>
 
 export async function apiHealth(): Promise<HealthResponse> {
   const { data } = await http.get<HealthResponse>('/api/health')

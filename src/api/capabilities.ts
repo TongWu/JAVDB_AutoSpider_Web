@@ -1,26 +1,12 @@
 import { http } from './client'
+import type { ResponseFor } from './_typed'
 
-export type IngestionMode = 'local' | 'github' | 'dual'
-export type GhActionsTier = 'none' | 'monitor' | 'edit' | 'admin'
-export type StorageBackend = 'sqlite' | 'd1' | 'dual'
-export type Deployment = 'colocated' | 'split' | 'unknown'
-
-export interface CapabilitiesResponse {
-  version: string
-  ingestion_mode: IngestionMode
-  gh_actions: { tier: GhActionsTier; repo: string | null; token_configured: boolean }
-  storage_backend: StorageBackend
-  features: {
-    pikpak: boolean
-    rclone: boolean
-    smtp: boolean
-    proxy_pool: boolean
-    javdb_login: boolean
-    proxy_preview: boolean
-  }
-  deployment: Deployment
-  build: { frontend_version: string | null; backend_version: string; git_sha: string }
-}
+export type CapabilitiesResponse = ResponseFor<'/api/capabilities', 'get'>
+// Re-export field types for callers (e.g. IngestionMode is used by Sidebar/HomePage)
+export type IngestionMode = NonNullable<CapabilitiesResponse>['ingestion_mode']
+export type GhActionsTier = NonNullable<CapabilitiesResponse>['gh_actions']['tier']
+export type StorageBackend = NonNullable<CapabilitiesResponse>['storage_backend']
+export type Deployment = NonNullable<CapabilitiesResponse>['deployment']
 
 export async function apiCapabilities(): Promise<CapabilitiesResponse> {
   const { data } = await http.get<CapabilitiesResponse>('/api/capabilities')

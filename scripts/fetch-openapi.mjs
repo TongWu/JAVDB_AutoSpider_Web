@@ -2,14 +2,20 @@
 /**
  * fetch-openapi.mjs
  *
- * Downloads openapi.json from the main repo (or $OPENAPI_URL override),
+ * Resolves openapi.json from the main repo (local file or remote URL),
  * writes it to tmp/openapi.json, then runs openapi-typescript to generate
  * src/types/api.gen.ts.
  *
- * Usage: node scripts/fetch-openapi.mjs
+ * Usage:
+ *   # Dev (local main repo present):
+ *   OPENAPI_PATH=/path/to/docs/api/openapi.json node scripts/fetch-openapi.mjs
+ *
+ *   # CI (fetch from GitHub raw URL):
+ *   node scripts/fetch-openapi.mjs
+ *   OPENAPI_URL=https://... node scripts/fetch-openapi.mjs
  */
 
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import { execSync } from 'node:child_process'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
@@ -20,34 +26,46 @@ const TMP_DIR = path.join(ROOT, 'tmp')
 const OUT_JSON = path.join(TMP_DIR, 'openapi.json')
 const OUT_TS = path.join(ROOT, 'src', 'types', 'api.gen.ts')
 
+const OPENAPI_PATH = process.env['OPENAPI_PATH'] ?? ''
 const OPENAPI_URL =
   process.env['OPENAPI_URL'] ??
   'https://raw.githubusercontent.com/TongWu/JAVDB_AutoSpider_CICD/main/docs/api/openapi.json'
 
-async function fetchJson(url) {
-  const res = await fetch(url)
-  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${url}`)
-  return res.text()
+async function resolveSchema() {
+  if (OPENAPI_PATH) {
+    console.log(`[fetch-openapi] reading local: ${OPENAPI_PATH}`)
+    const data = await readFile(OPENAPI_PATH, 'utf-8')
+    // Validate JSON
+    JSON.parse(data)
+    return data
+  }
+  console.log(`[fetch-openapi] fetching: ${OPENAPI_URL}`)
+  const res = await fetch(OPENAPI_URL)
+  if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${OPENAPI_URL}`)
+  const text = await res.text()
+  // Validate JSON
+  JSON.parse(text)
+  return text
 }
 
 async function main() {
   await mkdir(TMP_DIR, { recursive: true })
   await mkdir(path.dirname(OUT_TS), { recursive: true })
 
-  console.log(`Fetching ${OPENAPI_URL} ...`)
-  const json = await fetchJson(OPENAPI_URL)
+  const json = await resolveSchema()
   await writeFile(OUT_JSON, json, 'utf-8')
-  console.log(`Wrote ${OUT_JSON}`)
+  console.log(`[fetch-openapi] wrote ${OUT_JSON}`)
 
-  console.log(`Running openapi-typescript ...`)
+  console.log(`[fetch-openapi] running openapi-typescript ...`)
   execSync(
     `node node_modules/.bin/openapi-typescript ${OUT_JSON} -o ${OUT_TS}`,
     { cwd: ROOT, stdio: 'inherit' },
   )
-  console.log(`Generated ${OUT_TS}`)
+  console.log(`[fetch-openapi] generated ${OUT_TS}`)
+  console.log('[fetch-openapi] done.')
 }
 
 main().catch((err) => {
-  console.error(err)
+  console.error('[fetch-openapi] failed:', err)
   process.exit(1)
 })

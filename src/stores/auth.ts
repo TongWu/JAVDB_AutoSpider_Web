@@ -19,7 +19,7 @@ export const useAuthStore = defineStore('auth', () => {
     const data = await apiLogin(u, p)
     accessToken.value = data.access_token
     refreshToken.value = data.refresh_token
-    role.value = data.role
+    role.value = data.role as Role
     username.value = data.username ?? u
   }
 
