@@ -58,6 +58,21 @@ const username = ref<string>(
 // Password: never prefill from server (always masked), but restore session-store value
 const password = ref<string>(ob.getStepValue<string>(2, 'cred_password', ''))
 
+// Re-resolve from snapshot if it arrives after this step mounts (race with OnboardingPage mount)
+watch(() => ob.configSnapshot, (snap) => {
+  if (!snap) return
+  const storedCookie = ob.getStepValue<string>(2, 'cookie', '')
+  if (!storedCookie) {
+    const fromSnap = unmask(snap.JAVDB_SESSION_COOKIE)
+    if (fromSnap) cookie.value = fromSnap
+  }
+  const storedUsername = ob.getStepValue<string>(2, 'cred_username', '')
+  if (!storedUsername) {
+    const fromSnap = unmask(snap.JAVDB_USERNAME)
+    if (fromSnap) username.value = fromSnap
+  }
+}, { immediate: true })
+
 const loggingIn = ref(false)
 const credentialsError = ref<string | null>(null)
 const credentialsOk = ref(false)

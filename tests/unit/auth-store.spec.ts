@@ -31,6 +31,12 @@ describe('auth store', () => {
     expect(auth.role).toBe('admin')
   })
 
+  it('login stores csrf_token from response body', async () => {
+    const auth = useAuthStore()
+    await auth.login('alice', 'pw')
+    expect(auth.csrfToken).toBe('csrf-1')
+  })
+
   it('refresh updates access token', async () => {
     const auth = useAuthStore()
     await auth.login('alice', 'pw')
@@ -39,13 +45,15 @@ describe('auth store', () => {
     expect(auth.accessToken).toBe('access-2')
   })
 
-  it('logout clears state', async () => {
+  it('logout clears state including csrfToken', async () => {
     const auth = useAuthStore()
     await auth.login('alice', 'pw')
+    expect(auth.csrfToken).toBe('csrf-1')
     await auth.logout()
     expect(auth.isAuthenticated).toBe(false)
     expect(auth.accessToken).toBe(null)
     expect(auth.username).toBe(null)
+    expect(auth.csrfToken).toBe(null)
   })
 
   it('hasRole returns true when role matches', async () => {

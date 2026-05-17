@@ -46,7 +46,9 @@ http.interceptors.request.use(async (config) => {
   const mutating =
     method === 'POST' || method === 'PUT' || method === 'PATCH' || method === 'DELETE'
   if (mutating) {
-    const csrf = readCsrfCookie()
+    // Prefer in-memory CSRF token (works on plain HTTP where the cookie is
+    // dropped due to secure=True). Fall back to cookie if memory is empty.
+    const csrf = auth.csrfToken ?? readCsrfCookie()
     if (csrf) headers.set('X-CSRF-Token', csrf)
   }
 

@@ -12,6 +12,10 @@ export const useAuthStore = defineStore('auth', () => {
   const refreshToken = useStorage<string | null>('auth:refresh', null, sessionStorage)
   const role = useStorage<Role>('auth:role', null, sessionStorage)
   const username = useStorage<string | null>('auth:user', null, sessionStorage)
+  // CSRF token from login response body. In dev (plain HTTP) the browser drops
+  // the BE's secure=True cookie, so we store the token here and the axios
+  // interceptor prefers it over document.cookie.
+  const csrfToken = useStorage<string | null>('auth:csrf', null, sessionStorage)
 
   const isAuthenticated = computed(() => !!accessToken.value)
 
@@ -21,12 +25,18 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken.value = data.refresh_token
     role.value = data.role as Role
     username.value = data.username ?? u
+    // CRITICAL: store CSRF token so the interceptor can send it as a header
+    // even if the browser drops the cookie (secure=True on plain HTTP).
+    csrfToken.value = (data as { csrf_token?: string }).csrf_token ?? null
   }
 
   async function refresh(): Promise<string> {
     if (!refreshToken.value) throw new Error('no refresh token')
     const data = await apiRefresh(refreshToken.value)
     accessToken.value = data.access_token
+    // BE may rotate CSRF on refresh — capture if present
+    const newCsrf = (data as { csrf_token?: string }).csrf_token
+    if (newCsrf) csrfToken.value = newCsrf
     return data.access_token
   }
 
@@ -44,6 +54,7 @@ export const useAuthStore = defineStore('auth', () => {
       refreshToken.value = null
       role.value = null
       username.value = null
+      csrfToken.value = null
     }
   }
 
@@ -58,6 +69,7 @@ export const useAuthStore = defineStore('auth', () => {
     refreshToken,
     role,
     username,
+    csrfToken,
     isAuthenticated,
     login,
     refresh,

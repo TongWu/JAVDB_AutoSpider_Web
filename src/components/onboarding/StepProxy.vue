@@ -31,24 +31,63 @@ function resolveMode(): ProxyMode {
   return 'none'
 }
 
+function resolvePool(): ProxyEntry[] {
+  const stored = ob.getStepValue<ProxyEntry[]>(4, 'pool', [])
+  if (stored && stored.length > 0) return stored
+  const snap = ob.configSnapshot?.PROXY_POOL
+  if (Array.isArray(snap)) {
+    return snap.map((entry) => ({
+      name: typeof entry === 'object' && entry !== null && 'name' in entry ? String((entry as { name?: unknown }).name ?? '') : '',
+      http: typeof entry === 'object' && entry !== null && 'http' in entry ? String((entry as { http?: unknown }).http ?? '') : '',
+      https: typeof entry === 'object' && entry !== null && 'https' in entry ? String((entry as { https?: unknown }).https ?? '') : '',
+    }))
+  }
+  return []
+}
+
+function resolveModules(): string[] {
+  const stored = ob.getStepValue<string[]>(4, 'modules', [])
+  if (Array.isArray(stored) && stored.length > 0) return stored
+  const snap = ob.configSnapshot?.PROXY_MODULES
+  if (Array.isArray(snap) && snap.length > 0) return snap.map(String)
+  return ['spider']
+}
+
 const mode = ref<ProxyMode>(resolveMode())
 const singleUrl = ref<string>(
   ob.getStepValue<string>(4, 'singleUrl', '') ||
   unmask(ob.configSnapshot?.PROXY_HTTP),
 )
-const pool = ref<ProxyEntry[]>(ob.getStepValue<ProxyEntry[]>(4, 'pool', []))
-const modules = ref<string[]>(
-  ob.getStepValue<string[]>(4, 'modules', []) ||
-  (Array.isArray(ob.configSnapshot?.PROXY_MODULES)
-    ? (ob.configSnapshot!.PROXY_MODULES as string[])
-    : ['spider']),
-)
+const pool = ref<ProxyEntry[]>(resolvePool())
+const modules = ref<string[]>(resolveModules())
 const testing = ref(false)
 
 watch(mode, (v) => ob.setStepValue(4, 'mode', v))
 watch(singleUrl, (v) => ob.setStepValue(4, 'singleUrl', v))
 watch(pool, (v) => ob.setStepValue(4, 'pool', v), { deep: true })
 watch(modules, (v) => ob.setStepValue(4, 'modules', v))
+
+// Re-resolve from snapshot if it arrives after this step mounts (race with OnboardingPage mount)
+watch(() => ob.configSnapshot, (snap) => {
+  if (!snap) return
+  const storedPool = ob.getStepValue<ProxyEntry[]>(4, 'pool', [])
+  if (!storedPool || storedPool.length === 0) {
+    const newPool = resolvePool()
+    if (newPool.length > 0) pool.value = newPool
+  }
+  const storedModules = ob.getStepValue<string[]>(4, 'modules', [])
+  if (!Array.isArray(storedModules) || storedModules.length === 0) {
+    const newModules = resolveModules()
+    if (newModules.length > 0) modules.value = newModules
+  }
+  // Mode may also have come in late
+  if (mode.value === 'none') {
+    const snapshotMode = unmask(snap.PROXY_MODE).toLowerCase()
+    if (snapshotMode === 'single' || snapshotMode === 'pool') {
+      mode.value = snapshotMode as ProxyMode
+    }
+  }
+}, { immediate: true })
 
 // "All" is exclusive with the rest
 function onModulesChange(next: (string | number)[]) {

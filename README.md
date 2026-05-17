@@ -100,6 +100,24 @@ docker compose up -d api
 npm run dev
 ```
 
+### CSRF and HTTP dev
+
+In development you run the BE on plain HTTP. The BE's `csrf_token` cookie defaults to `secure=True`, which means browsers refuse to store it on HTTP — leading to 403 Forbidden on every mutating request.
+
+Two ways to handle this:
+
+1. **Run BE with `COOKIE_SECURE=False`** (recommended for dev):
+
+   ```bash
+   COOKIE_SECURE=False uvicorn apps.api.server:app --port 8100
+   ```
+
+   The cookie is then stored on HTTP. Do not set this in production.
+
+2. **Use HTTPS in dev** (more setup but matches prod): set up `mkcert` for local certs and serve uvicorn behind nginx or via uvicorn's `--ssl-keyfile` / `--ssl-certfile` options.
+
+The FE also captures `csrf_token` from the login response body and sends it as the `X-CSRF-Token` header on every mutating request. This covers production (HTTPS) where the cookie is set correctly; `COOKIE_SECURE=False` unblocks the other dimension (BE reading the cookie to verify against the header).
+
 ## Available scripts
 
 | Command | Purpose |

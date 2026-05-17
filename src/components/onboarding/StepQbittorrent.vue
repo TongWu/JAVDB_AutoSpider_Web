@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSpace, NButton, NInput, NCheckbox, NAlert, useMessage } from 'naive-ui'
 import { useOnboardingStore } from '@/stores/onboarding'
@@ -31,6 +31,19 @@ const qbPassword = ref<string>(ob.getStepValue<string>(3, 'qbPassword', ''))
 const allowSelfSigned = ref<boolean>(ob.getStepValue<boolean>(3, 'allowSelfSigned', false))
 const testing = ref(false)
 const testError = ref<string | null>(null)
+
+// Re-resolve from snapshot if it arrives after this step mounts (race with OnboardingPage mount)
+watch(() => ob.configSnapshot, (snap) => {
+  if (!snap) return
+  if (!ob.getStepValue<string>(3, 'qbUrl', '')) {
+    const fromSnap = unmask(snap.QB_URL)
+    if (fromSnap) qbUrl.value = fromSnap
+  }
+  if (!ob.getStepValue<string>(3, 'qbUsername', '')) {
+    const fromSnap = unmask(snap.QB_USERNAME)
+    if (fromSnap) qbUsername.value = fromSnap
+  }
+}, { immediate: true })
 
 async function runTest() {
   if (!qbUrl.value.trim()) {
