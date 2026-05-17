@@ -101,5 +101,21 @@
   },
   "user": {
     "signOut": "Sign out"
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "Welcome",
+      "javdb": "JavDB session",
+      "qbittorrent": "qBittorrent",
+      "proxy": "Proxy",
+      "firstRun": "First run"
+    },
+    "footer": "Step {current} of {total} · You can re-run onboarding from Settings",
+    "welcome": {
+      "title": "Welcome to AutoSpider",
+      "body": "Let's get your console configured. This will take a couple of minutes.",
+      "configureNow": "Configure now",
+      "later": "I'll do it later"
+    }
   }
 }

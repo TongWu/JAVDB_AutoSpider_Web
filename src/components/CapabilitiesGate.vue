@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { NSkeleton, NSpace } from 'naive-ui'
 import { useCapabilitiesStore } from '@/stores/capabilities'
 import { useAuthStore } from '@/stores/auth'
+import { useOnboardingStore } from '@/stores/onboarding'
 import { apiHealth } from '@/api/health'
 import OutageScreen from './OutageScreen.vue'
 
@@ -26,6 +27,20 @@ async function boot() {
   showOutage.value = false
   try {
     await Promise.all([cap.fetchInitial(), apiHealth()])
+    // Auto-redirect to onboarding for fresh users
+    try {
+      const onboarding = useOnboardingStore()
+      const status = await onboarding.fetchStatus()
+      if (!status.completed && auth.isAuthenticated) {
+        const currentName = router.currentRoute.value.name
+        if (currentName !== 'onboarding' && currentName !== 'login') {
+          void router.replace({ name: 'onboarding' })
+        }
+      }
+    } catch (err) {
+      // If onboarding status fails, log and continue — don't block boot.
+      console.error('Onboarding status fetch failed:', err)
+    }
     loading.value = false
   } catch (err) {
     console.error('Boot gate failed:', err)

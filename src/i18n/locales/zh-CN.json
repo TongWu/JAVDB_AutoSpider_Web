@@ -101,5 +101,21 @@
   },
   "user": {
     "signOut": "退出登录"
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "欢迎",
+      "javdb": "JavDB 会话",
+      "qbittorrent": "qBittorrent",
+      "proxy": "代理",
+      "firstRun": "首次运行"
+    },
+    "footer": "第 {current} 步，共 {total} 步 · 可在设置中重新运行向导",
+    "welcome": {
+      "title": "欢迎使用 AutoSpider",
+      "body": "花几分钟把控制台配置好。",
+      "configureNow": "立即配置",
+      "later": "稍后再说"
+    }
   }
 }

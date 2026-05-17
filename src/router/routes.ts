@@ -41,6 +41,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { layout: 'blank' },
   },
   {
+    path: '/onboarding',
+    name: 'onboarding',
+    component: () => import('@/pages/OnboardingPage.vue'),
+    meta: { requiresAuth: true, layout: 'blank' },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
   },

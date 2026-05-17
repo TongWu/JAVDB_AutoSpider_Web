@@ -101,5 +101,21 @@
   },
   "user": {
     "signOut": "サインアウト"
+  },
+  "onboarding": {
+    "steps": {
+      "welcome": "ようこそ",
+      "javdb": "JavDB セッション",
+      "qbittorrent": "qBittorrent",
+      "proxy": "プロキシ",
+      "firstRun": "初回実行"
+    },
+    "footer": "ステップ {current} / {total} · 設定からいつでもオンボーディングを再実行できます",
+    "welcome": {
+      "title": "AutoSpider へようこそ",
+      "body": "コンソールの設定を行います。数分で完了します。",
+      "configureNow": "今すぐ設定",
+      "later": "後で行う"
+    }
   }
 }
