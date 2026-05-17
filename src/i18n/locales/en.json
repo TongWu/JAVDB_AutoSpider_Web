@@ -1,0 +1,90 @@
+{
+  "app": {
+    "name": "AutoSpider",
+    "tagline": "JAVDB automation console"
+  },
+  "nav": {
+    "home": "Home",
+    "run": "Run",
+    "activity": "Activity",
+    "tasks": "Tasks",
+    "sessions": "Sessions",
+    "browse": "Browse",
+    "data": "Data",
+    "movies": "Movies",
+    "torrents": "Torrents",
+    "operations": "Operations",
+    "qbittorrent": "qBittorrent",
+    "pikpak": "PikPak",
+    "rclone": "Rclone",
+    "email": "Email",
+    "cleanup": "Cleanup",
+    "diagnostics": "Diagnostics",
+    "health": "Health",
+    "parseTester": "Parse tester",
+    "javdbSession": "JavDB session",
+    "githubActions": "GitHub Actions",
+    "runs": "Runs",
+    "workflows": "Workflows",
+    "secrets": "Secrets",
+    "settings": "Settings",
+    "config": "Config",
+    "auth": "Auth",
+    "capabilities": "Capabilities",
+    "appearance": "Appearance"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "submit": "Submit",
+    "back": "Back",
+    "continue": "Continue",
+    "retry": "Retry",
+    "loading": "Loading...",
+    "ok": "OK",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "login": {
+    "title": "Sign in to AutoSpider",
+    "username": "Username",
+    "password": "Password",
+    "rememberMe": "Remember me",
+    "signIn": "Sign in",
+    "failed": "Sign-in failed",
+    "invalidCredentials": "Invalid username or password"
+  },
+  "errors": {
+    "notFound": {
+      "title": "Page not found",
+      "body": "The page you tried to open does not exist.",
+      "backHome": "Back to Home"
+    },
+    "forbidden": {
+      "title": "Forbidden",
+      "body": "You do not have permission to view this page."
+    },
+    "generic": {
+      "title": "Something went wrong",
+      "body": "An unexpected error occurred. Try again or contact support.",
+      "requestId": "Request ID"
+    },
+    "outage": {
+      "title": "Cannot reach backend",
+      "body": "AutoSpider could not contact the backend service.",
+      "checklist": "Troubleshooting checklist:",
+      "checkBackend": "Check if the backend service is running",
+      "checkUrl": "Verify VITE_API_BASE_URL is set correctly",
+      "checkCors": "Verify CORS / firewall is not blocking requests",
+      "retry": "Retry connection"
+    }
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System default"
+  },
+  "language": {
+    "switch": "Language"
+  }
+}

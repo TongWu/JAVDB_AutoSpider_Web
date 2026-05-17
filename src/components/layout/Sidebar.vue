@@ -1,0 +1,133 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { NMenu } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+import type { MenuOption } from 'naive-ui'
+import { useUiStore } from '@/stores/ui'
+
+const { t } = useI18n()
+const router = useRouter()
+const ui = useUiStore()
+
+const options = computed<MenuOption[]>(() => [
+  { label: t('nav.home'), key: 'home', icon: () => '🏠' },
+  { label: t('nav.run'), key: 'run', icon: () => '⚡' },
+  {
+    label: t('nav.activity'),
+    key: 'activity',
+    icon: () => '📋',
+    children: [
+      { label: t('nav.tasks'), key: 'tasks' },
+      { label: t('nav.sessions'), key: 'sessions' },
+    ],
+  },
+  { label: t('nav.browse'), key: 'browse', icon: () => '🌐' },
+  {
+    label: t('nav.data'),
+    key: 'data',
+    icon: () => '🗃️',
+    children: [
+      { label: t('nav.movies'), key: 'movies' },
+      { label: t('nav.torrents'), key: 'torrents' },
+    ],
+  },
+  {
+    label: t('nav.operations'),
+    key: 'operations',
+    icon: () => '⚙️',
+    children: [
+      { label: t('nav.qbittorrent'), key: 'qbittorrent' },
+      { label: t('nav.pikpak'), key: 'pikpak' },
+      { label: t('nav.rclone'), key: 'rclone' },
+      { label: t('nav.email'), key: 'email' },
+      { label: t('nav.cleanup'), key: 'cleanup' },
+    ],
+  },
+  {
+    label: t('nav.diagnostics'),
+    key: 'diagnostics',
+    icon: () => '🔍',
+    children: [
+      { label: t('nav.health'), key: 'health' },
+      { label: t('nav.parseTester'), key: 'parseTester' },
+      { label: t('nav.javdbSession'), key: 'javdbSession' },
+    ],
+  },
+  {
+    label: t('nav.githubActions'),
+    key: 'githubActions',
+    icon: () => '🚀',
+    children: [
+      { label: t('nav.runs'), key: 'runs' },
+      { label: t('nav.workflows'), key: 'workflows' },
+      { label: t('nav.secrets'), key: 'secrets' },
+    ],
+  },
+  {
+    label: t('nav.settings'),
+    key: 'settings',
+    icon: () => '🔧',
+    children: [
+      { label: t('nav.config'), key: 'config' },
+      { label: t('nav.auth'), key: 'auth' },
+      { label: t('nav.capabilities'), key: 'capabilities' },
+      { label: t('nav.appearance'), key: 'appearance' },
+    ],
+  },
+])
+
+function onSelect(key: string) {
+  if (key === 'home') void router.push('/')
+}
+</script>
+
+<template>
+  <div class="sidebar-wrap">
+    <div class="sidebar-brand">
+      <span
+        v-if="!ui.sidebarCollapsed"
+        class="brand-text"
+      >AutoSpider</span>
+      <span
+        v-else
+        class="brand-icon"
+      >🕷️</span>
+    </div>
+    <NMenu
+      :options="options"
+      :collapsed="ui.sidebarCollapsed"
+      :collapsed-width="64"
+      :collapsed-icon-size="20"
+      @update:value="onSelect"
+    />
+  </div>
+</template>
+
+<style scoped>
+.sidebar-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar-brand {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 16px;
+  padding: 0 16px;
+  flex-shrink: 0;
+}
+
+.brand-text {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.brand-icon {
+  font-size: 20px;
+}
+</style>

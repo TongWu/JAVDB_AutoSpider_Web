@@ -1,0 +1,90 @@
+{
+  "app": {
+    "name": "AutoSpider",
+    "tagline": "JAVDB 自动化控制台"
+  },
+  "nav": {
+    "home": "首页",
+    "run": "运行",
+    "activity": "活动",
+    "tasks": "任务",
+    "sessions": "会话",
+    "browse": "浏览",
+    "data": "数据",
+    "movies": "影片",
+    "torrents": "种子",
+    "operations": "操作",
+    "qbittorrent": "qBittorrent",
+    "pikpak": "PikPak",
+    "rclone": "Rclone",
+    "email": "邮件",
+    "cleanup": "清理",
+    "diagnostics": "诊断",
+    "health": "健康检查",
+    "parseTester": "解析测试",
+    "javdbSession": "JavDB 会话",
+    "githubActions": "GitHub Actions",
+    "runs": "运行记录",
+    "workflows": "工作流",
+    "secrets": "密钥",
+    "settings": "设置",
+    "config": "配置",
+    "auth": "认证",
+    "capabilities": "功能权限",
+    "appearance": "外观"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "取消",
+    "submit": "提交",
+    "back": "返回",
+    "continue": "继续",
+    "retry": "重试",
+    "loading": "加载中...",
+    "ok": "确定",
+    "yes": "是",
+    "no": "否"
+  },
+  "login": {
+    "title": "登录 AutoSpider",
+    "username": "用户名",
+    "password": "密码",
+    "rememberMe": "记住我",
+    "signIn": "登录",
+    "failed": "登录失败",
+    "invalidCredentials": "用户名或密码错误"
+  },
+  "errors": {
+    "notFound": {
+      "title": "页面不存在",
+      "body": "您访问的页面不存在。",
+      "backHome": "返回首页"
+    },
+    "forbidden": {
+      "title": "访问被拒绝",
+      "body": "您没有权限查看此页面。"
+    },
+    "generic": {
+      "title": "出现了错误",
+      "body": "发生了意外错误，请重试或联系支持人员。",
+      "requestId": "请求 ID"
+    },
+    "outage": {
+      "title": "无法连接后端",
+      "body": "AutoSpider 无法连接到后端服务。",
+      "checklist": "排查清单：",
+      "checkBackend": "检查后端服务是否正在运行",
+      "checkUrl": "确认 VITE_API_BASE_URL 配置正确",
+      "checkCors": "确认 CORS / 防火墙未阻止请求",
+      "retry": "重新连接"
+    }
+  },
+  "theme": {
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
+  },
+  "language": {
+    "switch": "语言"
+  }
+}

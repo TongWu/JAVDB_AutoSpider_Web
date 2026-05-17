@@ -23,6 +23,14 @@ export default defineConfigWithVueTs(
   vueTsConfigs.recommended,
 
   {
+    name: 'app/layout-single-word',
+    files: ['src/components/layout/*.vue'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
+
+  {
     name: 'app/vue-i18n',
     plugins: {
       '@intlify/vue-i18n': pluginVueI18n,

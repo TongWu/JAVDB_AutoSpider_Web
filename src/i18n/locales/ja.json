@@ -1,0 +1,90 @@
+{
+  "app": {
+    "name": "AutoSpider",
+    "tagline": "JAVDB 自動化コンソール"
+  },
+  "nav": {
+    "home": "ホーム",
+    "run": "実行",
+    "activity": "アクティビティ",
+    "tasks": "タスク",
+    "sessions": "セッション",
+    "browse": "ブラウズ",
+    "data": "データ",
+    "movies": "動画",
+    "torrents": "トレント",
+    "operations": "操作",
+    "qbittorrent": "qBittorrent",
+    "pikpak": "PikPak",
+    "rclone": "Rclone",
+    "email": "メール",
+    "cleanup": "クリーンアップ",
+    "diagnostics": "診断",
+    "health": "ヘルスチェック",
+    "parseTester": "パーステスター",
+    "javdbSession": "JavDB セッション",
+    "githubActions": "GitHub Actions",
+    "runs": "実行履歴",
+    "workflows": "ワークフロー",
+    "secrets": "シークレット",
+    "settings": "設定",
+    "config": "構成",
+    "auth": "認証",
+    "capabilities": "機能権限",
+    "appearance": "外観"
+  },
+  "common": {
+    "save": "保存",
+    "cancel": "キャンセル",
+    "submit": "送信",
+    "back": "戻る",
+    "continue": "続ける",
+    "retry": "再試行",
+    "loading": "読み込み中...",
+    "ok": "OK",
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "login": {
+    "title": "AutoSpider にサインイン",
+    "username": "ユーザー名",
+    "password": "パスワード",
+    "rememberMe": "ログイン状態を保持",
+    "signIn": "サインイン",
+    "failed": "サインイン失敗",
+    "invalidCredentials": "ユーザー名またはパスワードが正しくありません"
+  },
+  "errors": {
+    "notFound": {
+      "title": "ページが見つかりません",
+      "body": "アクセスしようとしたページは存在しません。",
+      "backHome": "ホームに戻る"
+    },
+    "forbidden": {
+      "title": "アクセス禁止",
+      "body": "このページを表示する権限がありません。"
+    },
+    "generic": {
+      "title": "エラーが発生しました",
+      "body": "予期しないエラーが発生しました。再試行するかサポートにお問い合わせください。",
+      "requestId": "リクエスト ID"
+    },
+    "outage": {
+      "title": "バックエンドに接続できません",
+      "body": "AutoSpider はバックエンドサービスに接続できませんでした。",
+      "checklist": "トラブルシューティングチェックリスト：",
+      "checkBackend": "バックエンドサービスが起動しているか確認",
+      "checkUrl": "VITE_API_BASE_URL が正しく設定されているか確認",
+      "checkCors": "CORS / ファイアウォールがリクエストをブロックしていないか確認",
+      "retry": "再接続"
+    }
+  },
+  "theme": {
+    "light": "ライト",
+    "dark": "ダーク",
+    "system": "システムデフォルト"
+  },
+  "language": {
+    "switch": "言語"
+  }
+}
