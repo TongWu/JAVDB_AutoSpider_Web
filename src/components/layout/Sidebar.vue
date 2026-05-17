@@ -106,6 +106,7 @@ const options = computed<MenuOption[]>(() => {
 function onSelect(key: string) {
   if (key === 'home') void router.push('/')
   else if (key === 'run') void router.push('/run')
+  else if (key === 'tasks') void router.push('/tasks')
   // others still placeholder
 }
 </script>

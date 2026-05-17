@@ -257,6 +257,40 @@
       "empty": "ログ行がまだありません"
     }
   },
+  "tasks": {
+    "subtitle": "このインスタンスで実行されたすべての ingestion ジョブ。",
+    "col": {
+      "jobId": "ジョブ ID",
+      "mode": "モード",
+      "status": "ステータス",
+      "started": "開始日時",
+      "ended": "終了日時",
+      "duration": "所要時間",
+      "sessionId": "セッション ID",
+      "error": "エラー"
+    },
+    "status": {
+      "running": "実行中",
+      "success": "成功",
+      "failed": "失敗",
+      "cancelled": "キャンセル"
+    },
+    "mode": {
+      "all": "すべて",
+      "local": "ローカル",
+      "github": "GitHub"
+    },
+    "filters": {
+      "statusPlaceholder": "ステータスで絞り込み",
+      "modePlaceholder": "モードで絞り込み",
+      "searchPlaceholder": "ジョブ ID を検索…",
+      "reset": "リセット"
+    },
+    "drawer": {
+      "untitled": "タスク詳細",
+      "logs": "ログ"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "フレンドリー名（例：clash-home）",
     "httpPlaceholder": "http://127.0.0.1:7890",

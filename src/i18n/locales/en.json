@@ -257,6 +257,40 @@
       "empty": "No log lines yet"
     }
   },
+  "tasks": {
+    "subtitle": "All ingestion runs that have happened on this instance.",
+    "col": {
+      "jobId": "Job ID",
+      "mode": "Mode",
+      "status": "Status",
+      "started": "Started",
+      "ended": "Ended",
+      "duration": "Duration",
+      "sessionId": "Session ID",
+      "error": "Error"
+    },
+    "status": {
+      "running": "Running",
+      "success": "Success",
+      "failed": "Failed",
+      "cancelled": "Cancelled"
+    },
+    "mode": {
+      "all": "All modes",
+      "local": "Local",
+      "github": "GitHub"
+    },
+    "filters": {
+      "statusPlaceholder": "Filter by status",
+      "modePlaceholder": "Filter by mode",
+      "searchPlaceholder": "Search job id…",
+      "reset": "Reset"
+    },
+    "drawer": {
+      "untitled": "Task detail",
+      "logs": "Logs"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "Friendly name (e.g. clash-home)",
     "httpPlaceholder": "http://127.0.0.1:7890",
