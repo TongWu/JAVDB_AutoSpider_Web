@@ -23,6 +23,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/run',
+    name: 'run',
+    component: () => import('@/pages/RunPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/404',
     name: 'not-found',
     component: () => import('@/pages/NotFoundPage.vue'),

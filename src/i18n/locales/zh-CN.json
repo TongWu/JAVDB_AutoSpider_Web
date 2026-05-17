@@ -206,6 +206,57 @@
       "completeFailed": "无法将向导标记为已完成"
     }
   },
+  "run": {
+    "subtitle": "触发采集任务并实时查看日志。",
+    "tabs": {
+      "daily": "每日",
+      "adhoc": "自定义"
+    },
+    "mode": {
+      "daily": "每日",
+      "adhoc": "自定义",
+      "spider": "爬虫"
+    },
+    "runOnLabel": "运行于",
+    "runLocal": "本地 Worker",
+    "runGithub": "GitHub Actions",
+    "dryRun": "试运行",
+    "useProxy": "使用代理",
+    "submitButton": "启动",
+    "submitFailed": "无法启动任务",
+    "noJobIdInResponse": "服务器未返回任务 ID",
+    "startAnother": "再启动一个",
+    "advancedTitle": "高级（完整爬虫选项）",
+    "advancedActivate": "使用高级爬虫任务提交",
+    "advancedHint": "绕过标准每日/自定义快捷方式，直接发送原始 SpiderJobPayload。",
+    "daily": {
+      "startPage": "起始页",
+      "endPage": "结束页"
+    },
+    "adhoc": {
+      "urlLabel": "目标 URL",
+      "urlPlaceholder": "https://javdb.com/actors/EvkJ",
+      "ignoreReleaseDate": "忽略发布日期过滤"
+    },
+    "advanced": {
+      "phase": "阶段",
+      "ignoreHistory": "忽略历史记录",
+      "maxMoviesPhase1": "阶段 1 最大影片数",
+      "maxMoviesPhase2": "阶段 2 最大影片数",
+      "enableDedup": "启用去重",
+      "redownloadThreshold": "重下载阈值（0-1）",
+      "noRcloneFilter": "不使用 Rclone 过滤",
+      "disableAllFilters": "禁用所有过滤器"
+    },
+    "log": {
+      "filterPlaceholder": "过滤日志…",
+      "autoScroll": "自动滚动",
+      "copyAll": "复制",
+      "done": "已完成",
+      "live": "实时",
+      "empty": "暂无日志"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "友好名称（如 clash-home）",
     "httpPlaceholder": "http://127.0.0.1:7890",

@@ -206,6 +206,57 @@
       "completeFailed": "セットアップを完了としてマークできませんでした"
     }
   },
+  "run": {
+    "subtitle": "取り込み実行をトリガーし、ログをリアルタイムで確認します。",
+    "tabs": {
+      "daily": "デイリー",
+      "adhoc": "アドホック"
+    },
+    "mode": {
+      "daily": "デイリー",
+      "adhoc": "アドホック",
+      "spider": "スパイダー"
+    },
+    "runOnLabel": "実行先",
+    "runLocal": "ローカルワーカー",
+    "runGithub": "GitHub Actions",
+    "dryRun": "ドライラン",
+    "useProxy": "プロキシを使用",
+    "submitButton": "実行",
+    "submitFailed": "実行を開始できませんでした",
+    "noJobIdInResponse": "サーバーがジョブ ID を返しませんでした",
+    "startAnother": "別の実行を開始",
+    "advancedTitle": "詳細設定（全スパイダーオプション）",
+    "advancedActivate": "高度なスパイダージョブ送信を使用",
+    "advancedHint": "標準のデイリー/アドホックショートカットをバイパスし、生の SpiderJobPayload を送信します。",
+    "daily": {
+      "startPage": "開始ページ",
+      "endPage": "終了ページ"
+    },
+    "adhoc": {
+      "urlLabel": "対象 URL",
+      "urlPlaceholder": "https://javdb.com/actors/EvkJ",
+      "ignoreReleaseDate": "リリース日フィルターを無視"
+    },
+    "advanced": {
+      "phase": "フェーズ",
+      "ignoreHistory": "履歴を無視",
+      "maxMoviesPhase1": "フェーズ 1 最大動画数",
+      "maxMoviesPhase2": "フェーズ 2 最大動画数",
+      "enableDedup": "重複排除を有効化",
+      "redownloadThreshold": "再ダウンロード閾値（0-1）",
+      "noRcloneFilter": "Rclone フィルターなし",
+      "disableAllFilters": "すべてのフィルターを無効化"
+    },
+    "log": {
+      "filterPlaceholder": "ログをフィルター…",
+      "autoScroll": "自動スクロール",
+      "copyAll": "コピー",
+      "done": "完了",
+      "live": "ライブ",
+      "empty": "ログ行がまだありません"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "フレンドリー名（例：clash-home）",
     "httpPlaceholder": "http://127.0.0.1:7890",

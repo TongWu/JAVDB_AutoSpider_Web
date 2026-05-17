@@ -206,6 +206,57 @@
       "completeFailed": "Could not mark setup as complete"
     }
   },
+  "run": {
+    "subtitle": "Trigger ingestion runs and watch logs live.",
+    "tabs": {
+      "daily": "Daily",
+      "adhoc": "Ad Hoc"
+    },
+    "mode": {
+      "daily": "Daily",
+      "adhoc": "Ad Hoc",
+      "spider": "Spider"
+    },
+    "runOnLabel": "Run on",
+    "runLocal": "Local worker",
+    "runGithub": "GitHub Actions",
+    "dryRun": "Dry run",
+    "useProxy": "Use proxy",
+    "submitButton": "Run",
+    "submitFailed": "Could not start the run",
+    "noJobIdInResponse": "Server did not return a job id",
+    "startAnother": "Start another",
+    "advancedTitle": "Advanced (full spider options)",
+    "advancedActivate": "Use advanced spider job submission",
+    "advancedHint": "Bypasses the standard daily/adhoc shortcuts and sends a raw SpiderJobPayload.",
+    "daily": {
+      "startPage": "Start page",
+      "endPage": "End page"
+    },
+    "adhoc": {
+      "urlLabel": "Target URL",
+      "urlPlaceholder": "https://javdb.com/actors/EvkJ",
+      "ignoreReleaseDate": "Ignore release date filter"
+    },
+    "advanced": {
+      "phase": "Phase",
+      "ignoreHistory": "Ignore history",
+      "maxMoviesPhase1": "Max movies (phase 1)",
+      "maxMoviesPhase2": "Max movies (phase 2)",
+      "enableDedup": "Enable dedup",
+      "redownloadThreshold": "Redownload threshold (0-1)",
+      "noRcloneFilter": "No rclone filter",
+      "disableAllFilters": "Disable all filters"
+    },
+    "log": {
+      "filterPlaceholder": "Filter log…",
+      "autoScroll": "Auto-scroll",
+      "copyAll": "Copy",
+      "done": "Done",
+      "live": "Live",
+      "empty": "No log lines yet"
+    }
+  },
   "proxyPool": {
     "namePlaceholder": "Friendly name (e.g. clash-home)",
     "httpPlaceholder": "http://127.0.0.1:7890",
