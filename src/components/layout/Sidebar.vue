@@ -107,6 +107,7 @@ function onSelect(key: string) {
   if (key === 'home') void router.push('/')
   else if (key === 'run') void router.push('/run')
   else if (key === 'tasks') void router.push('/tasks')
+  else if (key === 'sessions') void router.push('/sessions')
   // others still placeholder
 }
 </script>

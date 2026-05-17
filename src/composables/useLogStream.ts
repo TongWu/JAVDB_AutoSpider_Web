@@ -18,6 +18,7 @@ export function useLogStream(jobId: () => string) {
     if (s.done) return
     try {
       const chunk = await apiGetTaskStream(id, s.offset)
+      if (!chunk) return
       const newOffset = chunk.next_offset ?? chunk.offset ?? s.offset
       let newLines: string[] = []
       if (Array.isArray(chunk.lines)) {

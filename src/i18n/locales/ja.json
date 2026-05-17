@@ -258,6 +258,65 @@
       "empty": "ログ行がまだありません"
     }
   },
+  "sessions": {
+    "subtitle": "D1 / SQLite に書き込まれた ingestion セッション。ロールバックで書き込みを取り消し、強制コミットで finalizing でスタックしたセッションを解除できます。",
+    "col": {
+      "sessionId": "セッション ID",
+      "state": "状態",
+      "writeMode": "書き込みモード",
+      "run": "Run",
+      "created": "作成日時"
+    },
+    "state": {
+      "in_progress": "進行中",
+      "finalizing": "確定中",
+      "committed": "コミット済み",
+      "failed": "失敗"
+    },
+    "writeMode": {
+      "audit": "監査",
+      "pending": "ペンディング"
+    },
+    "filters": {
+      "statePlaceholder": "状態で絞り込み",
+      "writeModePlaceholder": "書き込みモードで絞り込み",
+      "searchPlaceholder": "セッション ID を検索…",
+      "reset": "リセット"
+    },
+    "drawer": {
+      "untitled": "セッション詳細",
+      "movies": "ムービー",
+      "torrents": "トレント",
+      "noMovies": "このセッションにはムービーの記録がありません。",
+      "noTorrents": "このセッションにはトレントの記録がありません。",
+      "loadFailed": "セッション詳細の読み込みに失敗しました。"
+    },
+    "action": {
+      "rollback": "ロールバック…",
+      "commit": "強制コミット…"
+    },
+    "rollback": {
+      "title": "セッションをロールバック",
+      "subtitle": "先にドライランでプレビューし、その後適用してください。",
+      "includePending": "ペンディング書き込みを含める",
+      "restoreFromAudit": "監査テーブルから復元",
+      "runPreview": "ドライラン実行",
+      "previewHeading": "ドライラン概要",
+      "actionsCount": "{n} 件の操作を再生します。",
+      "apply": "ロールバック適用",
+      "cancel": "キャンセル",
+      "applied": "ロールバックを適用しました。"
+    },
+    "commit": {
+      "title": "セッションを強制コミット",
+      "subtitle": "finalizing でスタックしたセッションを強制的にコミットします。",
+      "dropPending": "ペンディング書き込みをコミットせず破棄",
+      "warning": "通常のコミットガードをバイパスします。セッションがスタックし、書き込みが正しいと確信できる場合にのみ使用してください。",
+      "confirm": "強制コミット",
+      "cancel": "キャンセル",
+      "applied": "セッションをコミットしました（新しい状態：{state}）。"
+    }
+  },
   "tasks": {
     "subtitle": "このインスタンスで実行されたすべての ingestion ジョブ。",
     "col": {

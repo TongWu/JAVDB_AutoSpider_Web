@@ -258,6 +258,65 @@
       "empty": "暂无日志"
     }
   },
+  "sessions": {
+    "subtitle": "写入 D1 / SQLite 的 ingestion 会话。回滚会撤销写入；强制提交可解锁卡在 finalizing 的会话。",
+    "col": {
+      "sessionId": "会话 ID",
+      "state": "状态",
+      "writeMode": "写入模式",
+      "run": "Run",
+      "created": "创建时间"
+    },
+    "state": {
+      "in_progress": "进行中",
+      "finalizing": "提交中",
+      "committed": "已提交",
+      "failed": "失败"
+    },
+    "writeMode": {
+      "audit": "审计模式",
+      "pending": "Pending 模式"
+    },
+    "filters": {
+      "statePlaceholder": "按状态筛选",
+      "writeModePlaceholder": "按写入模式筛选",
+      "searchPlaceholder": "搜索会话 ID…",
+      "reset": "重置"
+    },
+    "drawer": {
+      "untitled": "会话详情",
+      "movies": "影片",
+      "torrents": "种子",
+      "noMovies": "本次会话没有影片记录。",
+      "noTorrents": "本次会话没有种子记录。",
+      "loadFailed": "加载会话详情失败。"
+    },
+    "action": {
+      "rollback": "回滚…",
+      "commit": "强制提交…"
+    },
+    "rollback": {
+      "title": "回滚会话",
+      "subtitle": "先做 dry-run 预览，再执行回滚。",
+      "includePending": "包含 pending 写入",
+      "restoreFromAudit": "从审计表恢复",
+      "runPreview": "执行 dry-run",
+      "previewHeading": "Dry-run 摘要",
+      "actionsCount": "将回放 {n} 条操作。",
+      "apply": "应用回滚",
+      "cancel": "取消",
+      "applied": "回滚已应用。"
+    },
+    "commit": {
+      "title": "强制提交会话",
+      "subtitle": "强制提交卡在 finalizing 状态的会话。",
+      "dropPending": "丢弃 pending 写入而非提交",
+      "warning": "此操作会绕过正常的提交校验。仅在会话卡死且你确认写入正确时使用。",
+      "confirm": "强制提交",
+      "cancel": "取消",
+      "applied": "会话已提交（新状态：{state}）。"
+    }
+  },
   "tasks": {
     "subtitle": "本实例上所有的 ingestion 运行记录。",
     "col": {

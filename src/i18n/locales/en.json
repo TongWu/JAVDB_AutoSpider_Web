@@ -258,6 +258,65 @@
       "empty": "No log lines yet"
     }
   },
+  "sessions": {
+    "subtitle": "Ingestion sessions written to D1 / SQLite. Rollback removes the writes; force-commit unblocks sessions stuck in finalizing.",
+    "col": {
+      "sessionId": "Session ID",
+      "state": "State",
+      "writeMode": "Write Mode",
+      "run": "Run",
+      "created": "Created"
+    },
+    "state": {
+      "in_progress": "In progress",
+      "finalizing": "Finalizing",
+      "committed": "Committed",
+      "failed": "Failed"
+    },
+    "writeMode": {
+      "audit": "Audit",
+      "pending": "Pending"
+    },
+    "filters": {
+      "statePlaceholder": "Filter by state",
+      "writeModePlaceholder": "Filter by write mode",
+      "searchPlaceholder": "Search session id…",
+      "reset": "Reset"
+    },
+    "drawer": {
+      "untitled": "Session detail",
+      "movies": "Movies",
+      "torrents": "Torrents",
+      "noMovies": "No movies recorded in this session.",
+      "noTorrents": "No torrents recorded in this session.",
+      "loadFailed": "Failed to load session detail."
+    },
+    "action": {
+      "rollback": "Rollback…",
+      "commit": "Force commit…"
+    },
+    "rollback": {
+      "title": "Rollback session",
+      "subtitle": "Preview the rollback first, then apply.",
+      "includePending": "Include pending writes",
+      "restoreFromAudit": "Restore from audit table",
+      "runPreview": "Run dry-run",
+      "previewHeading": "Dry-run summary",
+      "actionsCount": "{n} action(s) will be replayed.",
+      "apply": "Apply rollback",
+      "cancel": "Cancel",
+      "applied": "Rollback applied."
+    },
+    "commit": {
+      "title": "Force commit session",
+      "subtitle": "Force-commit a session stuck in finalizing.",
+      "dropPending": "Drop pending writes instead of committing them",
+      "warning": "This bypasses normal commit guards. Use only when a session is stuck and you know the writes are correct.",
+      "confirm": "Force commit",
+      "cancel": "Cancel",
+      "applied": "Session committed (new state: {state})."
+    }
+  },
   "tasks": {
     "subtitle": "All ingestion runs that have happened on this instance.",
     "col": {
