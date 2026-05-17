@@ -69,7 +69,14 @@ export const useOnboardingStore = defineStore('onboarding', () => {
   }
 
   async function fetchConfigSnapshot(): Promise<Record<string, unknown>> {
-    const { data } = await http.get<Record<string, unknown>>('/api/config')
+    // Onboarding is admin-only and the user is verifying/editing their own
+    // settings — request unmasked values so the form fields show real
+    // proxy URLs / cookie / etc. instead of '********' placeholders.
+    // Falls back to masked response if the BE doesn't support the param yet
+    // (older deployments — silently ignored by FastAPI's query parser).
+    const { data } = await http.get<Record<string, unknown>>('/api/config', {
+      params: { include_secrets: 'true' },
+    })
     configSnapshot.value = data
     return data
   }
