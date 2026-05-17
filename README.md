@@ -90,23 +90,25 @@ The FE is mode-agnostic — it talks to a single abstract backend via `VITE_API_
 
 ```bash
 npm install
-npm run dev                     # http://localhost:5173
+npm run dev                     # http://127.0.0.1:5173
 ```
 
-The dev server expects a backend running at `VITE_API_BASE_URL` (default `http://127.0.0.1:8100`). Easiest: start just the API container and run the FE on the host:
+The dev server binds to `127.0.0.1` (NOT `localhost`) on purpose — see the "CSRF and HTTP dev" note below. The FE expects a backend running at `VITE_API_BASE_URL` (default `http://127.0.0.1:8100`). Easiest: start just the API container and run the FE on the host:
 
 ```bash
 docker compose up -d api
 npm run dev
 ```
 
+Or run BE directly with uvicorn (see the CSRF note for env vars).
+
 ### CSRF and HTTP dev
 
-In development you run the BE on plain HTTP. The BE's `csrf_token` cookie defaults to `secure=True`, which means browsers refuse to store it on HTTP — leading to 403 Forbidden on every mutating request.
+The BE sets a `csrf_token` cookie that the FE has to echo back as an `X-CSRF-Token` header on every mutating request. Two things must be true for this to work in dev:
 
-Two ways to handle this:
+1. **FE and BE must share the same hostname.** The BE defaults to `http://127.0.0.1:8100`. Therefore the FE must also be accessed at `http://127.0.0.1:5173` — NOT `http://localhost:5173`. Browsers treat `localhost` and `127.0.0.1` as different sites, and SameSite=Lax cookies set on one don't flow to the other on PUT/POST. The Vite config binds to `127.0.0.1` by default to enforce this.
 
-1. **Run BE with `COOKIE_SECURE=False`** (recommended for dev):
+2. **Run BE with `COOKIE_SECURE=False`** for HTTP dev. The cookie defaults to `secure=True`, which means browsers won't store it on plain HTTP at all.
 
    ```bash
    COOKIE_SECURE=False uvicorn apps.api.server:app --port 8100
@@ -114,9 +116,9 @@ Two ways to handle this:
 
    The cookie is then stored on HTTP. Do not set this in production.
 
-2. **Use HTTPS in dev** (more setup but matches prod): set up `mkcert` for local certs and serve uvicorn behind nginx or via uvicorn's `--ssl-keyfile` / `--ssl-certfile` options.
+3. **Or use HTTPS in dev** (more setup, matches prod): set up `mkcert` for local certs and serve uvicorn behind nginx or via uvicorn's `--ssl-keyfile` / `--ssl-certfile` options.
 
-The FE also captures `csrf_token` from the login response body and sends it as the `X-CSRF-Token` header on every mutating request. This covers production (HTTPS) where the cookie is set correctly; `COOKIE_SECURE=False` unblocks the other dimension (BE reading the cookie to verify against the header).
+The FE also captures `csrf_token` from the login response body and sends it as the `X-CSRF-Token` header on every mutating request. This covers production (HTTPS) where the cookie is set correctly; in dev, conditions (1) + (2) together unblock the cookie flow.
 
 ## Available scripts
 
