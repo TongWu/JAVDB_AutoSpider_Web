@@ -7,7 +7,9 @@ import WizardStepper from '@/components/onboarding/WizardStepper.vue'
 
 const StepWelcome = defineAsyncComponent(() => import('@/components/onboarding/StepWelcome.vue'))
 const StepJavdbSession = defineAsyncComponent(() => import('@/components/onboarding/StepJavdbSession.vue'))
-// Steps 3-5 added in later tasks; fall back to Welcome as placeholder
+const StepQbittorrent = defineAsyncComponent(() => import('@/components/onboarding/StepQbittorrent.vue'))
+const StepProxy = defineAsyncComponent(() => import('@/components/onboarding/StepProxy.vue'))
+// Step 5 added in later task; fall back to Welcome as placeholder
 const StepPlaceholder = defineAsyncComponent(() => import('@/components/onboarding/StepWelcome.vue'))
 
 const { t } = useI18n()
@@ -24,6 +26,8 @@ const StepComponent = computed(() => {
   switch (step.value) {
     case 1: return StepWelcome
     case 2: return StepJavdbSession
+    case 3: return StepQbittorrent
+    case 4: return StepProxy
     default: return StepPlaceholder
   }
 })

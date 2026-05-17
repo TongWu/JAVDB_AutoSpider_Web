@@ -44,7 +44,8 @@
     "loading": "Loading...",
     "ok": "OK",
     "yes": "Yes",
-    "no": "No"
+    "no": "No",
+    "delete": "Delete"
   },
   "login": {
     "title": "Sign in to AutoSpider",
@@ -138,6 +139,49 @@
       "cookieRequired": "Paste a cookie value first",
       "credentialsRequired": "Username and password are required",
       "notTestedYet": "Test the connection or skip first"
+    },
+    "qbittorrent": {
+      "title": "Connect qBittorrent",
+      "body": "AutoSpider pushes magnets to qBittorrent's Web UI. We'll test the connection before moving on.",
+      "urlLabel": "qBittorrent Web UI URL",
+      "urlPlaceholder": "https://192.168.1.100:8080",
+      "urlHint": "Include the protocol (http:// or https://) and the port qBittorrent is exposing. Default is 8080.",
+      "allowSelfSigned": "Allow self-signed certificates (for local HTTPS)",
+      "testButton": "Test connection",
+      "testPassed": "Connected to qBittorrent",
+      "testFailed": "Connection failed",
+      "urlRequired": "Enter the qBittorrent URL first",
+      "notTestedYet": "Test the connection or skip first"
+    },
+    "proxy": {
+      "title": "Proxy configuration",
+      "body": "Configure HTTP proxies for spider, qBittorrent uploads, or PikPak transfers. Skip if you don't use a proxy.",
+      "modeLabel": "Proxy mode",
+      "modeNone": "None",
+      "modeSingle": "Single",
+      "modePool": "Pool",
+      "singleUrlLabel": "Proxy URL",
+      "singleUrlPlaceholder": "http://127.0.0.1:7890",
+      "poolLabel": "Proxy pool",
+      "modulesLabel": "Use proxy for",
+      "moduleSpider": "Spider",
+      "moduleQb": "qBittorrent",
+      "modulePikpak": "PikPak",
+      "moduleAll": "All",
+      "modulesHint": "Which modules should send traffic through the proxy. 'All' overrides the others.",
+      "testButton": "Test proxy",
+      "testPassed": "Proxy reachable",
+      "testFailed": "Proxy test failed",
+      "testFirst": "Test the proxy or switch to 'None'"
     }
+  },
+  "proxyPool": {
+    "namePlaceholder": "Friendly name (e.g. clash-home)",
+    "httpPlaceholder": "http://127.0.0.1:7890",
+    "httpsPlaceholder": "http://127.0.0.1:7890",
+    "addEntry": "Add proxy",
+    "empty": "No proxies configured yet. Click 'Add proxy' to add one.",
+    "confirmDeleteTitle": "Remove this proxy?",
+    "confirmDeleteBody": "This will remove the entry from your pool. Other proxies are unaffected."
   }
 }

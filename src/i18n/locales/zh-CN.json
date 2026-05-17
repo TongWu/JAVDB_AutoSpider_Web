@@ -44,7 +44,8 @@
     "loading": "加载中...",
     "ok": "确定",
     "yes": "是",
-    "no": "否"
+    "no": "否",
+    "delete": "删除"
   },
   "login": {
     "title": "登录 AutoSpider",
@@ -138,6 +139,49 @@
       "cookieRequired": "请先粘贴 Cookie 值",
       "credentialsRequired": "用户名和密码不能为空",
       "notTestedYet": "请先测试连接或跳过此步骤"
+    },
+    "qbittorrent": {
+      "title": "连接 qBittorrent",
+      "body": "AutoSpider 会将磁力链接推送到 qBittorrent Web UI。继续前我们将测试连接。",
+      "urlLabel": "qBittorrent Web UI 地址",
+      "urlPlaceholder": "https://192.168.1.100:8080",
+      "urlHint": "请包含协议（http:// 或 https://）及 qBittorrent 监听的端口，默认为 8080。",
+      "allowSelfSigned": "允许自签名证书（用于本地 HTTPS）",
+      "testButton": "测试连接",
+      "testPassed": "已连接到 qBittorrent",
+      "testFailed": "连接失败",
+      "urlRequired": "请先输入 qBittorrent 地址",
+      "notTestedYet": "请先测试连接或跳过此步骤"
+    },
+    "proxy": {
+      "title": "代理配置",
+      "body": "为爬虫、qBittorrent 上传或 PikPak 传输配置 HTTP 代理。如果不使用代理，可跳过此步骤。",
+      "modeLabel": "代理模式",
+      "modeNone": "不使用",
+      "modeSingle": "单代理",
+      "modePool": "代理池",
+      "singleUrlLabel": "代理地址",
+      "singleUrlPlaceholder": "http://127.0.0.1:7890",
+      "poolLabel": "代理池",
+      "modulesLabel": "使用代理的模块",
+      "moduleSpider": "爬虫",
+      "moduleQb": "qBittorrent",
+      "modulePikpak": "PikPak",
+      "moduleAll": "全部",
+      "modulesHint": "选择哪些模块通过代理发送流量。「全部」会覆盖其他选项。",
+      "testButton": "测试代理",
+      "testPassed": "代理可用",
+      "testFailed": "代理测试失败",
+      "testFirst": "请先测试代理或切换为「不使用」"
     }
+  },
+  "proxyPool": {
+    "namePlaceholder": "友好名称（如 clash-home）",
+    "httpPlaceholder": "http://127.0.0.1:7890",
+    "httpsPlaceholder": "http://127.0.0.1:7890",
+    "addEntry": "添加代理",
+    "empty": "暂无代理配置。点击「添加代理」添加一条。",
+    "confirmDeleteTitle": "移除此代理？",
+    "confirmDeleteBody": "这将从代理池中移除该条目，其他代理不受影响。"
   }
 }

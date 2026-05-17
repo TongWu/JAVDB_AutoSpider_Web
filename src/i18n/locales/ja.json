@@ -44,7 +44,8 @@
     "loading": "読み込み中...",
     "ok": "OK",
     "yes": "はい",
-    "no": "いいえ"
+    "no": "いいえ",
+    "delete": "削除"
   },
   "login": {
     "title": "AutoSpider にサインイン",
@@ -138,6 +139,49 @@
       "cookieRequired": "最初に Cookie の値を貼り付けてください",
       "credentialsRequired": "ユーザー名とパスワードは必須です",
       "notTestedYet": "先に接続をテストするかスキップしてください"
+    },
+    "qbittorrent": {
+      "title": "qBittorrent に接続",
+      "body": "AutoSpider はマグネットリンクを qBittorrent の Web UI に送信します。続行前に接続をテストします。",
+      "urlLabel": "qBittorrent Web UI URL",
+      "urlPlaceholder": "https://192.168.1.100:8080",
+      "urlHint": "プロトコル（http:// または https://）と qBittorrent が使用するポートを含めてください。デフォルトは 8080 です。",
+      "allowSelfSigned": "自己署名証明書を許可する（ローカル HTTPS 用）",
+      "testButton": "接続テスト",
+      "testPassed": "qBittorrent に接続しました",
+      "testFailed": "接続に失敗しました",
+      "urlRequired": "最初に qBittorrent の URL を入力してください",
+      "notTestedYet": "先に接続をテストするかスキップしてください"
+    },
+    "proxy": {
+      "title": "プロキシ設定",
+      "body": "スパイダー・qBittorrent アップロード・PikPak 転送用の HTTP プロキシを設定します。プロキシを使用しない場合はスキップしてください。",
+      "modeLabel": "プロキシモード",
+      "modeNone": "使用しない",
+      "modeSingle": "シングル",
+      "modePool": "プール",
+      "singleUrlLabel": "プロキシ URL",
+      "singleUrlPlaceholder": "http://127.0.0.1:7890",
+      "poolLabel": "プロキシプール",
+      "modulesLabel": "プロキシを使用するモジュール",
+      "moduleSpider": "スパイダー",
+      "moduleQb": "qBittorrent",
+      "modulePikpak": "PikPak",
+      "moduleAll": "すべて",
+      "modulesHint": "プロキシ経由でトラフィックを送信するモジュールを選択します。「すべて」は他の選択を上書きします。",
+      "testButton": "プロキシをテスト",
+      "testPassed": "プロキシに到達できます",
+      "testFailed": "プロキシテストに失敗しました",
+      "testFirst": "プロキシをテストするか「使用しない」に切り替えてください"
     }
+  },
+  "proxyPool": {
+    "namePlaceholder": "フレンドリー名（例：clash-home）",
+    "httpPlaceholder": "http://127.0.0.1:7890",
+    "httpsPlaceholder": "http://127.0.0.1:7890",
+    "addEntry": "プロキシを追加",
+    "empty": "プロキシがまだ設定されていません。「プロキシを追加」をクリックして追加してください。",
+    "confirmDeleteTitle": "このプロキシを削除しますか？",
+    "confirmDeleteBody": "このエントリをプールから削除します。他のプロキシには影響しません。"
   }
 }
