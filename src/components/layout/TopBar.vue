@@ -1,14 +1,18 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useRouter } from 'vue-router'
 import { NSpace, NButton, NDropdown } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { useUiStore, type ThemeMode } from '@/stores/ui'
 import { useLocaleStore } from '@/stores/i18n'
+import { useAuthStore } from '@/stores/auth'
 import type { SupportedLocale } from '@/i18n'
 
 const { t } = useI18n()
 const ui = useUiStore()
 const localeStore = useLocaleStore()
+const auth = useAuthStore()
+const router = useRouter()
 
 // Theme toggle
 const themeIcon = computed(() => {
@@ -38,6 +42,18 @@ const localeOptions = computed(() => [
 
 function onLocaleSelect(key: string) {
   void localeStore.change(key as SupportedLocale)
+}
+
+// User menu
+const userMenuOptions = computed(() => [
+  { label: t('user.signOut'), key: 'signOut' },
+])
+
+async function onUserMenuSelect(key: string) {
+  if (key === 'signOut') {
+    await auth.logout()
+    void router.push({ name: 'login' })
+  }
 }
 </script>
 
@@ -71,8 +87,21 @@ function onLocaleSelect(key: string) {
           {{ themeIcon }} {{ themeLabel }}
         </NButton>
 
-        <!-- User menu placeholder -->
-        <NButton text>
+        <!-- User menu (shown when authenticated) -->
+        <NDropdown
+          v-if="auth.isAuthenticated"
+          :options="userMenuOptions"
+          @select="onUserMenuSelect"
+        >
+          <NButton text>
+            👤 {{ auth.username }}
+          </NButton>
+        </NDropdown>
+        <NButton
+          v-else
+          text
+          @click="() => router.push({ name: 'login' })"
+        >
           👤
         </NButton>
       </NSpace>

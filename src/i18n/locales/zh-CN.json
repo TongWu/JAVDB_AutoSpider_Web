@@ -86,5 +86,8 @@
   },
   "language": {
     "switch": "语言"
+  },
+  "user": {
+    "signOut": "退出登录"
   }
 }

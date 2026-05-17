@@ -6,11 +6,22 @@ const router = createRouter({
   routes,
 })
 
-// Placeholder for B3-B4 auth/capabilities guards
-router.beforeEach((to, _from, next) => {
-  // Real auth guard lands in B3. For now, just allow.
-  void to
-  next()
+router.beforeEach(async (to) => {
+  // Lazy-import to avoid SSR-style initialization order issues
+  const { useAuthStore } = await import('@/stores/auth')
+  const auth = useAuthStore()
+
+  const requiresAuth = to.matched.some((r) => r.meta.requiresAuth)
+  if (requiresAuth && !auth.isAuthenticated) {
+    return { name: 'login', query: { next: to.fullPath } }
+  }
+
+  const requiredRoles = to.meta.roles as string[] | undefined
+  if (requiredRoles && requiredRoles.length > 0 && !auth.hasRole(requiredRoles as never)) {
+    return { name: 'forbidden' }
+  }
+
+  return true
 })
 
 export default router

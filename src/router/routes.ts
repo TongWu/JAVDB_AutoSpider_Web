@@ -1,4 +1,13 @@
 import type { RouteRecordRaw } from 'vue-router'
+import type { Role } from '@/stores/auth'
+
+declare module 'vue-router' {
+  interface RouteMeta {
+    layout?: 'blank' | 'default'
+    requiresAuth?: boolean
+    roles?: Role[]
+  }
+}
 
 export const routes: RouteRecordRaw[] = [
   {
@@ -23,6 +32,7 @@ export const routes: RouteRecordRaw[] = [
     path: '/403',
     name: 'forbidden',
     component: () => import('@/pages/ForbiddenPage.vue'),
+    meta: { layout: 'blank' },
   },
   {
     path: '/error',
