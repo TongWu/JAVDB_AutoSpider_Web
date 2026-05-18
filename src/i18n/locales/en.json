@@ -393,106 +393,406 @@
         "advanced": "Advanced"
       },
       "fields": {
-        "GIT_USERNAME": { "label": "Git Username" },
-        "GIT_PASSWORD": { "label": "Git Password / Token" },
-        "GIT_REPO_URL": { "label": "Git Repo URL" },
-        "GIT_BRANCH": { "label": "Git Branch" },
-        "QB_URL": { "label": "qBittorrent Web UI URL" },
-        "QB_ALLOW_INSECURE_HTTP": { "label": "Allow Plain HTTP for qB" },
-        "QB_VERIFY_TLS": { "label": "Verify qB TLS Certificate" },
-        "QB_USERNAME": { "label": "qBittorrent Username" },
-        "QB_PASSWORD": { "label": "qBittorrent Password" },
-        "TORRENT_CATEGORY": { "label": "Daily Torrent Category" },
-        "TORRENT_CATEGORY_ADHOC": { "label": "Ad-Hoc Torrent Category" },
-        "QB_URL_ADHOC": { "label": "Ad-Hoc qBittorrent URL" },
-        "QB_USERNAME_ADHOC": { "label": "Ad-Hoc qBittorrent Username" },
-        "QB_PASSWORD_ADHOC": { "label": "Ad-Hoc qBittorrent Password" },
-        "TORRENT_SAVE_PATH": { "label": "Torrent Save Path" },
-        "AUTO_START": { "label": "Auto-Start New Torrents" },
-        "SKIP_CHECKING": { "label": "Skip Hash Checking" },
-        "REQUEST_TIMEOUT": { "label": "qB Request Timeout (s)" },
-        "DELAY_BETWEEN_ADDITIONS": { "label": "Delay Between Additions (s)" },
-        "SMTP_SERVER": { "label": "SMTP Server" },
-        "SMTP_PORT": { "label": "SMTP Port" },
-        "SMTP_USER": { "label": "SMTP Username" },
-        "SMTP_PASSWORD": { "label": "SMTP Password / App Password" },
-        "EMAIL_FROM": { "label": "Email From Address" },
-        "EMAIL_TO": { "label": "Email Recipient(s)" },
-        "PROXY_MODE": { "label": "Proxy Mode (single / pool)" },
-        "PROXY_POOL": { "label": "Proxy Pool (JSON list)" },
-        "PROXY_POOL_MAX_FAILURES": { "label": "Pool Max Failures Before Ban" },
-        "PROXY_HTTP": { "label": "Active HTTP Proxy (read-only)" },
-        "PROXY_HTTPS": { "label": "Active HTTPS Proxy (read-only)" },
-        "PROXY_MODULES": { "label": "Modules That Use Proxy" },
-        "LOGIN_PROXY_NAME": { "label": "Preferred Proxy for Login" },
-        "LOGIN_ATTEMPTS_PER_PROXY_LIMIT": { "label": "Max Login Attempts per Proxy" },
-        "LOGIN_MAX_FAILURES_BEFORE_PROXY_SWITCH": { "label": "Failures Before Switching Proxy" },
-        "LOGIN_VERIFICATION_URLS": { "label": "Login Verification URLs (JSON)" },
-        "JAVDB_USERNAME": { "label": "JavDB Username / Email" },
-        "JAVDB_PASSWORD": { "label": "JavDB Password" },
-        "JAVDB_SESSION_COOKIE": { "label": "JavDB Session Cookie (_jdb_session)" },
-        "GPT_API_URL": { "label": "GPT API URL (captcha solver)" },
-        "GPT_API_KEY": { "label": "GPT API Key" },
-        "CF_BYPASS_SERVICE_PORT": { "label": "Cloudflare Bypass Service Port" },
-        "CF_BYPASS_ENABLED": { "label": "Enable Cloudflare Bypass" },
-        "CF_BYPASS_PORT_MAP": { "label": "Cloudflare Bypass Port Map (JSON)" },
-        "PAGE_START": { "label": "Daily Crawl Start Page" },
-        "PAGE_END": { "label": "Daily Crawl End Page" },
-        "PHASE2_MIN_RATE": { "label": "Phase 2 Minimum Rating" },
-        "PHASE2_MIN_COMMENTS": { "label": "Phase 2 Minimum Comment Count" },
-        "BASE_URL": { "label": "JavDB Base URL" },
-        "MOVIE_SLEEP_MIN": { "label": "Movie Sleep Min (s)" },
-        "MOVIE_SLEEP_MAX": { "label": "Movie Sleep Max (s)" },
-        "LOG_LEVEL": { "label": "Log Level (DEBUG / INFO / WARNING / ERROR)" },
-        "SPIDER_LOG_FILE": { "label": "Spider Log File" },
-        "UPLOADER_LOG_FILE": { "label": "qB Uploader Log File" },
-        "PIPELINE_LOG_FILE": { "label": "Pipeline Log File" },
-        "EMAIL_NOTIFICATION_LOG_FILE": { "label": "Email Notification Log File" },
-        "IGNORE_RELEASE_DATE_FILTER": { "label": "Ignore Release-Date Filter" },
-        "INCLUDE_DOWNLOADED_IN_REPORT": { "label": "Include Already-Downloaded in Reports" },
-        "REPORTS_DIR": { "label": "Reports Directory" },
-        "DAILY_REPORT_DIR": { "label": "Daily Report Directory" },
-        "AD_HOC_DIR": { "label": "Ad-Hoc Report Directory" },
-        "PARSED_MOVIES_CSV": { "label": "Parsed Movies CSV Filename" },
-        "HISTORY_DB_PATH": { "label": "History DB Path" },
-        "REPORTS_DB_PATH": { "label": "Reports DB Path" },
-        "OPERATIONS_DB_PATH": { "label": "Operations DB Path" },
-        "PIKPAK_EMAIL": { "label": "PikPak Email" },
-        "PIKPAK_PASSWORD": { "label": "PikPak Password" },
-        "PIKPAK_LOG_FILE": { "label": "PikPak Log File" },
-        "PIKPAK_REQUEST_DELAY": { "label": "PikPak Request Delay (s)" },
-        "PIKPAK_ROOT_FOLDER": { "label": "PikPak Root Folder" },
-        "QB_FILE_FILTER_MIN_SIZE_MB": { "label": "Minimum File Size to Keep (MB)" },
-        "QB_FILE_FILTER_LOG_FILE": { "label": "qB File Filter Log File" },
-        "RCLONE_CONFIG_BASE64": { "label": "Rclone Config (base64-encoded)" },
-        "RCLONE_FOLDER_PATH": { "label": "Rclone Remote Folder" },
-        "STORAGE_MODE": { "label": "Storage Mode (duo / single)" },
-        "STORAGE_BACKEND": { "label": "Storage Backend (sqlite / d1 / dual)" },
-        "CLOUDFLARE_ACCOUNT_ID": { "label": "Cloudflare Account ID" },
-        "CLOUDFLARE_API_TOKEN": { "label": "Cloudflare API Token" },
-        "D1_HISTORY_DB_ID": { "label": "D1 History DB ID" },
-        "D1_REPORTS_DB_ID": { "label": "D1 Reports DB ID" },
-        "D1_OPERATIONS_DB_ID": { "label": "D1 Operations DB ID" },
-        "PROXY_COORDINATOR_URL": { "label": "Proxy Coordinator URL" },
-        "PROXY_COORDINATOR_TOKEN": { "label": "Proxy Coordinator Token" },
-        "MOVIE_CLAIM_ENABLED": { "label": "Movie Claim Enabled (auto / true / false)" },
-        "RUNNER_REGISTRY_ENABLED": { "label": "Runner Registry Enabled" },
-        "RCLONE_INVENTORY_CSV": { "label": "Rclone Inventory CSV" },
-        "DEDUP_CSV": { "label": "Dedup Result CSV" },
-        "DEDUP_DIR": { "label": "Dedup Output Directory" },
-        "DEDUP_LOG_FILE": { "label": "Dedup Log File" },
-        "INGESTION_MODE": { "label": "Ingestion Mode (local / github / dual)" },
-        "API_SECRET_KEY": { "label": "API JWT Secret Key" },
-        "ADMIN_USERNAME": { "label": "Admin Username" },
-        "ADMIN_PASSWORD": { "label": "Admin Password (plaintext, hashed on boot)" },
-        "ADMIN_PASSWORD_HASH": { "label": "Admin Password Hash (bcrypt)" },
-        "READONLY_USERNAME": { "label": "Read-Only Username" },
-        "READONLY_PASSWORD": { "label": "Read-Only Password (plaintext)" },
-        "READONLY_PASSWORD_HASH": { "label": "Read-Only Password Hash (bcrypt)" },
-        "GH_ACTIONS_TIER": { "label": "GitHub Actions Tier (none / monitor / edit / admin)" },
-        "GH_ACTIONS_REPO": { "label": "GitHub Actions Repo (owner/name)" },
-        "GH_ACTIONS_TOKEN": { "label": "GitHub Actions PAT" },
-        "COOKIE_SECURE": { "label": "Set Secure Flag on Cookies" }
+        "GIT_USERNAME": {
+          "label": "Git Username",
+          "description": "Git username for push authentication"
+        },
+        "GIT_PASSWORD": {
+          "label": "Git Password / Token",
+          "description": "GitHub PAT used for git push (not a password)"
+        },
+        "GIT_REPO_URL": {
+          "label": "Git Repo URL",
+          "description": "Git remote URL for report auto-commit"
+        },
+        "GIT_BRANCH": {
+          "label": "Git Branch",
+          "description": "Git branch for report auto-commit"
+        },
+        "QB_URL": {
+          "label": "qBittorrent Web UI URL",
+          "description": "qBittorrent Web UI URL (daily mode)"
+        },
+        "QB_ALLOW_INSECURE_HTTP": {
+          "label": "Allow Plain HTTP for qB",
+          "description": "Allow plain HTTP for qBittorrent Web UI"
+        },
+        "QB_VERIFY_TLS": {
+          "label": "Verify qB TLS Certificate",
+          "description": "Verify TLS certificates for qBittorrent connections"
+        },
+        "QB_USERNAME": {
+          "label": "qBittorrent Username",
+          "description": "qBittorrent Web UI username (daily mode)"
+        },
+        "QB_PASSWORD": {
+          "label": "qBittorrent Password",
+          "description": "qBittorrent Web UI password (daily mode)"
+        },
+        "TORRENT_CATEGORY": {
+          "label": "Daily Torrent Category",
+          "description": "qBittorrent category tag for daily torrents"
+        },
+        "TORRENT_CATEGORY_ADHOC": {
+          "label": "Ad-Hoc Torrent Category",
+          "description": "qBittorrent category tag for ad-hoc torrents"
+        },
+        "QB_URL_ADHOC": {
+          "label": "Ad-Hoc qBittorrent URL",
+          "description": "qBittorrent Web UI URL (ad-hoc mode)"
+        },
+        "QB_USERNAME_ADHOC": {
+          "label": "Ad-Hoc qBittorrent Username",
+          "description": "qBittorrent Web UI username (ad-hoc mode)"
+        },
+        "QB_PASSWORD_ADHOC": {
+          "label": "Ad-Hoc qBittorrent Password",
+          "description": "qBittorrent Web UI password (ad-hoc mode)"
+        },
+        "TORRENT_SAVE_PATH": {
+          "label": "Torrent Save Path",
+          "description": "Download save path in qBittorrent"
+        },
+        "AUTO_START": {
+          "label": "Auto-Start New Torrents",
+          "description": "Start daily ingestion automatically on API boot"
+        },
+        "SKIP_CHECKING": {
+          "label": "Skip Hash Checking",
+          "description": "Skip duplicate-checking before torrent addition"
+        },
+        "REQUEST_TIMEOUT": {
+          "label": "qB Request Timeout (s)",
+          "description": "HTTP request timeout in seconds"
+        },
+        "DELAY_BETWEEN_ADDITIONS": {
+          "label": "Delay Between Additions (s)",
+          "description": "Seconds to wait between qB torrent additions"
+        },
+        "SMTP_SERVER": {
+          "label": "SMTP Server",
+          "description": "SMTP server hostname (e.g. smtp.gmail.com)"
+        },
+        "SMTP_PORT": {
+          "label": "SMTP Port",
+          "description": "SMTP server port (587 for TLS, 465 for SSL)"
+        },
+        "SMTP_USER": {
+          "label": "SMTP Username",
+          "description": "SMTP login username (usually the email address)"
+        },
+        "SMTP_PASSWORD": {
+          "label": "SMTP Password / App Password",
+          "description": "SMTP server password or app-specific password"
+        },
+        "EMAIL_FROM": {
+          "label": "Email From Address",
+          "description": "Sender address for notification emails"
+        },
+        "EMAIL_TO": {
+          "label": "Email Recipient(s)",
+          "description": "Recipient address for notification emails"
+        },
+        "PROXY_MODE": {
+          "label": "Proxy Mode (single / pool)",
+          "description": "Proxy strategy: none, single, or pool"
+        },
+        "PROXY_POOL": {
+          "label": "Proxy Pool (JSON list)",
+          "description": "JSON array of proxy entries for pool mode"
+        },
+        "PROXY_POOL_MAX_FAILURES": {
+          "label": "Pool Max Failures Before Ban",
+          "description": "Max failures before banning a proxy from the pool"
+        },
+        "PROXY_HTTP": {
+          "label": "Active HTTP Proxy (read-only)",
+          "description": "Single-proxy HTTP address"
+        },
+        "PROXY_HTTPS": {
+          "label": "Active HTTPS Proxy (read-only)",
+          "description": "Single-proxy HTTPS address"
+        },
+        "PROXY_MODULES": {
+          "label": "Modules That Use Proxy",
+          "description": "Which modules use the proxy (spider, qbittorrent, pikpak)"
+        },
+        "LOGIN_PROXY_NAME": {
+          "label": "Preferred Proxy for Login",
+          "description": "Preferred proxy name for login attempts"
+        },
+        "LOGIN_ATTEMPTS_PER_PROXY_LIMIT": {
+          "label": "Max Login Attempts per Proxy",
+          "description": "Max login attempts per proxy before switching"
+        },
+        "LOGIN_MAX_FAILURES_BEFORE_PROXY_SWITCH": {
+          "label": "Failures Before Switching Proxy",
+          "description": "Consecutive failures before proxy rotation in login"
+        },
+        "LOGIN_VERIFICATION_URLS": {
+          "label": "Login Verification URLs (JSON)",
+          "description": "URLs used to verify login success"
+        },
+        "JAVDB_USERNAME": {
+          "label": "JavDB Username / Email",
+          "description": "JavDB account email for headless login"
+        },
+        "JAVDB_PASSWORD": {
+          "label": "JavDB Password",
+          "description": "JavDB account password for headless login"
+        },
+        "JAVDB_SESSION_COOKIE": {
+          "label": "JavDB Session Cookie (_jdb_session)",
+          "description": "JavDB _jdb_session cookie value (auto-refreshed)"
+        },
+        "GPT_API_URL": {
+          "label": "GPT API URL (captcha solver)",
+          "description": "OpenAI-compatible API endpoint URL"
+        },
+        "GPT_API_KEY": {
+          "label": "GPT API Key",
+          "description": "OpenAI API key for AI-assisted features"
+        },
+        "CF_BYPASS_SERVICE_PORT": {
+          "label": "Cloudflare Bypass Service Port",
+          "description": "Port of the CF bypass HTTP service"
+        },
+        "CF_BYPASS_ENABLED": {
+          "label": "Enable Cloudflare Bypass",
+          "description": "Enable Cloudflare bypass service"
+        },
+        "CF_BYPASS_PORT_MAP": {
+          "label": "Cloudflare Bypass Port Map (JSON)",
+          "description": "Port mapping for CF bypass containers"
+        },
+        "PAGE_START": {
+          "label": "Daily Crawl Start Page",
+          "description": "First page number for daily spider range"
+        },
+        "PAGE_END": {
+          "label": "Daily Crawl End Page",
+          "description": "Last page number for daily spider range"
+        },
+        "PHASE2_MIN_RATE": {
+          "label": "Phase 2 Minimum Rating",
+          "description": "Minimum rating for Phase 2 filtering"
+        },
+        "PHASE2_MIN_COMMENTS": {
+          "label": "Phase 2 Minimum Comment Count",
+          "description": "Minimum comment count for Phase 2 filtering"
+        },
+        "BASE_URL": {
+          "label": "JavDB Base URL",
+          "description": "JavDB base URL used by the spider"
+        },
+        "MOVIE_SLEEP_MIN": {
+          "label": "Movie Sleep Min (s)",
+          "description": "Min seconds to sleep between movie page fetches"
+        },
+        "MOVIE_SLEEP_MAX": {
+          "label": "Movie Sleep Max (s)",
+          "description": "Max seconds to sleep between movie page fetches"
+        },
+        "LOG_LEVEL": {
+          "label": "Log Level (DEBUG / INFO / WARNING / ERROR)",
+          "description": "Logging verbosity: DEBUG, INFO, WARNING, ERROR"
+        },
+        "SPIDER_LOG_FILE": {
+          "label": "Spider Log File",
+          "description": "Log file for spider runs"
+        },
+        "UPLOADER_LOG_FILE": {
+          "label": "qB Uploader Log File",
+          "description": "Log file for qB uploader runs"
+        },
+        "PIPELINE_LOG_FILE": {
+          "label": "Pipeline Log File",
+          "description": "Log file for pipeline orchestration runs"
+        },
+        "EMAIL_NOTIFICATION_LOG_FILE": {
+          "label": "Email Notification Log File",
+          "description": "Log file for email notification runs"
+        },
+        "IGNORE_RELEASE_DATE_FILTER": {
+          "label": "Ignore Release-Date Filter",
+          "description": "Skip release-date filtering in spider"
+        },
+        "INCLUDE_DOWNLOADED_IN_REPORT": {
+          "label": "Include Already-Downloaded in Reports",
+          "description": "Include already-downloaded movies in CSV reports"
+        },
+        "REPORTS_DIR": {
+          "label": "Reports Directory",
+          "description": "Base directory for all generated reports"
+        },
+        "DAILY_REPORT_DIR": {
+          "label": "Daily Report Directory",
+          "description": "Directory for daily ingestion CSV reports"
+        },
+        "AD_HOC_DIR": {
+          "label": "Ad-Hoc Report Directory",
+          "description": "Directory for ad-hoc scraping reports"
+        },
+        "PARSED_MOVIES_CSV": {
+          "label": "Parsed Movies CSV Filename",
+          "description": "Path to the parsed movies CSV output"
+        },
+        "HISTORY_DB_PATH": {
+          "label": "History DB Path",
+          "description": "Local SQLite path for MovieHistory / TorrentHistory"
+        },
+        "REPORTS_DB_PATH": {
+          "label": "Reports DB Path",
+          "description": "Local SQLite path for session/report data"
+        },
+        "OPERATIONS_DB_PATH": {
+          "label": "Operations DB Path",
+          "description": "Local SQLite path for operations data"
+        },
+        "PIKPAK_EMAIL": {
+          "label": "PikPak Email",
+          "description": "PikPak account email"
+        },
+        "PIKPAK_PASSWORD": {
+          "label": "PikPak Password",
+          "description": "PikPak account password"
+        },
+        "PIKPAK_LOG_FILE": {
+          "label": "PikPak Log File",
+          "description": "Log file for PikPak bridge runs"
+        },
+        "PIKPAK_REQUEST_DELAY": {
+          "label": "PikPak Request Delay (s)",
+          "description": "Seconds between PikPak API requests"
+        },
+        "PIKPAK_ROOT_FOLDER": {
+          "label": "PikPak Root Folder",
+          "description": "PikPak root folder path for uploads"
+        },
+        "QB_FILE_FILTER_MIN_SIZE_MB": {
+          "label": "Minimum File Size to Keep (MB)",
+          "description": "Minimum file size (MB) to keep during filtering"
+        },
+        "QB_FILE_FILTER_LOG_FILE": {
+          "label": "qB File Filter Log File",
+          "description": "Log file for qB file-filter runs"
+        },
+        "RCLONE_CONFIG_BASE64": {
+          "label": "Rclone Config (base64-encoded)",
+          "description": "Base64-encoded rclone.conf for cloud remotes"
+        },
+        "RCLONE_FOLDER_PATH": {
+          "label": "Rclone Remote Folder",
+          "description": "Rclone remote path for dedup scanning"
+        },
+        "STORAGE_MODE": {
+          "label": "Storage Mode (duo / single)",
+          "description": "Alias for STORAGE_BACKEND (deprecated)"
+        },
+        "STORAGE_BACKEND": {
+          "label": "Storage Backend (sqlite / d1 / dual)",
+          "description": "Storage backend: sqlite, d1, or dual"
+        },
+        "CLOUDFLARE_ACCOUNT_ID": {
+          "label": "Cloudflare Account ID",
+          "description": "Cloudflare account ID for D1 API calls"
+        },
+        "CLOUDFLARE_API_TOKEN": {
+          "label": "Cloudflare API Token",
+          "description": "Cloudflare API token with D1 permissions"
+        },
+        "D1_HISTORY_DB_ID": {
+          "label": "D1 History DB ID",
+          "description": "Cloudflare D1 database ID for history data"
+        },
+        "D1_REPORTS_DB_ID": {
+          "label": "D1 Reports DB ID",
+          "description": "Cloudflare D1 database ID for reports data"
+        },
+        "D1_OPERATIONS_DB_ID": {
+          "label": "D1 Operations DB ID",
+          "description": "Cloudflare D1 database ID for operations data"
+        },
+        "PROXY_COORDINATOR_URL": {
+          "label": "Proxy Coordinator URL",
+          "description": "URL of the Proxy Coordinator Worker"
+        },
+        "PROXY_COORDINATOR_TOKEN": {
+          "label": "Proxy Coordinator Token",
+          "description": "Auth token for the Proxy Coordinator Worker"
+        },
+        "MOVIE_CLAIM_ENABLED": {
+          "label": "Movie Claim Enabled (auto / true / false)",
+          "description": "Enable coordinator MovieClaim stage tracking"
+        },
+        "RUNNER_REGISTRY_ENABLED": {
+          "label": "Runner Registry Enabled",
+          "description": "Enable coordinator runner registry tracking"
+        },
+        "RCLONE_INVENTORY_CSV": {
+          "label": "Rclone Inventory CSV",
+          "description": "Path to the rclone inventory CSV"
+        },
+        "DEDUP_CSV": {
+          "label": "Dedup Result CSV",
+          "description": "Path to the rclone dedup CSV log"
+        },
+        "DEDUP_DIR": {
+          "label": "Dedup Output Directory",
+          "description": "Directory for rclone dedup reports"
+        },
+        "DEDUP_LOG_FILE": {
+          "label": "Dedup Log File",
+          "description": "Log file for rclone dedup runs"
+        },
+        "INGESTION_MODE": {
+          "label": "Ingestion Mode (local / github / dual)",
+          "description": "How ingestion runs: local, github, or dual"
+        },
+        "API_SECRET_KEY": {
+          "label": "API JWT Secret Key",
+          "description": "Secret key for signing JWT tokens"
+        },
+        "ADMIN_USERNAME": {
+          "label": "Admin Username",
+          "description": "Username for the admin account"
+        },
+        "ADMIN_PASSWORD": {
+          "label": "Admin Password (plaintext, hashed on boot)",
+          "description": "Plaintext fallback; prefer ADMIN_PASSWORD_HASH"
+        },
+        "ADMIN_PASSWORD_HASH": {
+          "label": "Admin Password Hash (bcrypt)",
+          "description": "Bcrypt hash used for admin login"
+        },
+        "READONLY_USERNAME": {
+          "label": "Read-Only Username",
+          "description": "Username for the read-only account"
+        },
+        "READONLY_PASSWORD": {
+          "label": "Read-Only Password (plaintext)",
+          "description": "Plaintext fallback; prefer READONLY_PASSWORD_HASH"
+        },
+        "READONLY_PASSWORD_HASH": {
+          "label": "Read-Only Password Hash (bcrypt)",
+          "description": "Bcrypt hash used for read-only user login"
+        },
+        "GH_ACTIONS_TIER": {
+          "label": "GitHub Actions Tier (none / monitor / edit / admin)",
+          "description": "GitHub Actions integration tier (none/monitor/edit/admin)"
+        },
+        "GH_ACTIONS_REPO": {
+          "label": "GitHub Actions Repo (owner/name)",
+          "description": "GitHub repo (owner/name) for Actions integration"
+        },
+        "GH_ACTIONS_TOKEN": {
+          "label": "GitHub Actions PAT",
+          "description": "GitHub PAT with workflow/actions scope"
+        },
+        "COOKIE_SECURE": {
+          "label": "Set Secure Flag on Cookies",
+          "description": "Require HTTPS for auth cookies (disable for local dev)"
+        }
       }
     },
     "auth": {

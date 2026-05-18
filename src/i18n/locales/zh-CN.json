@@ -393,106 +393,406 @@
         "advanced": "高级"
       },
       "fields": {
-        "GIT_USERNAME": { "label": "Git 用户名" },
-        "GIT_PASSWORD": { "label": "Git 密码 / Token" },
-        "GIT_REPO_URL": { "label": "Git 仓库 URL" },
-        "GIT_BRANCH": { "label": "Git 分支" },
-        "QB_URL": { "label": "qBittorrent Web UI 地址" },
-        "QB_ALLOW_INSECURE_HTTP": { "label": "允许 qB 使用明文 HTTP" },
-        "QB_VERIFY_TLS": { "label": "校验 qB 的 TLS 证书" },
-        "QB_USERNAME": { "label": "qBittorrent 用户名" },
-        "QB_PASSWORD": { "label": "qBittorrent 密码" },
-        "TORRENT_CATEGORY": { "label": "每日任务种子分类" },
-        "TORRENT_CATEGORY_ADHOC": { "label": "临时任务种子分类" },
-        "QB_URL_ADHOC": { "label": "临时任务 qBittorrent 地址" },
-        "QB_USERNAME_ADHOC": { "label": "临时任务 qBittorrent 用户名" },
-        "QB_PASSWORD_ADHOC": { "label": "临时任务 qBittorrent 密码" },
-        "TORRENT_SAVE_PATH": { "label": "种子保存路径" },
-        "AUTO_START": { "label": "自动开始新种子" },
-        "SKIP_CHECKING": { "label": "跳过哈希校验" },
-        "REQUEST_TIMEOUT": { "label": "qB 请求超时（秒）" },
-        "DELAY_BETWEEN_ADDITIONS": { "label": "种子添加间隔（秒）" },
-        "SMTP_SERVER": { "label": "SMTP 服务器" },
-        "SMTP_PORT": { "label": "SMTP 端口" },
-        "SMTP_USER": { "label": "SMTP 用户名" },
-        "SMTP_PASSWORD": { "label": "SMTP 密码 / 应用专用密码" },
-        "EMAIL_FROM": { "label": "邮件发件人地址" },
-        "EMAIL_TO": { "label": "邮件收件人" },
-        "PROXY_MODE": { "label": "代理模式（single / pool）" },
-        "PROXY_POOL": { "label": "代理池（JSON 列表）" },
-        "PROXY_POOL_MAX_FAILURES": { "label": "代理被封禁前的最大失败次数" },
-        "PROXY_HTTP": { "label": "当前 HTTP 代理（只读）" },
-        "PROXY_HTTPS": { "label": "当前 HTTPS 代理（只读）" },
-        "PROXY_MODULES": { "label": "启用代理的模块" },
-        "LOGIN_PROXY_NAME": { "label": "登录优先使用的代理名称" },
-        "LOGIN_ATTEMPTS_PER_PROXY_LIMIT": { "label": "单个代理最大登录尝试次数" },
-        "LOGIN_MAX_FAILURES_BEFORE_PROXY_SWITCH": { "label": "切换代理前的失败次数" },
-        "LOGIN_VERIFICATION_URLS": { "label": "登录校验 URL 列表（JSON）" },
-        "JAVDB_USERNAME": { "label": "JavDB 用户名 / 邮箱" },
-        "JAVDB_PASSWORD": { "label": "JavDB 密码" },
-        "JAVDB_SESSION_COOKIE": { "label": "JavDB 会话 Cookie（_jdb_session）" },
-        "GPT_API_URL": { "label": "GPT API 地址（验证码识别）" },
-        "GPT_API_KEY": { "label": "GPT API Key" },
-        "CF_BYPASS_SERVICE_PORT": { "label": "Cloudflare 绕过服务端口" },
-        "CF_BYPASS_ENABLED": { "label": "启用 Cloudflare 绕过" },
-        "CF_BYPASS_PORT_MAP": { "label": "Cloudflare 绕过端口映射（JSON）" },
-        "PAGE_START": { "label": "每日抓取起始页" },
-        "PAGE_END": { "label": "每日抓取结束页" },
-        "PHASE2_MIN_RATE": { "label": "Phase 2 最低评分" },
-        "PHASE2_MIN_COMMENTS": { "label": "Phase 2 最低评论数" },
-        "BASE_URL": { "label": "JavDB 站点基础 URL" },
-        "MOVIE_SLEEP_MIN": { "label": "影片间隔最小值（秒）" },
-        "MOVIE_SLEEP_MAX": { "label": "影片间隔最大值（秒）" },
-        "LOG_LEVEL": { "label": "日志级别（DEBUG / INFO / WARNING / ERROR）" },
-        "SPIDER_LOG_FILE": { "label": "爬虫日志文件" },
-        "UPLOADER_LOG_FILE": { "label": "qB 上传器日志文件" },
-        "PIPELINE_LOG_FILE": { "label": "Pipeline 日志文件" },
-        "EMAIL_NOTIFICATION_LOG_FILE": { "label": "邮件通知日志文件" },
-        "IGNORE_RELEASE_DATE_FILTER": { "label": "忽略发布日期过滤" },
-        "INCLUDE_DOWNLOADED_IN_REPORT": { "label": "报表中包含已下载条目" },
-        "REPORTS_DIR": { "label": "报表目录" },
-        "DAILY_REPORT_DIR": { "label": "每日报表目录" },
-        "AD_HOC_DIR": { "label": "临时任务报表目录" },
-        "PARSED_MOVIES_CSV": { "label": "解析后的影片 CSV 文件名" },
-        "HISTORY_DB_PATH": { "label": "History 数据库路径" },
-        "REPORTS_DB_PATH": { "label": "Reports 数据库路径" },
-        "OPERATIONS_DB_PATH": { "label": "Operations 数据库路径" },
-        "PIKPAK_EMAIL": { "label": "PikPak 邮箱" },
-        "PIKPAK_PASSWORD": { "label": "PikPak 密码" },
-        "PIKPAK_LOG_FILE": { "label": "PikPak 日志文件" },
-        "PIKPAK_REQUEST_DELAY": { "label": "PikPak 请求间隔（秒）" },
-        "PIKPAK_ROOT_FOLDER": { "label": "PikPak 根目录" },
-        "QB_FILE_FILTER_MIN_SIZE_MB": { "label": "最小保留文件大小（MB）" },
-        "QB_FILE_FILTER_LOG_FILE": { "label": "qB 文件过滤日志" },
-        "RCLONE_CONFIG_BASE64": { "label": "Rclone 配置（base64 编码）" },
-        "RCLONE_FOLDER_PATH": { "label": "Rclone 远端目录" },
-        "STORAGE_MODE": { "label": "存储模式（duo / single）" },
-        "STORAGE_BACKEND": { "label": "存储后端（sqlite / d1 / dual）" },
-        "CLOUDFLARE_ACCOUNT_ID": { "label": "Cloudflare Account ID" },
-        "CLOUDFLARE_API_TOKEN": { "label": "Cloudflare API Token" },
-        "D1_HISTORY_DB_ID": { "label": "D1 History 数据库 ID" },
-        "D1_REPORTS_DB_ID": { "label": "D1 Reports 数据库 ID" },
-        "D1_OPERATIONS_DB_ID": { "label": "D1 Operations 数据库 ID" },
-        "PROXY_COORDINATOR_URL": { "label": "Proxy Coordinator URL" },
-        "PROXY_COORDINATOR_TOKEN": { "label": "Proxy Coordinator Token" },
-        "MOVIE_CLAIM_ENABLED": { "label": "启用影片认领（auto / true / false）" },
-        "RUNNER_REGISTRY_ENABLED": { "label": "启用 Runner 注册表" },
-        "RCLONE_INVENTORY_CSV": { "label": "Rclone 清单 CSV" },
-        "DEDUP_CSV": { "label": "去重结果 CSV" },
-        "DEDUP_DIR": { "label": "去重输出目录" },
-        "DEDUP_LOG_FILE": { "label": "去重日志文件" },
-        "INGESTION_MODE": { "label": "抓取模式（local / github / dual）" },
-        "API_SECRET_KEY": { "label": "API JWT 密钥" },
-        "ADMIN_USERNAME": { "label": "管理员用户名" },
-        "ADMIN_PASSWORD": { "label": "管理员密码（明文，启动时哈希）" },
-        "ADMIN_PASSWORD_HASH": { "label": "管理员密码哈希（bcrypt）" },
-        "READONLY_USERNAME": { "label": "只读账号用户名" },
-        "READONLY_PASSWORD": { "label": "只读账号密码（明文）" },
-        "READONLY_PASSWORD_HASH": { "label": "只读账号密码哈希（bcrypt）" },
-        "GH_ACTIONS_TIER": { "label": "GitHub Actions 权限层级（none / monitor / edit / admin）" },
-        "GH_ACTIONS_REPO": { "label": "GitHub Actions 仓库（owner/name）" },
-        "GH_ACTIONS_TOKEN": { "label": "GitHub Actions PAT" },
-        "COOKIE_SECURE": { "label": "Cookie 启用 Secure 标志" }
+        "GIT_USERNAME": {
+          "label": "Git 用户名",
+          "description": "push 认证的 Git 用户名"
+        },
+        "GIT_PASSWORD": {
+          "label": "Git 密码 / Token",
+          "description": "用于 git push 的 GitHub PAT（非密码）"
+        },
+        "GIT_REPO_URL": {
+          "label": "Git 仓库 URL",
+          "description": "报告自动提交的 Git 远程 URL"
+        },
+        "GIT_BRANCH": {
+          "label": "Git 分支",
+          "description": "报告自动提交的 Git 分支"
+        },
+        "QB_URL": {
+          "label": "qBittorrent Web UI 地址",
+          "description": "qBittorrent Web UI URL（日常模式）"
+        },
+        "QB_ALLOW_INSECURE_HTTP": {
+          "label": "允许 qB 使用明文 HTTP",
+          "description": "允许 qBittorrent Web UI 使用明文 HTTP"
+        },
+        "QB_VERIFY_TLS": {
+          "label": "校验 qB 的 TLS 证书",
+          "description": "验证 qBittorrent 连接的 TLS 证书"
+        },
+        "QB_USERNAME": {
+          "label": "qBittorrent 用户名",
+          "description": "qBittorrent Web UI 用户名（日常模式）"
+        },
+        "QB_PASSWORD": {
+          "label": "qBittorrent 密码",
+          "description": "qBittorrent Web UI 密码（日常模式）"
+        },
+        "TORRENT_CATEGORY": {
+          "label": "每日任务种子分类",
+          "description": "日常种子的 qBittorrent 分类标签"
+        },
+        "TORRENT_CATEGORY_ADHOC": {
+          "label": "临时任务种子分类",
+          "description": "自定义种子的 qBittorrent 分类标签"
+        },
+        "QB_URL_ADHOC": {
+          "label": "临时任务 qBittorrent 地址",
+          "description": "qBittorrent Web UI URL（自定义模式）"
+        },
+        "QB_USERNAME_ADHOC": {
+          "label": "临时任务 qBittorrent 用户名",
+          "description": "qBittorrent Web UI 用户名（自定义模式）"
+        },
+        "QB_PASSWORD_ADHOC": {
+          "label": "临时任务 qBittorrent 密码",
+          "description": "qBittorrent Web UI 密码（自定义模式）"
+        },
+        "TORRENT_SAVE_PATH": {
+          "label": "种子保存路径",
+          "description": "qBittorrent 中的下载保存路径"
+        },
+        "AUTO_START": {
+          "label": "自动开始新种子",
+          "description": "API 启动时自动开始每日爬取"
+        },
+        "SKIP_CHECKING": {
+          "label": "跳过哈希校验",
+          "description": "添加种子前跳过重复检查"
+        },
+        "REQUEST_TIMEOUT": {
+          "label": "qB 请求超时（秒）",
+          "description": "HTTP 请求超时秒数"
+        },
+        "DELAY_BETWEEN_ADDITIONS": {
+          "label": "种子添加间隔（秒）",
+          "description": "qB 添加种子间的等待秒数"
+        },
+        "SMTP_SERVER": {
+          "label": "SMTP 服务器",
+          "description": "SMTP 服务器主机名（如 smtp.gmail.com）"
+        },
+        "SMTP_PORT": {
+          "label": "SMTP 端口",
+          "description": "SMTP 服务器端口（TLS 用 587，SSL 用 465）"
+        },
+        "SMTP_USER": {
+          "label": "SMTP 用户名",
+          "description": "SMTP 登录用户名（通常为邮箱地址）"
+        },
+        "SMTP_PASSWORD": {
+          "label": "SMTP 密码 / 应用专用密码",
+          "description": "SMTP 服务器密码或应用专用密码"
+        },
+        "EMAIL_FROM": {
+          "label": "邮件发件人地址",
+          "description": "通知邮件的发件人地址"
+        },
+        "EMAIL_TO": {
+          "label": "邮件收件人",
+          "description": "通知邮件的收件人地址"
+        },
+        "PROXY_MODE": {
+          "label": "代理模式（single / pool）",
+          "description": "代理策略：none、single 或 pool"
+        },
+        "PROXY_POOL": {
+          "label": "代理池（JSON 列表）",
+          "description": "pool 模式下的代理条目 JSON 数组"
+        },
+        "PROXY_POOL_MAX_FAILURES": {
+          "label": "代理被封禁前的最大失败次数",
+          "description": "代理从池中禁用前的最大失败次数"
+        },
+        "PROXY_HTTP": {
+          "label": "当前 HTTP 代理（只读）",
+          "description": "单代理 HTTP 地址"
+        },
+        "PROXY_HTTPS": {
+          "label": "当前 HTTPS 代理（只读）",
+          "description": "单代理 HTTPS 地址"
+        },
+        "PROXY_MODULES": {
+          "label": "启用代理的模块",
+          "description": "使用代理的模块（spider、qbittorrent、pikpak）"
+        },
+        "LOGIN_PROXY_NAME": {
+          "label": "登录优先使用的代理名称",
+          "description": "登录尝试的首选代理名称"
+        },
+        "LOGIN_ATTEMPTS_PER_PROXY_LIMIT": {
+          "label": "单个代理最大登录尝试次数",
+          "description": "每个代理切换前的最大登录尝试次数"
+        },
+        "LOGIN_MAX_FAILURES_BEFORE_PROXY_SWITCH": {
+          "label": "切换代理前的失败次数",
+          "description": "登录中连续失败后切换代理的次数"
+        },
+        "LOGIN_VERIFICATION_URLS": {
+          "label": "登录校验 URL 列表（JSON）",
+          "description": "用于验证登录成功的 URL"
+        },
+        "JAVDB_USERNAME": {
+          "label": "JavDB 用户名 / 邮箱",
+          "description": "JavDB 账户邮箱（无头登录用）"
+        },
+        "JAVDB_PASSWORD": {
+          "label": "JavDB 密码",
+          "description": "JavDB 账户密码（无头登录用）"
+        },
+        "JAVDB_SESSION_COOKIE": {
+          "label": "JavDB 会话 Cookie（_jdb_session）",
+          "description": "JavDB _jdb_session Cookie 值（自动刷新）"
+        },
+        "GPT_API_URL": {
+          "label": "GPT API 地址（验证码识别）",
+          "description": "OpenAI 兼容 API 端点 URL"
+        },
+        "GPT_API_KEY": {
+          "label": "GPT API Key",
+          "description": "AI 辅助功能的 OpenAI API 密钥"
+        },
+        "CF_BYPASS_SERVICE_PORT": {
+          "label": "Cloudflare 绕过服务端口",
+          "description": "CF 绕过 HTTP 服务的端口"
+        },
+        "CF_BYPASS_ENABLED": {
+          "label": "启用 Cloudflare 绕过",
+          "description": "启用 Cloudflare 绕过服务"
+        },
+        "CF_BYPASS_PORT_MAP": {
+          "label": "Cloudflare 绕过端口映射（JSON）",
+          "description": "CF 绕过容器的端口映射"
+        },
+        "PAGE_START": {
+          "label": "每日抓取起始页",
+          "description": "每日爬虫范围的起始页码"
+        },
+        "PAGE_END": {
+          "label": "每日抓取结束页",
+          "description": "每日爬虫范围的最后页码"
+        },
+        "PHASE2_MIN_RATE": {
+          "label": "Phase 2 最低评分",
+          "description": "Phase 2 过滤的最低评分"
+        },
+        "PHASE2_MIN_COMMENTS": {
+          "label": "Phase 2 最低评论数",
+          "description": "Phase 2 过滤的最低评论数"
+        },
+        "BASE_URL": {
+          "label": "JavDB 站点基础 URL",
+          "description": "爬虫使用的 JavDB 基础 URL"
+        },
+        "MOVIE_SLEEP_MIN": {
+          "label": "影片间隔最小值（秒）",
+          "description": "影片页面获取间的最小休眠秒数"
+        },
+        "MOVIE_SLEEP_MAX": {
+          "label": "影片间隔最大值（秒）",
+          "description": "影片页面获取间的最大休眠秒数"
+        },
+        "LOG_LEVEL": {
+          "label": "日志级别（DEBUG / INFO / WARNING / ERROR）",
+          "description": "日志详细程度：DEBUG、INFO、WARNING、ERROR"
+        },
+        "SPIDER_LOG_FILE": {
+          "label": "爬虫日志文件",
+          "description": "爬虫运行日志文件"
+        },
+        "UPLOADER_LOG_FILE": {
+          "label": "qB 上传器日志文件",
+          "description": "qB 上传器运行日志文件"
+        },
+        "PIPELINE_LOG_FILE": {
+          "label": "Pipeline 日志文件",
+          "description": "流水线编排运行日志文件"
+        },
+        "EMAIL_NOTIFICATION_LOG_FILE": {
+          "label": "邮件通知日志文件",
+          "description": "邮件通知运行日志文件"
+        },
+        "IGNORE_RELEASE_DATE_FILTER": {
+          "label": "忽略发布日期过滤",
+          "description": "爬虫中跳过发布日期过滤"
+        },
+        "INCLUDE_DOWNLOADED_IN_REPORT": {
+          "label": "报表中包含已下载条目",
+          "description": "在 CSV 报告中包含已下载的影片"
+        },
+        "REPORTS_DIR": {
+          "label": "报表目录",
+          "description": "所有生成报告的基础目录"
+        },
+        "DAILY_REPORT_DIR": {
+          "label": "每日报表目录",
+          "description": "每日爬取 CSV 报告目录"
+        },
+        "AD_HOC_DIR": {
+          "label": "临时任务报表目录",
+          "description": "自定义爬取报告目录"
+        },
+        "PARSED_MOVIES_CSV": {
+          "label": "解析后的影片 CSV 文件名",
+          "description": "解析后影片 CSV 输出路径"
+        },
+        "HISTORY_DB_PATH": {
+          "label": "History 数据库路径",
+          "description": "MovieHistory / TorrentHistory 的本地 SQLite 路径"
+        },
+        "REPORTS_DB_PATH": {
+          "label": "Reports 数据库路径",
+          "description": "会话/报告数据的本地 SQLite 路径"
+        },
+        "OPERATIONS_DB_PATH": {
+          "label": "Operations 数据库路径",
+          "description": "运维数据的本地 SQLite 路径"
+        },
+        "PIKPAK_EMAIL": {
+          "label": "PikPak 邮箱",
+          "description": "PikPak 账户邮箱"
+        },
+        "PIKPAK_PASSWORD": {
+          "label": "PikPak 密码",
+          "description": "PikPak 账户密码"
+        },
+        "PIKPAK_LOG_FILE": {
+          "label": "PikPak 日志文件",
+          "description": "PikPak 桥接运行日志文件"
+        },
+        "PIKPAK_REQUEST_DELAY": {
+          "label": "PikPak 请求间隔（秒）",
+          "description": "PikPak API 请求间隔秒数"
+        },
+        "PIKPAK_ROOT_FOLDER": {
+          "label": "PikPak 根目录",
+          "description": "PikPak 上传的根文件夹路径"
+        },
+        "QB_FILE_FILTER_MIN_SIZE_MB": {
+          "label": "最小保留文件大小（MB）",
+          "description": "过滤时保留的最小文件大小（MB）"
+        },
+        "QB_FILE_FILTER_LOG_FILE": {
+          "label": "qB 文件过滤日志",
+          "description": "qB 文件过滤运行日志文件"
+        },
+        "RCLONE_CONFIG_BASE64": {
+          "label": "Rclone 配置（base64 编码）",
+          "description": "Base64 编码的 rclone.conf（云端远程）"
+        },
+        "RCLONE_FOLDER_PATH": {
+          "label": "Rclone 远端目录",
+          "description": "rclone 去重扫描的远程路径"
+        },
+        "STORAGE_MODE": {
+          "label": "存储模式（duo / single）",
+          "description": "STORAGE_BACKEND 的别名（已弃用）"
+        },
+        "STORAGE_BACKEND": {
+          "label": "存储后端（sqlite / d1 / dual）",
+          "description": "存储后端：sqlite、d1 或 dual"
+        },
+        "CLOUDFLARE_ACCOUNT_ID": {
+          "label": "Cloudflare Account ID",
+          "description": "用于 D1 API 调用的 Cloudflare 账户 ID"
+        },
+        "CLOUDFLARE_API_TOKEN": {
+          "label": "Cloudflare API Token",
+          "description": "具有 D1 权限的 Cloudflare API 令牌"
+        },
+        "D1_HISTORY_DB_ID": {
+          "label": "D1 History 数据库 ID",
+          "description": "历史数据的 Cloudflare D1 数据库 ID"
+        },
+        "D1_REPORTS_DB_ID": {
+          "label": "D1 Reports 数据库 ID",
+          "description": "报告数据的 Cloudflare D1 数据库 ID"
+        },
+        "D1_OPERATIONS_DB_ID": {
+          "label": "D1 Operations 数据库 ID",
+          "description": "运维数据的 Cloudflare D1 数据库 ID"
+        },
+        "PROXY_COORDINATOR_URL": {
+          "label": "Proxy Coordinator URL",
+          "description": "代理协调器 Worker 的 URL"
+        },
+        "PROXY_COORDINATOR_TOKEN": {
+          "label": "Proxy Coordinator Token",
+          "description": "代理协调器 Worker 的认证令牌"
+        },
+        "MOVIE_CLAIM_ENABLED": {
+          "label": "启用影片认领（auto / true / false）",
+          "description": "启用协调器 MovieClaim 阶段跟踪"
+        },
+        "RUNNER_REGISTRY_ENABLED": {
+          "label": "启用 Runner 注册表",
+          "description": "启用协调器 runner 注册跟踪"
+        },
+        "RCLONE_INVENTORY_CSV": {
+          "label": "Rclone 清单 CSV",
+          "description": "rclone 清单 CSV 路径"
+        },
+        "DEDUP_CSV": {
+          "label": "去重结果 CSV",
+          "description": "rclone 去重 CSV 日志路径"
+        },
+        "DEDUP_DIR": {
+          "label": "去重输出目录",
+          "description": "rclone 去重报告目录"
+        },
+        "DEDUP_LOG_FILE": {
+          "label": "去重日志文件",
+          "description": "rclone 去重运行日志文件"
+        },
+        "INGESTION_MODE": {
+          "label": "抓取模式（local / github / dual）",
+          "description": "爬取运行方式：local、github 或 dual"
+        },
+        "API_SECRET_KEY": {
+          "label": "API JWT 密钥",
+          "description": "用于签发 JWT 令牌的密钥"
+        },
+        "ADMIN_USERNAME": {
+          "label": "管理员用户名",
+          "description": "管理员账户的用户名"
+        },
+        "ADMIN_PASSWORD": {
+          "label": "管理员密码（明文，启动时哈希）",
+          "description": "明文密码回退；推荐使用 ADMIN_PASSWORD_HASH"
+        },
+        "ADMIN_PASSWORD_HASH": {
+          "label": "管理员密码哈希（bcrypt）",
+          "description": "管理员登录使用的 bcrypt 哈希"
+        },
+        "READONLY_USERNAME": {
+          "label": "只读账号用户名",
+          "description": "只读账户的用户名"
+        },
+        "READONLY_PASSWORD": {
+          "label": "只读账号密码（明文）",
+          "description": "明文密码回退；推荐使用 READONLY_PASSWORD_HASH"
+        },
+        "READONLY_PASSWORD_HASH": {
+          "label": "只读账号密码哈希（bcrypt）",
+          "description": "只读用户登录使用的 bcrypt 哈希"
+        },
+        "GH_ACTIONS_TIER": {
+          "label": "GitHub Actions 权限层级（none / monitor / edit / admin）",
+          "description": "GitHub Actions 集成层级（none/monitor/edit/admin）"
+        },
+        "GH_ACTIONS_REPO": {
+          "label": "GitHub Actions 仓库（owner/name）",
+          "description": "Actions 集成的 GitHub 仓库（owner/name）"
+        },
+        "GH_ACTIONS_TOKEN": {
+          "label": "GitHub Actions PAT",
+          "description": "具有 workflow/actions 权限的 GitHub PAT"
+        },
+        "COOKIE_SECURE": {
+          "label": "Cookie 启用 Secure 标志",
+          "description": "认证 Cookie 要求 HTTPS（本地开发时禁用）"
+        }
       }
     },
     "auth": {
