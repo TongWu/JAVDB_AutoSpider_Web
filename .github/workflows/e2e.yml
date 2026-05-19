@@ -41,7 +41,7 @@ jobs:
 
       - name: Boot BE via compose
         env:
-          GHCR_OWNER: TongWu
+          GHCR_OWNER: tongwu
           # TEST_MODE=1 enables /api/test/reset so fixtures can clear state.
           # Pass it via shell env; docker-compose.yml exposes it under
           # `environment: TEST_MODE: ${TEST_MODE:-}` on the api service.
