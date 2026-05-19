@@ -1,4 +1,4 @@
-import { onScopeDispose, ref, shallowRef } from 'vue'
+import { onScopeDispose, ref, shallowRef, type Ref, type ShallowRef } from 'vue'
 import { apiIndexStatus, type ExploreIndexStatusItem } from '@/api/explore'
 import type { IndexStatus, IndexStatusMeta } from '@/components/browse/D1StatusDot.vue'
 
@@ -13,8 +13,8 @@ export interface IndexStatusEntry {
 export interface UseIndexStatusReturn {
   observe(href: string): void
   unobserve(href: string): void
-  statuses: ReturnType<typeof shallowRef<Map<string, IndexStatusEntry>>>
-  isFetching: ReturnType<typeof ref<boolean>>
+  statuses: ShallowRef<Map<string, IndexStatusEntry>>
+  isFetching: Ref<boolean>
   /** Force-flush any queued hrefs (useful for tests). */
   flushNow(): Promise<void>
 }
