@@ -12,14 +12,14 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  webServer: process.env.CI
-    ? undefined
-    : {
-        command: 'npm run dev',
-        url: 'http://127.0.0.1:5173',
-        reuseExistingServer: true,
-        timeout: 60_000,
-      },
+  webServer: {
+    command: process.env.CI
+      ? 'npm run preview -- --port 5173 --host 127.0.0.1'
+      : 'npm run dev',
+    url: 'http://127.0.0.1:5173',
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,
+  },
   projects: [
     { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
