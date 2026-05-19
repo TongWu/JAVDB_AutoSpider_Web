@@ -43,7 +43,11 @@ function onDiscard(): void {
 
 <template>
   <div class="settings-config-page">
-    <NAlert v-if="config.error && config.meta.length === 0" type="error" :title="t('errors.generic.title')">
+    <NAlert
+      v-if="config.error && config.meta.length === 0"
+      type="error"
+      :title="t('errors.generic.title')"
+    >
       {{ extractErrorMessage(config.error) }}
     </NAlert>
 
@@ -58,13 +62,27 @@ function onDiscard(): void {
       </div>
     </NSpin>
 
-    <div v-if="config.isDirty" class="save-bar">
+    <div
+      v-if="config.isDirty"
+      class="save-bar"
+    >
       <span class="dirty-hint">
         {{ t('settings.config.dirtyHint', { n: config.dirtyKeys.length }) }}
       </span>
       <NSpace :size="8">
-        <NButton :disabled="config.saving" @click="onDiscard">{{ t('settings.config.discard') }}</NButton>
-        <NButton type="primary" :loading="config.saving" @click="onSave">{{ t('settings.config.save') }}</NButton>
+        <NButton
+          :disabled="config.saving"
+          @click="onDiscard"
+        >
+          {{ t('settings.config.discard') }}
+        </NButton>
+        <NButton
+          type="primary"
+          :loading="config.saving"
+          @click="onSave"
+        >
+          {{ t('settings.config.save') }}
+        </NButton>
       </NSpace>
     </div>
   </div>

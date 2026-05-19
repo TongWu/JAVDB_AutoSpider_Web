@@ -1,10 +1,8 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
 import { NCard, NDescriptions, NDescriptionsItem, NTag, NSpin } from 'naive-ui'
 import { useCapabilitiesStore } from '@/stores/capabilities'
 
-const { t } = useI18n()
 const caps = useCapabilitiesStore()
 
 const data = computed(() => caps.data)

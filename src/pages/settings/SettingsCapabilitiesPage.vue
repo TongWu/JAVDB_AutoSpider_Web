@@ -21,7 +21,12 @@ async function refresh(): Promise<void> {
 <template>
   <div class="settings-cap-page">
     <NSpace justify="end">
-      <NButton :loading="caps.loading" @click="refresh">{{ t('settings.capabilities.refresh') }}</NButton>
+      <NButton
+        :loading="caps.loading"
+        @click="refresh"
+      >
+        {{ t('settings.capabilities.refresh') }}
+      </NButton>
     </NSpace>
     <CapabilitySnapshot />
   </div>

@@ -31,6 +31,14 @@ export default defineConfigWithVueTs(
   },
 
   {
+    name: 'app/test-files',
+    files: ['tests/**/*.{ts,tsx,vue}'],
+    rules: {
+      'vue/one-component-per-file': 'off',
+    },
+  },
+
+  {
     name: 'app/vue-i18n',
     plugins: {
       '@intlify/vue-i18n': pluginVueI18n,
