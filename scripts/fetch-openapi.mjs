@@ -13,6 +13,9 @@
  *   # CI (fetch from GitHub raw URL):
  *   node scripts/fetch-openapi.mjs
  *   OPENAPI_URL=https://... node scripts/fetch-openapi.mjs
+ *
+ *   # Private repo (sends Authorization: Bearer <token>):
+ *   OPENAPI_TOKEN=ghp_xxx node scripts/fetch-openapi.mjs
  */
 
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
@@ -30,6 +33,8 @@ const OPENAPI_PATH = process.env['OPENAPI_PATH'] ?? ''
 const OPENAPI_URL =
   process.env['OPENAPI_URL'] ??
   'https://raw.githubusercontent.com/TongWu/JAVDB_AutoSpider_CICD/main/docs/api/openapi.json'
+const OPENAPI_TOKEN =
+  process.env['OPENAPI_TOKEN'] ?? process.env['GITHUB_TOKEN'] ?? ''
 
 async function resolveSchema() {
   if (OPENAPI_PATH) {
@@ -40,7 +45,10 @@ async function resolveSchema() {
     return data
   }
   console.log(`[fetch-openapi] fetching: ${OPENAPI_URL}`)
-  const res = await fetch(OPENAPI_URL)
+  const headers = OPENAPI_TOKEN
+    ? { Authorization: `Bearer ${OPENAPI_TOKEN}` }
+    : {}
+  const res = await fetch(OPENAPI_URL, { headers })
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${OPENAPI_URL}`)
   const text = await res.text()
   // Validate JSON

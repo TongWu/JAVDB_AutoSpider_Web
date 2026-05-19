@@ -38,6 +38,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@vitejs/plugin-vue": "^5.0.0",
+    "@vitest/coverage-v8": "^2.1.9",
     "@vue/eslint-config-typescript": "^14.0.0",
     "@vue/test-utils": "^2.0.0",
     "axios-mock-adapter": "^2.1.0",
