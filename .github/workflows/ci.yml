@@ -36,8 +36,11 @@ jobs:
       - name: Regenerate API types from main repo schema
         # Confirms the committed src/types/api.gen.ts matches the upstream
         # schema. Fails CI if drift exists.
+        # CICD_REPO_TOKEN is a PAT with read access to the private
+        # TongWu/JAVDB_AutoSpider_CICD repo; required to fetch openapi.json.
         env:
           OPENAPI_URL: https://raw.githubusercontent.com/TongWu/JAVDB_AutoSpider_CICD/main/docs/api/openapi.json
+          OPENAPI_TOKEN: ${{ secrets.CICD_REPO_TOKEN }}
         run: |
           npm run gen:api-types
           if ! git diff --quiet src/types/api.gen.ts; then
