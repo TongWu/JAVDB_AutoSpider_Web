@@ -28,6 +28,6 @@ test.describe('Journey 2: Login → Run Daily → see log stream', () => {
     ).toBeVisible({ timeout: 15_000 })
 
     // The log viewer should be present (filter input is a stable anchor)
-    await expect(page.locator('input[placeholder*="Filter"]')).toBeVisible()
+    await expect(page.locator('input[placeholder*="Filter"]')).toBeVisible({ timeout: 10_000 })
   })
 })

@@ -1,5 +1,5 @@
 import { test, expect, type APIRequestContext } from '@playwright/test'
-import { loginViaUi, markOnboarded, resetBackend } from './fixtures/auth'
+import { getAuthHeaders, loginViaUi, markOnboarded, resetBackend } from './fixtures/auth'
 
 const API_URL = process.env.E2E_API_URL ?? 'http://127.0.0.1:8100'
 
@@ -7,7 +7,8 @@ async function fetchConfigValue(
   request: APIRequestContext,
   key: string,
 ): Promise<unknown> {
-  const r = await request.get(`${API_URL}/api/config`)
+  const headers = await getAuthHeaders(request)
+  const r = await request.get(`${API_URL}/api/config`, { headers })
   if (!r.ok()) return undefined
   const body = (await r.json()) as Record<string, unknown>
   return body[key]
@@ -94,7 +95,9 @@ test.describe('Journey 6: Settings → Config edit + save round-trip', () => {
 
     // Restore so the next test starts clean.
     if (typeof before === 'string') {
+      const restoreHeaders = await getAuthHeaders(request)
       await request.put(`${API_URL}/api/config`, {
+        headers: restoreHeaders,
         data: { TORRENT_CATEGORY: before },
       })
     }

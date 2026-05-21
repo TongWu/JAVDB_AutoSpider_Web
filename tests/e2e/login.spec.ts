@@ -2,5 +2,5 @@ import { expect, test } from '@playwright/test'
 
 test('login page loads', async ({ page }) => {
   await page.goto('/login')
-  await expect(page.getByRole('heading', { name: /sign in/i })).toBeVisible({ timeout: 10_000 })
+  await expect(page.getByText('Sign in to AutoSpider')).toBeVisible({ timeout: 10_000 })
 })

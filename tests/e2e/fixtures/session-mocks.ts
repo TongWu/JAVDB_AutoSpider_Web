@@ -101,10 +101,14 @@ export async function installSessionMocks(page: Page): Promise<void> {
 
   await page.route(/\/api\/sessions\/[^/]+$/, async (route) => {
     if (route.request().method() !== 'GET') return route.fallback()
+    const url = route.request().url()
+    const isFinalizing = url.includes(encodeURIComponent(FINALIZING_SESSION.session_id))
+      || url.includes(FINALIZING_SESSION.session_id)
+    const session = isFinalizing ? FINALIZING_SESSION : COMMITTED_SESSION
     await route.fulfill({
       status: 200,
       contentType: 'application/json',
-      body: JSON.stringify(SESSION_DETAIL),
+      body: JSON.stringify({ ...SESSION_DETAIL, session }),
     })
   })
 }

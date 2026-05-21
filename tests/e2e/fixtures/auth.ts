@@ -23,17 +23,22 @@ export async function loginViaUi(page: Page, username = ADMIN_USERNAME, password
   await page.waitForURL((url) => !/\/login$/.test(url.pathname), { timeout: 10_000 })
 }
 
+export async function getAuthHeaders(request: APIRequestContext): Promise<Record<string, string>> {
+  const res = await request.post(`${API_URL}/api/auth/login`, {
+    data: { username: ADMIN_USERNAME, password: ADMIN_PASSWORD },
+  })
+  const body = await res.json()
+  const token = body.access_token as string | undefined
+  const csrf = body.csrf_token as string | undefined
+  const headers: Record<string, string> = {}
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  if (csrf) headers['X-CSRF-Token'] = csrf
+  return headers
+}
+
 export async function markOnboarded(request: APIRequestContext): Promise<void> {
   try {
-    const res = await request.post(`${API_URL}/api/auth/login`, {
-      data: { username: ADMIN_USERNAME, password: ADMIN_PASSWORD },
-    })
-    const body = await res.json()
-    const token = body.access_token as string | undefined
-    const csrf = body.csrf_token as string | undefined
-    const headers: Record<string, string> = {}
-    if (token) headers['Authorization'] = `Bearer ${token}`
-    if (csrf) headers['X-CSRF-Token'] = csrf
+    const headers = await getAuthHeaders(request)
     await request.post(`${API_URL}/api/onboarding/complete`, { headers })
   } catch {
     /* ignore */

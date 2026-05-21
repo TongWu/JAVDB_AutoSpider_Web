@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { NSkeleton, NSpace } from 'naive-ui'
 import { useCapabilitiesStore } from '@/stores/capabilities'
@@ -61,6 +61,13 @@ async function retry() {
 }
 
 onMounted(boot)
+
+watch(
+  () => auth.isAuthenticated,
+  (isAuth, wasAuth) => {
+    if (isAuth && !wasAuth) void boot()
+  },
+)
 </script>
 
 <template>

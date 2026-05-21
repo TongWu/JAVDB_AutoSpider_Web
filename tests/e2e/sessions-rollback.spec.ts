@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test'
 import { loginViaUi, markOnboarded, resetBackend } from './fixtures/auth'
-import { installSessionMocks } from './fixtures/session-mocks'
+import { installSessionMocks, COMMITTED_SESSION, FINALIZING_SESSION } from './fixtures/session-mocks'
 
 test.describe('Journey 5/5a/5b: Sessions list + rollback + force-commit', () => {
   test.beforeEach(async ({ request, page }) => {
@@ -18,9 +18,10 @@ test.describe('Journey 5/5a/5b: Sessions list + rollback + force-commit', () => 
       timeout: 10_000,
     })
 
-    // Click the first data row (skip header row)
-    const firstRow = page.locator('.n-data-table-tr').nth(1)
-    await firstRow.click()
+    // Wait for mock data to render in the table, then click the committed row
+    const committedRow = page.locator('tr', { hasText: COMMITTED_SESSION.session_id })
+    await expect(committedRow).toBeVisible({ timeout: 10_000 })
+    await committedRow.click()
 
     // Drawer should open
     await expect(page.locator('.n-drawer')).toBeVisible({ timeout: 5_000 })
@@ -47,15 +48,10 @@ test.describe('Journey 5/5a/5b: Sessions list + rollback + force-commit', () => 
     await loginViaUi(page)
     await page.goto('/sessions')
 
-    // Filter to finalizing
-    const stateFilter = page.getByPlaceholder(/filter by state/i)
-    if (await stateFilter.isVisible()) {
-      await stateFilter.click()
-      await page.getByRole('option', { name: /finalizing/i }).click()
-    }
-
-    const firstRow = page.locator('.n-data-table-tr').nth(1)
-    await firstRow.click()
+    // Wait for the finalizing row to appear and click it
+    const finalizingRow = page.locator('tr', { hasText: FINALIZING_SESSION.session_id })
+    await expect(finalizingRow).toBeVisible({ timeout: 10_000 })
+    await finalizingRow.click()
     await expect(page.locator('.n-drawer')).toBeVisible({ timeout: 5_000 })
 
     await page.getByRole('button', { name: /force commit/i }).click()
@@ -74,7 +70,9 @@ test.describe('Journey 5/5a/5b: Sessions list + rollback + force-commit', () => 
     await loginViaUi(page)
     await page.goto('/sessions')
 
-    const firstRow = page.locator('.n-data-table-tr').nth(1)
+    // Wait for mock data to render, then click first data row
+    const firstRow = page.locator('tr', { hasText: COMMITTED_SESSION.session_id })
+    await expect(firstRow).toBeVisible({ timeout: 10_000 })
     await firstRow.click()
     await expect(page.locator('.n-drawer')).toBeVisible({ timeout: 5_000 })
 

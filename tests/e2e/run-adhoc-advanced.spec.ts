@@ -10,6 +10,7 @@ test.describe('Journey 3: Ad Hoc with Advanced spider options', () => {
   test('submits an Ad Hoc job via Advanced mode with custom URL', async ({ page }) => {
     await loginViaUi(page)
     await page.goto('/run')
+    await expect(page.getByRole('heading', { name: /run/i })).toBeVisible({ timeout: 10_000 })
 
     // Switch to Ad Hoc tab
     await page.getByRole('tab', { name: /ad ?hoc/i }).click()

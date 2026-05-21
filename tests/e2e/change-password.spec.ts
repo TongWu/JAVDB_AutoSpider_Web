@@ -55,7 +55,7 @@ test.describe('Journey 7: change password → re-login round-trip', () => {
 
     // Navigate to Auth tab
     await page.goto('/settings/auth')
-    await expect(page.getByText(new RegExp(ADMIN_USERNAME, 'i'))).toBeVisible({
+    await expect(page.getByText(new RegExp(ADMIN_USERNAME, 'i')).first()).toBeVisible({
       timeout: 10_000,
     })
 
