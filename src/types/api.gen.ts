@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/auth/change-password": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Change Password */
+        post: operations["change_password_api_auth_change_password_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/auth/login": {
         parameters: {
             query?: never;
@@ -799,6 +816,13 @@ export interface components {
              */
             version: string;
         };
+        /** ChangePasswordPayload */
+        ChangePasswordPayload: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
         /**
          * ConfigResponse
          * @description GET /api/config returns the masked runtime config dict verbatim.
@@ -1110,16 +1134,54 @@ export interface components {
             page_num: number;
         };
         /**
-         * JavdbLoginRefreshResponse
-         * @description Returned by POST /api/login/refresh — wraps the JavDB login CLI run.
+         * JavdbLoginRefreshPayload
+         * @description Optional request body for POST /api/login/refresh.
+         *
+         *     Empty body (or omitted body) defaults to proxy_mode='auto', which preserves
+         *     the original behavior. Existing callers that POST without a body still work.
          */
-        JavdbLoginRefreshResponse: {
-            /** Output */
+        JavdbLoginRefreshPayload: {
+            /** Max Attempts */
+            max_attempts?: number | null;
+            /** Pool Names */
+            pool_names?: string[] | null;
+            /**
+             * Proxy Mode
+             * @default auto
+             * @enum {string}
+             */
+            proxy_mode: "auto" | "none" | "single" | "pool";
+            /** Proxy Url */
+            proxy_url?: string | null;
+        };
+        /**
+         * JavdbLoginRefreshResponseV2
+         * @description Structured response for POST /api/login/refresh with categorized errors.
+         */
+        JavdbLoginRefreshResponseV2: {
+            /**
+             * Attempts
+             * @default []
+             */
+            attempts: {
+                [key: string]: unknown;
+            }[];
+            /** Error Category */
+            error_category?: ("invalid_credentials" | "ip_banned" | "captcha_failed" | "cloudflare_blocked" | "connection_error" | "no_credentials" | "no_proxy_succeeded" | "unknown") | null;
+            /** Message */
+            message: string;
+            /**
+             * Output
+             * @default
+             */
             output: string;
-            /** Status */
-            status: string;
-        } & {
-            [key: string]: unknown;
+            /** Proxy Used */
+            proxy_used?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "failed";
         };
         /**
          * JobSummaryResponse
@@ -1244,6 +1306,16 @@ export interface components {
              * @default false
              */
             drop_pending: boolean;
+            /**
+             * Emit Metrics
+             * @default true
+             */
+            emit_metrics: boolean;
+            /**
+             * Fanout Claims
+             * @default true
+             */
+            fanout_claims: boolean;
             /**
              * Force
              * @default false
@@ -1583,6 +1655,39 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    change_password_api_auth_change_password_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatusOkResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     login_api_auth_login_post: {
         parameters: {
             query?: never;
@@ -1678,7 +1783,10 @@ export interface operations {
     };
     get_config_api_config_get: {
         parameters: {
-            query?: never;
+            query?: {
+                /** @description Admin-only: return unmasked secrets */
+                include_secrets?: boolean;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -1692,6 +1800,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ConfigResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -2170,7 +2287,11 @@ export interface operations {
             path?: never;
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["JavdbLoginRefreshPayload"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {
@@ -2178,7 +2299,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["JavdbLoginRefreshResponse"];
+                    "application/json": components["schemas"]["JavdbLoginRefreshResponseV2"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
