@@ -38,7 +38,12 @@ function reset(): void {
 </script>
 
 <template>
-  <NSpace align="center" :wrap-item="false" :size="12" style="flex-wrap: wrap;">
+  <NSpace
+    align="center"
+    :wrap-item="false"
+    :size="12"
+    style="flex-wrap: wrap;"
+  >
     <NSelect
       v-model:value="stateValue"
       multiple
@@ -63,6 +68,12 @@ function reset(): void {
       size="small"
       style="min-width: 220px;"
     />
-    <NButton tertiary size="small" @click="reset">{{ t('sessions.filters.reset') }}</NButton>
+    <NButton
+      tertiary
+      size="small"
+      @click="reset"
+    >
+      {{ t('sessions.filters.reset') }}
+    </NButton>
   </NSpace>
 </template>

@@ -69,12 +69,19 @@ usePolling(
     <div class="sessions-page">
       <header class="page-header">
         <h1>{{ t('nav.sessions') }}</h1>
-        <p class="subtitle">{{ t('sessions.subtitle') }}</p>
+        <p class="subtitle">
+          {{ t('sessions.subtitle') }}
+        </p>
       </header>
 
       <SessionFilters />
 
-      <NAlert v-if="sessions.error" type="error" :title="t('errors.generic.title')" closable>
+      <NAlert
+        v-if="sessions.error"
+        type="error"
+        :title="t('errors.generic.title')"
+        closable
+      >
         {{ sessions.error instanceof Error ? sessions.error.message : String(sessions.error) }}
       </NAlert>
 

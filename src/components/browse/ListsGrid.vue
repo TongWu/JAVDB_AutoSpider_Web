@@ -24,10 +24,18 @@ function statusFor(href: string): { status: 'committed' | 'pending' | 'failed_re
 </script>
 
 <template>
-  <div v-if="browse.listsCards.length === 0" class="empty">
-    <slot name="empty">No results.</slot>
+  <div
+    v-if="browse.listsCards.length === 0"
+    class="empty"
+  >
+    <slot name="empty">
+      No results.
+    </slot>
   </div>
-  <div v-else class="lists-grid">
+  <div
+    v-else
+    class="lists-grid"
+  >
     <ListsCard
       v-for="card in browse.listsCards"
       :key="card.href"

@@ -59,7 +59,11 @@ async function uploadCookie(): Promise<void> {
 
 <template>
   <div class="browse-toolbar">
-    <NSpace align="center" :size="8" wrap>
+    <NSpace
+      align="center"
+      :size="8"
+      wrap
+    >
       <NInput
         v-model:value="browse.query"
         :placeholder="t('browse.toolbar.placeholder')"
@@ -67,19 +71,35 @@ async function uploadCookie(): Promise<void> {
         style="min-width: 360px;"
         @keyup.enter="onSubmit"
       />
-      <NButton type="primary" :loading="browse.submitting" @click="onSubmit">
+      <NButton
+        type="primary"
+        :loading="browse.submitting"
+        @click="onSubmit"
+      >
         {{ t('browse.toolbar.submit') }}
       </NButton>
 
-      <NPopover trigger="click" placement="bottom-end">
+      <NPopover
+        trigger="click"
+        placement="bottom-end"
+      >
         <template #trigger>
-          <NButton tertiary :disabled="browse.recentSearches.length === 0">
-            <template #icon><NIcon>🕘</NIcon></template>
+          <NButton
+            tertiary
+            :disabled="browse.recentSearches.length === 0"
+          >
+            <template #icon>
+              <NIcon>🕘</NIcon>
+            </template>
             {{ t('browse.toolbar.recent') }}
           </NButton>
         </template>
         <div style="min-width: 240px;">
-          <NList v-if="browse.recentSearches.length" hoverable clickable>
+          <NList
+            v-if="browse.recentSearches.length"
+            hoverable
+            clickable
+          >
             <NListItem
               v-for="q in browse.recentSearches"
               :key="q"
@@ -88,7 +108,12 @@ async function uploadCookie(): Promise<void> {
               {{ q }}
             </NListItem>
           </NList>
-          <p v-else class="empty">{{ t('browse.toolbar.recentEmpty') }}</p>
+          <p
+            v-else
+            class="empty"
+          >
+            {{ t('browse.toolbar.recentEmpty') }}
+          </p>
         </div>
       </NPopover>
 
@@ -99,20 +124,31 @@ async function uploadCookie(): Promise<void> {
         placement="bottom-end"
       >
         <template #trigger>
-          <NButton tertiary @click="showCookie = !showCookie">
+          <NButton
+            tertiary
+            @click="showCookie = !showCookie"
+          >
             {{ t('browse.cookieSync.button') }}
           </NButton>
         </template>
         <div style="width: 360px;">
-          <p class="popover-hint">{{ t('browse.cookieSync.hint') }}</p>
+          <p class="popover-hint">
+            {{ t('browse.cookieSync.hint') }}
+          </p>
           <NInput
             v-model:value="cookieInput"
             type="textarea"
             :rows="3"
             :placeholder="t('browse.cookieSync.placeholder')"
           />
-          <NSpace justify="end" style="margin-top: 8px;">
-            <NButton size="small" @click="showCookie = false">
+          <NSpace
+            justify="end"
+            style="margin-top: 8px;"
+          >
+            <NButton
+              size="small"
+              @click="showCookie = false"
+            >
               {{ t('browse.cookieSync.cancel') }}
             </NButton>
             <NButton

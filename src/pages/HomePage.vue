@@ -73,14 +73,28 @@ const recentRunsData: Array<Record<string, unknown>> = []
       <div>
         <h1>{{ t('home.greeting') }}</h1>
         <p class="subtitle">
-          <NTag round size="small" type="success">healthy</NTag>
+          <NTag
+            round
+            size="small"
+            type="success"
+          >
+            healthy
+          </NTag>
           backend {{ buildVersion }} · {{ gitSha }}
         </p>
       </div>
-      <NButton type="primary" disabled>{{ t('home.runDaily') }}</NButton>
+      <NButton
+        type="primary"
+        disabled
+      >
+        {{ t('home.runDaily') }}
+      </NButton>
     </header>
 
-    <div v-if="hintsToShow.length > 0" class="hints">
+    <div
+      v-if="hintsToShow.length > 0"
+      class="hints"
+    >
       <HintCard
         v-for="hint in hintsToShow"
         :key="hint.id"
@@ -91,24 +105,59 @@ const recentRunsData: Array<Record<string, unknown>> = []
       />
     </div>
 
-    <NGrid :cols="4" :x-gap="16" :y-gap="16" style="margin-top: 24px">
+    <NGrid
+      :cols="4"
+      :x-gap="16"
+      :y-gap="16"
+      style="margin-top: 24px"
+    >
       <NGi>
-        <NCard><NStatistic :label="t('home.stat.running')" :value="0" /></NCard>
+        <NCard>
+          <NStatistic
+            :label="t('home.stat.running')"
+            :value="0"
+          />
+        </NCard>
       </NGi>
       <NGi>
-        <NCard><NStatistic :label="t('home.stat.today')" :value="0" /></NCard>
+        <NCard>
+          <NStatistic
+            :label="t('home.stat.today')"
+            :value="0"
+          />
+        </NCard>
       </NGi>
       <NGi>
-        <NCard><NStatistic :label="t('home.stat.failed')" :value="0" /></NCard>
+        <NCard>
+          <NStatistic
+            :label="t('home.stat.failed')"
+            :value="0"
+          />
+        </NCard>
       </NGi>
       <NGi>
-        <NCard><NStatistic :label="t('home.stat.pending')" :value="0" /></NCard>
+        <NCard>
+          <NStatistic
+            :label="t('home.stat.pending')"
+            :value="0"
+          />
+        </NCard>
       </NGi>
     </NGrid>
 
-    <NCard :title="t('home.recentRuns')" style="margin-top: 24px">
-      <NDataTable :columns="recentRunsColumns" :data="recentRunsData" />
-      <NSpace v-if="recentRunsData.length === 0" justify="center" style="padding: 24px">
+    <NCard
+      :title="t('home.recentRuns')"
+      style="margin-top: 24px"
+    >
+      <NDataTable
+        :columns="recentRunsColumns"
+        :data="recentRunsData"
+      />
+      <NSpace
+        v-if="recentRunsData.length === 0"
+        justify="center"
+        style="padding: 24px"
+      >
         <span style="color: var(--n-text-color-disabled)">{{ t('home.noRunsYet') }}</span>
       </NSpace>
     </NCard>

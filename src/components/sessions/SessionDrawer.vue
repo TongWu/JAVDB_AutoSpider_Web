@@ -93,13 +93,21 @@ const torrentsColumns = computed<DataTableColumns<Record<string, unknown>>>(() =
 </script>
 
 <template>
-  <NDrawer v-model:show="visible" :width="720" placement="right">
+  <NDrawer
+    v-model:show="visible"
+    :width="720"
+    placement="right"
+  >
     <NDrawerContent
       v-if="props.session"
       :title="props.session.session_id ?? t('sessions.drawer.untitled')"
       :native-scrollbar="false"
     >
-      <NDescriptions :column="2" size="small" label-placement="left">
+      <NDescriptions
+        :column="2"
+        size="small"
+        label-placement="left"
+      >
         <NDescriptionsItem :label="t('sessions.col.sessionId')">
           <code>{{ props.session.session_id }}</code>
         </NDescriptionsItem>
@@ -124,11 +132,22 @@ const torrentsColumns = computed<DataTableColumns<Record<string, unknown>>>(() =
       <NDivider />
 
       <NSpin :show="sessions.detailLoading && !detail">
-        <div v-if="loadError" style="padding: 16px 0;">
+        <div
+          v-if="loadError"
+          style="padding: 16px 0;"
+        >
           <NEmpty :description="t('sessions.drawer.loadFailed')" />
         </div>
-        <NTabs v-else-if="detail" default-value="movies" type="line" animated>
-          <NTabPane name="movies" :tab="`${t('sessions.drawer.movies')} (${detail.movies.length})`">
+        <NTabs
+          v-else-if="detail"
+          default-value="movies"
+          type="line"
+          animated
+        >
+          <NTabPane
+            name="movies"
+            :tab="`${t('sessions.drawer.movies')} (${detail.movies.length})`"
+          >
             <NDataTable
               v-if="detail.movies.length > 0"
               :columns="moviesColumns"
@@ -138,9 +157,15 @@ const torrentsColumns = computed<DataTableColumns<Record<string, unknown>>>(() =
               flex-height
               style="min-height: 200px;"
             />
-            <NEmpty v-else :description="t('sessions.drawer.noMovies')" />
+            <NEmpty
+              v-else
+              :description="t('sessions.drawer.noMovies')"
+            />
           </NTabPane>
-          <NTabPane name="torrents" :tab="`${t('sessions.drawer.torrents')} (${detail.torrents.length})`">
+          <NTabPane
+            name="torrents"
+            :tab="`${t('sessions.drawer.torrents')} (${detail.torrents.length})`"
+          >
             <NDataTable
               v-if="detail.torrents.length > 0"
               :columns="torrentsColumns"
@@ -150,10 +175,16 @@ const torrentsColumns = computed<DataTableColumns<Record<string, unknown>>>(() =
               flex-height
               style="min-height: 200px;"
             />
-            <NEmpty v-else :description="t('sessions.drawer.noTorrents')" />
+            <NEmpty
+              v-else
+              :description="t('sessions.drawer.noTorrents')"
+            />
           </NTabPane>
         </NTabs>
-        <div v-else style="min-height: 120px;" />
+        <div
+          v-else
+          style="min-height: 120px;"
+        />
       </NSpin>
 
       <NDivider />

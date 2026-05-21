@@ -35,9 +35,16 @@ const tooltip = computed(() => {
 </script>
 
 <template>
-  <NTooltip trigger="hover" placement="top">
+  <NTooltip
+    trigger="hover"
+    placement="top"
+  >
     <template #trigger>
-      <span class="d1-dot" :style="{ background: color }" :data-status="props.status" />
+      <span
+        class="d1-dot"
+        :style="{ background: color }"
+        :data-status="props.status"
+      />
     </template>
     {{ tooltip }}
   </NTooltip>

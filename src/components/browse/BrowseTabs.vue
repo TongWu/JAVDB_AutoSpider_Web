@@ -37,13 +37,22 @@ watch(
     animated
     @update:value="(v: string) => browse.setMode(v as BrowseMode)"
   >
-    <NTabPane name="resolve" :tab="t('browse.tabs.resolve')">
+    <NTabPane
+      name="resolve"
+      :tab="t('browse.tabs.resolve')"
+    >
       <slot name="resolve" />
     </NTabPane>
-    <NTabPane name="lists" :tab="t('browse.tabs.lists')">
+    <NTabPane
+      name="lists"
+      :tab="t('browse.tabs.lists')"
+    >
       <slot name="lists" />
     </NTabPane>
-    <NTabPane name="preview" :tab="t('browse.tabs.preview')">
+    <NTabPane
+      name="preview"
+      :tab="t('browse.tabs.preview')"
+    >
       <slot name="preview" />
     </NTabPane>
   </NTabs>

@@ -17,20 +17,36 @@ const browse = useBrowseStore()
   <div class="browse-page">
     <header class="page-head">
       <h1>{{ t('browse.title') }}</h1>
-      <p class="muted">{{ t('browse.subtitle') }}</p>
+      <p class="muted">
+        {{ t('browse.subtitle') }}
+      </p>
     </header>
 
     <BrowseToolbar />
 
-    <NAlert v-if="browse.error" type="warning" :show-icon="true" closable @close="browse.error = null">
+    <NAlert
+      v-if="browse.error"
+      type="warning"
+      :show-icon="true"
+      closable
+      @close="browse.error = null"
+    >
       {{ extractErrorMessage(browse.error) }}
     </NAlert>
 
     <BrowseTabs>
       <template #resolve>
         <NSpin :show="browse.submitting">
-          <ResolveCard v-if="browse.lastResolve" :result="browse.lastResolve" />
-          <div v-else class="empty">{{ t('browse.resolve.empty') }}</div>
+          <ResolveCard
+            v-if="browse.lastResolve"
+            :result="browse.lastResolve"
+          />
+          <div
+            v-else
+            class="empty"
+          >
+            {{ t('browse.resolve.empty') }}
+          </div>
         </NSpin>
       </template>
       <template #lists>

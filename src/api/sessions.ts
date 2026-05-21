@@ -52,6 +52,8 @@ export async function apiCommitSession(
   const body: SessionCommitPayload = {
     force: payload.force ?? false,
     drop_pending: payload.drop_pending ?? false,
+    emit_metrics: payload.emit_metrics ?? true,
+    fanout_claims: payload.fanout_claims ?? true,
   }
   const { data } = await http.post<SessionCommitResponse>(
     `/api/sessions/${encodeURIComponent(sessionId)}/commit`,

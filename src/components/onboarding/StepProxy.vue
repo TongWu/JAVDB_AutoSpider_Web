@@ -146,23 +146,37 @@ function next() {
 <template>
   <div class="step-content">
     <h2>{{ t('onboarding.proxy.title') }}</h2>
-    <p class="lead">{{ t('onboarding.proxy.body') }}</p>
+    <p class="lead">
+      {{ t('onboarding.proxy.body') }}
+    </p>
 
-    <NSpace vertical size="large">
+    <NSpace
+      vertical
+      size="large"
+    >
       <div>
         <label class="label">{{ t('onboarding.proxy.modeLabel') }}</label>
         <NRadioGroup v-model:value="mode">
           <NSpace>
-            <NRadio value="none">{{ t('onboarding.proxy.modeNone') }}</NRadio>
-            <NRadio value="single">{{ t('onboarding.proxy.modeSingle') }}</NRadio>
-            <NRadio value="pool">{{ t('onboarding.proxy.modePool') }}</NRadio>
+            <NRadio value="none">
+              {{ t('onboarding.proxy.modeNone') }}
+            </NRadio>
+            <NRadio value="single">
+              {{ t('onboarding.proxy.modeSingle') }}
+            </NRadio>
+            <NRadio value="pool">
+              {{ t('onboarding.proxy.modePool') }}
+            </NRadio>
           </NSpace>
         </NRadioGroup>
       </div>
 
       <div v-if="mode === 'single'">
         <label class="label">{{ t('onboarding.proxy.singleUrlLabel') }}</label>
-        <NInput v-model:value="singleUrl" :placeholder="t('onboarding.proxy.singleUrlPlaceholder')" />
+        <NInput
+          v-model:value="singleUrl"
+          :placeholder="t('onboarding.proxy.singleUrlPlaceholder')"
+        />
       </div>
 
       <div v-if="mode === 'pool'">
@@ -172,19 +186,36 @@ function next() {
 
       <div>
         <label class="label">{{ t('onboarding.proxy.modulesLabel') }}</label>
-        <NCheckboxGroup :value="modules" @update:value="onModulesChange">
+        <NCheckboxGroup
+          :value="modules"
+          @update:value="onModulesChange"
+        >
           <NSpace>
-            <NCheckbox value="spider">{{ t('onboarding.proxy.moduleSpider') }}</NCheckbox>
-            <NCheckbox value="qbittorrent">{{ t('onboarding.proxy.moduleQb') }}</NCheckbox>
-            <NCheckbox value="pikpak">{{ t('onboarding.proxy.modulePikpak') }}</NCheckbox>
-            <NCheckbox value="all">{{ t('onboarding.proxy.moduleAll') }}</NCheckbox>
+            <NCheckbox value="spider">
+              {{ t('onboarding.proxy.moduleSpider') }}
+            </NCheckbox>
+            <NCheckbox value="qbittorrent">
+              {{ t('onboarding.proxy.moduleQb') }}
+            </NCheckbox>
+            <NCheckbox value="pikpak">
+              {{ t('onboarding.proxy.modulePikpak') }}
+            </NCheckbox>
+            <NCheckbox value="all">
+              {{ t('onboarding.proxy.moduleAll') }}
+            </NCheckbox>
           </NSpace>
         </NCheckboxGroup>
-        <p class="hint">{{ t('onboarding.proxy.modulesHint') }}</p>
+        <p class="hint">
+          {{ t('onboarding.proxy.modulesHint') }}
+        </p>
       </div>
 
       <NSpace v-if="mode !== 'none'">
-        <NButton type="primary" :loading="testing" @click="runTest">
+        <NButton
+          type="primary"
+          :loading="testing"
+          @click="runTest"
+        >
           {{ t('onboarding.proxy.testButton') }}
         </NButton>
       </NSpace>
@@ -199,10 +230,21 @@ function next() {
     </NSpace>
 
     <div class="actions">
-      <NButton @click="back">{{ t('common.back') }}</NButton>
+      <NButton @click="back">
+        {{ t('common.back') }}
+      </NButton>
       <NSpace>
-        <NButton tertiary @click="skip">{{ t('common.skip') }}</NButton>
-        <NButton type="primary" :disabled="!canContinue" @click="next">
+        <NButton
+          tertiary
+          @click="skip"
+        >
+          {{ t('common.skip') }}
+        </NButton>
+        <NButton
+          type="primary"
+          :disabled="!canContinue"
+          @click="next"
+        >
           {{ t('common.continue') }}
         </NButton>
       </NSpace>

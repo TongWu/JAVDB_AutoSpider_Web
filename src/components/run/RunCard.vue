@@ -28,16 +28,33 @@ const elapsedSec = computed(() => {
     <template #header>
       <div class="header">
         <div>
-          <div class="job-id">{{ props.jobId }}</div>
+          <div class="job-id">
+            {{ props.jobId }}
+          </div>
           <div class="meta">
-            <NTag size="small" round>{{ t(`run.mode.${props.mode}`) }}</NTag>
-            <NTag v-if="stream" size="small" round :type="stream.done ? 'success' : 'info'">
+            <NTag
+              size="small"
+              round
+            >
+              {{ t(`run.mode.${props.mode}`) }}
+            </NTag>
+            <NTag
+              v-if="stream"
+              size="small"
+              round
+              :type="stream.done ? 'success' : 'info'"
+            >
               {{ stream.status || 'pending' }}
             </NTag>
             <span class="elapsed">{{ Math.floor(elapsedSec / 60) }}m {{ elapsedSec % 60 }}s</span>
           </div>
         </div>
-        <NButton size="small" @click="emit('reset')">{{ t('run.startAnother') }}</NButton>
+        <NButton
+          size="small"
+          @click="emit('reset')"
+        >
+          {{ t('run.startAnother') }}
+        </NButton>
       </div>
     </template>
 

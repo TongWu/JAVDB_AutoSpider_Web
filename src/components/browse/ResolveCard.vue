@@ -121,24 +121,75 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
 </script>
 
 <template>
-  <NCard size="small" :bordered="true" class="resolve-card">
+  <NCard
+    size="small"
+    :bordered="true"
+    class="resolve-card"
+  >
     <!-- DETAIL branch: the URL was resolved into a single movie detail. -->
     <template v-if="props.result.kind === 'detail'">
       <div class="detail-head">
-        <img v-if="thumbnail" :src="thumbnail" :alt="title" class="thumb" loading="lazy" />
+        <img
+          v-if="thumbnail"
+          :src="thumbnail"
+          :alt="title"
+          class="thumb"
+          loading="lazy"
+        >
         <div class="meta">
           <div class="title-row">
-            <h3 class="title">{{ title || t('browse.resolve.untitled') }}</h3>
-            <NTag v-if="code" size="small" type="success" round>{{ code }}</NTag>
+            <h3 class="title">
+              {{ title || t('browse.resolve.untitled') }}
+            </h3>
+            <NTag
+              v-if="code"
+              size="small"
+              type="success"
+              round
+            >
+              {{ code }}
+            </NTag>
           </div>
-          <p v-if="releaseDate" class="muted">{{ releaseDate }}</p>
-          <NSpace v-if="actors.length" :size="4" wrap>
-            <NTag v-for="a in actors" :key="a" size="tiny" round>{{ a }}</NTag>
+          <p
+            v-if="releaseDate"
+            class="muted"
+          >
+            {{ releaseDate }}
+          </p>
+          <NSpace
+            v-if="actors.length"
+            :size="4"
+            wrap
+          >
+            <NTag
+              v-for="a in actors"
+              :key="a"
+              size="tiny"
+              round
+            >
+              {{ a }}
+            </NTag>
           </NSpace>
-          <NSpace v-if="tags.length" :size="4" wrap style="margin-top: 6px;">
-            <NTag v-for="g in tags" :key="g" size="tiny" type="info" round>{{ g }}</NTag>
+          <NSpace
+            v-if="tags.length"
+            :size="4"
+            wrap
+            style="margin-top: 6px;"
+          >
+            <NTag
+              v-for="g in tags"
+              :key="g"
+              size="tiny"
+              type="info"
+              round
+            >
+              {{ g }}
+            </NTag>
           </NSpace>
-          <NSpace v-if="isAdmin" style="margin-top: 10px;">
+          <NSpace
+            v-if="isAdmin"
+            style="margin-top: 10px;"
+          >
             <NButton
               type="primary"
               size="small"
@@ -156,18 +207,36 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
 
     <!-- CODE branch: search-by-code returned multiple candidates. -->
     <template v-else>
-      <NAlert v-if="codeMovies.length === 0" type="info" :show-icon="true">
+      <NAlert
+        v-if="codeMovies.length === 0"
+        type="info"
+        :show-icon="true"
+      >
         {{ t('browse.resolve.code.noResults', { code: props.result.data.video_code }) }}
       </NAlert>
       <template v-else>
-        <NAlert v-if="exactMatch" type="success" :show-icon="true" style="margin-bottom: 10px;">
+        <NAlert
+          v-if="exactMatch"
+          type="success"
+          :show-icon="true"
+          style="margin-bottom: 10px;"
+        >
           {{ t('browse.resolve.code.exactMatch', { title: exactMatch.title ?? exactMatch.code ?? '?' }) }}
-          <NButton size="tiny" tertiary style="margin-left: 8px;" @click="onResolveExact">
+          <NButton
+            size="tiny"
+            tertiary
+            style="margin-left: 8px;"
+            @click="onResolveExact"
+          >
             {{ t('browse.resolve.code.openDetail') }}
           </NButton>
         </NAlert>
         <ul class="code-results">
-          <li v-for="(m, idx) in codeMovies" :key="(m.href as string) ?? idx" class="code-row">
+          <li
+            v-for="(m, idx) in codeMovies"
+            :key="(m.href as string) ?? idx"
+            class="code-row"
+          >
             <a
               v-if="typeof m.href === 'string'"
               href="#"

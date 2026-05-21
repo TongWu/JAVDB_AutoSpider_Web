@@ -19,10 +19,17 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <NCard size="small" class="hint-card">
+  <NCard
+    size="small"
+    class="hint-card"
+  >
     <div class="content">
-      <h4 class="title">{{ props.title }}</h4>
-      <p class="body">{{ props.body }}</p>
+      <h4 class="title">
+        {{ props.title }}
+      </h4>
+      <p class="body">
+        {{ props.body }}
+      </p>
     </div>
     <NSpace>
       <NButton
@@ -33,7 +40,11 @@ const { t } = useI18n()
       >
         {{ props.actionLabel }}
       </NButton>
-      <NButton size="small" tertiary @click="emit('dismiss', props.hintId)">
+      <NButton
+        size="small"
+        tertiary
+        @click="emit('dismiss', props.hintId)"
+      >
         {{ t('common.dismiss') }}
       </NButton>
     </NSpace>

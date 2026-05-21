@@ -76,11 +76,31 @@ const numberValue = computed({
   <div class="config-field">
     <div class="label-row">
       <label class="label">{{ labelText }}</label>
-      <NTag v-if="props.meta.sensitive" size="tiny" type="warning" round>secret</NTag>
-      <NTag v-if="props.meta.readonly" size="tiny" type="default" round>read-only</NTag>
-      <NTooltip v-if="descriptionText" placement="right">
+      <NTag
+        v-if="props.meta.sensitive"
+        size="tiny"
+        type="warning"
+        round
+      >
+        secret
+      </NTag>
+      <NTag
+        v-if="props.meta.readonly"
+        size="tiny"
+        type="default"
+        round
+      >
+        read-only
+      </NTag>
+      <NTooltip
+        v-if="descriptionText"
+        placement="right"
+      >
         <template #trigger>
-          <NIcon size="14" style="cursor: help; color: var(--n-text-color-3);">
+          <NIcon
+            size="14"
+            style="cursor: help; color: var(--n-text-color-3);"
+          >
             ⓘ
           </NIcon>
         </template>
@@ -89,7 +109,11 @@ const numberValue = computed({
     </div>
 
     <div class="control-row">
-      <NSwitch v-if="props.meta.type === 'bool'" v-model:value="boolValue" :disabled="props.meta.readonly" />
+      <NSwitch
+        v-if="props.meta.type === 'bool'"
+        v-model:value="boolValue"
+        :disabled="props.meta.readonly"
+      />
 
       <NInputNumber
         v-else-if="props.meta.type === 'int'"
@@ -110,7 +134,10 @@ const numberValue = computed({
         style="max-width: 240px;"
       />
 
-      <div v-else-if="props.meta.type === 'json'" style="width: 100%;">
+      <div
+        v-else-if="props.meta.type === 'json'"
+        style="width: 100%;"
+      >
         <NInput
           v-model:value="jsonBuffer"
           type="textarea"
@@ -119,7 +146,12 @@ const numberValue = computed({
           :disabled="props.meta.readonly"
           @blur="onJsonBlur"
         />
-        <p v-if="jsonError" class="json-error">{{ jsonError }}</p>
+        <p
+          v-if="jsonError"
+          class="json-error"
+        >
+          {{ jsonError }}
+        </p>
       </div>
 
       <NInput

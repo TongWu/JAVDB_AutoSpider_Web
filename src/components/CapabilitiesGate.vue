@@ -65,12 +65,25 @@ onMounted(boot)
 
 <template>
   <template v-if="loading">
-    <div class="boot-skeleton" data-testid="capabilities-boot">
-      <NSpace vertical size="large" style="padding: 24px;">
+    <div
+      class="boot-skeleton"
+      data-testid="capabilities-boot"
+    >
+      <NSpace
+        vertical
+        size="large"
+        style="padding: 24px;"
+      >
         <NSkeleton height="48px" />
         <NSpace>
-          <NSkeleton :width="240" height="100vh" />
-          <NSkeleton height="200px" style="flex: 1;" />
+          <NSkeleton
+            :width="240"
+            height="100vh"
+          />
+          <NSkeleton
+            height="200px"
+            style="flex: 1;"
+          />
         </NSpace>
       </NSpace>
     </div>

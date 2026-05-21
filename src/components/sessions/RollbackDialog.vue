@@ -99,7 +99,10 @@ function formatSummaryEntries(summary: Record<string, unknown>): { label: string
 </script>
 
 <template>
-  <NModal v-model:show="visible" :mask-closable="!previewing && !applying">
+  <NModal
+    v-model:show="visible"
+    :mask-closable="!previewing && !applying"
+  >
     <NCard
       style="max-width: 640px;"
       :title="t('sessions.rollback.title')"
@@ -107,7 +110,10 @@ function formatSummaryEntries(summary: Record<string, unknown>): { label: string
       role="dialog"
       aria-modal="true"
     >
-      <NSpace vertical :size="14">
+      <NSpace
+        vertical
+        :size="14"
+      >
         <div>
           <p style="margin: 0 0 8px; font-size: 13px; color: var(--n-text-color-2);">
             {{ t('sessions.rollback.subtitle') }}
@@ -115,22 +121,45 @@ function formatSummaryEntries(summary: Record<string, unknown>): { label: string
           <code style="font-size: 12px;">{{ props.sessionId ?? '—' }}</code>
         </div>
 
-        <NSpace vertical :size="8">
-          <NCheckbox v-model:checked="includePending" :disabled="previewing || applying">
+        <NSpace
+          vertical
+          :size="8"
+        >
+          <NCheckbox
+            v-model:checked="includePending"
+            :disabled="previewing || applying"
+          >
             {{ t('sessions.rollback.includePending') }}
           </NCheckbox>
-          <NCheckbox v-model:checked="restoreFromAudit" :disabled="previewing || applying">
+          <NCheckbox
+            v-model:checked="restoreFromAudit"
+            :disabled="previewing || applying"
+          >
             {{ t('sessions.rollback.restoreFromAudit') }}
           </NCheckbox>
         </NSpace>
 
-        <NAlert v-if="errorMsg" type="error" :show-icon="true">
+        <NAlert
+          v-if="errorMsg"
+          type="error"
+          :show-icon="true"
+        >
           {{ errorMsg }}
         </NAlert>
 
-        <div v-if="preview" class="preview-block">
-          <h4 style="margin: 0 0 8px;">{{ t('sessions.rollback.previewHeading') }}</h4>
-          <NDescriptions :column="1" size="small" label-placement="left" bordered>
+        <div
+          v-if="preview"
+          class="preview-block"
+        >
+          <h4 style="margin: 0 0 8px;">
+            {{ t('sessions.rollback.previewHeading') }}
+          </h4>
+          <NDescriptions
+            :column="1"
+            size="small"
+            label-placement="left"
+            bordered
+          >
             <NDescriptionsItem
               v-for="row in formatSummaryEntries(preview.summary)"
               :key="row.label"
@@ -146,8 +175,14 @@ function formatSummaryEntries(summary: Record<string, unknown>): { label: string
       </NSpace>
 
       <template #footer>
-        <NSpace justify="end" :size="8">
-          <NButton :disabled="previewing || applying" @click="close">
+        <NSpace
+          justify="end"
+          :size="8"
+        >
+          <NButton
+            :disabled="previewing || applying"
+            @click="close"
+          >
             {{ t('sessions.rollback.cancel') }}
           </NButton>
           <NButton

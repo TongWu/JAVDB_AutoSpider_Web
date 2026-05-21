@@ -92,13 +92,23 @@ function next() {
 <template>
   <div class="step-content">
     <h2>{{ t('onboarding.qbittorrent.title') }}</h2>
-    <p class="lead">{{ t('onboarding.qbittorrent.body') }}</p>
+    <p class="lead">
+      {{ t('onboarding.qbittorrent.body') }}
+    </p>
 
-    <NSpace vertical size="large">
+    <NSpace
+      vertical
+      size="large"
+    >
       <div>
         <label class="label">{{ t('onboarding.qbittorrent.urlLabel') }}</label>
-        <NInput v-model:value="qbUrl" :placeholder="t('onboarding.qbittorrent.urlPlaceholder')" />
-        <p class="hint">{{ t('onboarding.qbittorrent.urlHint') }}</p>
+        <NInput
+          v-model:value="qbUrl"
+          :placeholder="t('onboarding.qbittorrent.urlPlaceholder')"
+        />
+        <p class="hint">
+          {{ t('onboarding.qbittorrent.urlHint') }}
+        </p>
       </div>
 
       <div class="row2">
@@ -108,7 +118,11 @@ function next() {
         </div>
         <div>
           <label class="label">{{ t('login.password') }}</label>
-          <NInput v-model:value="qbPassword" type="password" show-password-on="click" />
+          <NInput
+            v-model:value="qbPassword"
+            type="password"
+            show-password-on="click"
+          />
         </div>
       </div>
 
@@ -145,10 +159,21 @@ function next() {
     </NSpace>
 
     <div class="actions">
-      <NButton @click="back">{{ t('common.back') }}</NButton>
+      <NButton @click="back">
+        {{ t('common.back') }}
+      </NButton>
       <NSpace>
-        <NButton tertiary @click="skip">{{ t('common.skip') }}</NButton>
-        <NButton type="primary" :disabled="!testOk" @click="next">
+        <NButton
+          tertiary
+          @click="skip"
+        >
+          {{ t('common.skip') }}
+        </NButton>
+        <NButton
+          type="primary"
+          :disabled="!testOk"
+          @click="next"
+        >
           {{ t('common.continue') }}
         </NButton>
       </NSpace>

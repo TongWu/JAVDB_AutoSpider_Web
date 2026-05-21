@@ -88,11 +88,20 @@ function resetTab(mode: RunMode) {
   <div class="run-page">
     <header class="page-header">
       <h1>{{ t('nav.run') }}</h1>
-      <p class="subtitle">{{ t('run.subtitle') }}</p>
+      <p class="subtitle">
+        {{ t('run.subtitle') }}
+      </p>
     </header>
 
-    <NTabs v-model:value="activeTab" type="line" animated>
-      <NTabPane name="daily" :tab="t('run.tabs.daily')">
+    <NTabs
+      v-model:value="activeTab"
+      type="line"
+      animated
+    >
+      <NTabPane
+        name="daily"
+        :tab="t('run.tabs.daily')"
+      >
         <NCard>
           <RunForm
             v-if="!activeJobs.daily"
@@ -108,7 +117,10 @@ function resetTab(mode: RunMode) {
         </NCard>
       </NTabPane>
 
-      <NTabPane name="adhoc" :tab="t('run.tabs.adhoc')">
+      <NTabPane
+        name="adhoc"
+        :tab="t('run.tabs.adhoc')"
+      >
         <NCard>
           <RunForm
             v-if="!activeJobs.adhoc"
@@ -125,7 +137,13 @@ function resetTab(mode: RunMode) {
       </NTabPane>
     </NTabs>
 
-    <NAlert v-if="errorMsg" type="error" :title="t('errors.generic.title')" closable @close="errorMsg = null">
+    <NAlert
+      v-if="errorMsg"
+      type="error"
+      :title="t('errors.generic.title')"
+      closable
+      @close="errorMsg = null"
+    >
       {{ errorMsg }}
     </NAlert>
   </div>

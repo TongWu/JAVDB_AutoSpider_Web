@@ -20,7 +20,9 @@ function later() {
 <template>
   <div class="welcome">
     <h2>{{ t('onboarding.welcome.title') }}</h2>
-    <p class="lead">{{ t('onboarding.welcome.body') }}</p>
+    <p class="lead">
+      {{ t('onboarding.welcome.body') }}
+    </p>
 
     <pre class="pipeline">{{ t('onboarding.welcome.pipeline') }}</pre>
 
@@ -31,10 +33,17 @@ function later() {
     </ul>
 
     <NSpace>
-      <NButton type="primary" size="large" @click="configureNow">
+      <NButton
+        type="primary"
+        size="large"
+        @click="configureNow"
+      >
         {{ t('onboarding.welcome.configureNow') }}
       </NButton>
-      <NButton size="large" @click="later">
+      <NButton
+        size="large"
+        @click="later"
+      >
         {{ t('onboarding.welcome.later') }}
       </NButton>
     </NSpace>

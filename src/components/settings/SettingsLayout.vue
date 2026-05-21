@@ -35,14 +35,33 @@ function onTab(key: string): void {
     <div class="settings-layout">
       <header class="page-header">
         <h1>{{ t('nav.settings') }}</h1>
-        <p class="subtitle">{{ t('settings.subtitle') }}</p>
+        <p class="subtitle">
+          {{ t('settings.subtitle') }}
+        </p>
       </header>
 
-      <NTabs :value="active" type="line" animated @update:value="onTab">
-        <NTabPane name="config" :tab="t('nav.config')" />
-        <NTabPane name="auth" :tab="t('nav.auth')" />
-        <NTabPane name="capabilities" :tab="t('nav.capabilities')" />
-        <NTabPane name="appearance" :tab="t('nav.appearance')" />
+      <NTabs
+        :value="active"
+        type="line"
+        animated
+        @update:value="onTab"
+      >
+        <NTabPane
+          name="config"
+          :tab="t('nav.config')"
+        />
+        <NTabPane
+          name="auth"
+          :tab="t('nav.auth')"
+        />
+        <NTabPane
+          name="capabilities"
+          :tab="t('nav.capabilities')"
+        />
+        <NTabPane
+          name="appearance"
+          :tab="t('nav.appearance')"
+        />
       </NTabs>
 
       <router-view />

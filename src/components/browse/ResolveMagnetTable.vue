@@ -140,7 +140,10 @@ function sizeToBytes(raw: unknown): number {
 
 <template>
   <NSpace vertical>
-    <p v-if="props.magnets.length === 0" class="empty">
+    <p
+      v-if="props.magnets.length === 0"
+      class="empty"
+    >
       {{ t('browse.resolve.magnet.empty') }}
     </p>
     <NDataTable

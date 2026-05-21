@@ -22,11 +22,24 @@ function formatValue(value: unknown): { kind: 'tag' | 'text' | 'object'; text: s
 <template>
   <NCard size="small">
     <NSpin :show="caps.loading && !data">
-      <NDescriptions v-if="data" :column="1" size="small" label-placement="left" bordered>
-        <template v-for="(value, key) in data" :key="key">
+      <NDescriptions
+        v-if="data"
+        :column="1"
+        size="small"
+        label-placement="left"
+        bordered
+      >
+        <template
+          v-for="(value, key) in data"
+          :key="key"
+        >
           <NDescriptionsItem :label="String(key)">
             <template v-if="formatValue(value).kind === 'tag'">
-              <NTag :type="formatValue(value).tagType" size="small" round>
+              <NTag
+                :type="formatValue(value).tagType"
+                size="small"
+                round
+              >
                 {{ formatValue(value).text }}
               </NTag>
             </template>
@@ -39,7 +52,10 @@ function formatValue(value: unknown): { kind: 'tag' | 'text' | 'object'; text: s
           </NDescriptionsItem>
         </template>
       </NDescriptions>
-      <div v-else style="min-height: 120px;" />
+      <div
+        v-else
+        style="min-height: 120px;"
+      />
     </NSpin>
   </NCard>
 </template>

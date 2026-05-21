@@ -44,7 +44,10 @@ function reset() {
 </script>
 
 <template>
-  <NSpace align="center" :size="12">
+  <NSpace
+    align="center"
+    :size="12"
+  >
     <NSelect
       multiple
       clearable
@@ -75,6 +78,12 @@ function reset() {
       style="min-width: 200px"
       @update:value="(v: string) => tasks.setFilter('search', v)"
     />
-    <NButton tertiary size="small" @click="reset">{{ t('tasks.filters.reset') }}</NButton>
+    <NButton
+      tertiary
+      size="small"
+      @click="reset"
+    >
+      {{ t('tasks.filters.reset') }}
+    </NButton>
   </NSpace>
 </template>

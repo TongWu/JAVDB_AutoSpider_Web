@@ -64,30 +64,56 @@ async function parseThis(): Promise<void> {
 </script>
 
 <template>
-  <NSpace vertical :size="12">
-    <NSpace align="center" :size="8" wrap>
+  <NSpace
+    vertical
+    :size="12"
+  >
+    <NSpace
+      align="center"
+      :size="8"
+      wrap
+    >
       <NInput
         v-model:value="url"
         :placeholder="t('browse.preview.urlPlaceholder')"
         style="min-width: 360px; flex: 1;"
         @keyup.enter="fetchPreview"
       />
-      <NButton type="primary" :loading="loading" :disabled="!url.trim()" @click="fetchPreview">
+      <NButton
+        type="primary"
+        :loading="loading"
+        :disabled="!url.trim()"
+        @click="fetchPreview"
+      >
         {{ t('browse.preview.fetch') }}
       </NButton>
-      <NButton :disabled="!url.trim()" @click="parseThis">
+      <NButton
+        :disabled="!url.trim()"
+        @click="parseThis"
+      >
         {{ t('browse.preview.parseThis') }}
       </NButton>
     </NSpace>
 
-    <NAlert v-if="error" type="warning" :show-icon="true" closable @close="error = null">
+    <NAlert
+      v-if="error"
+      type="warning"
+      :show-icon="true"
+      closable
+      @close="error = null"
+    >
       {{ error }}
     </NAlert>
 
-    <p class="muted">{{ t('browse.preview.sandboxNote') }}</p>
+    <p class="muted">
+      {{ t('browse.preview.sandboxNote') }}
+    </p>
 
     <NSpin :show="loading">
-      <div v-if="html" class="frame-wrap">
+      <div
+        v-if="html"
+        class="frame-wrap"
+      >
         <!--
           sandbox="allow-same-origin" — no scripts, no top-level navigation, no
           forms. The BE has already sanitised the document, so the iframe is a
@@ -99,9 +125,12 @@ async function parseThis(): Promise<void> {
           referrerpolicy="no-referrer"
           :srcdoc="html"
           title="javdb preview"
-        ></iframe>
+        />
       </div>
-      <div v-else class="empty">
+      <div
+        v-else
+        class="empty"
+      >
         {{ t('browse.preview.empty') }}
       </div>
     </NSpin>

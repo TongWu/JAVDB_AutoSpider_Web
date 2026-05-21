@@ -30,7 +30,11 @@ function onUpdate(key: string, val: unknown): void {
 </script>
 
 <template>
-  <NCard :title="sectionLabel" size="small" embedded>
+  <NCard
+    :title="sectionLabel"
+    size="small"
+    embedded
+  >
     <ConfigField
       v-for="field in props.fields"
       :key="field.key"

@@ -29,18 +29,35 @@ const localeOptions = computed<SelectOption[]>(() => [
 
 <template>
   <NCard size="small">
-    <NSpace vertical :size="16">
-      <NFormItem :label="t('settings.appearance.theme')" label-placement="left" :show-feedback="false">
+    <NSpace
+      vertical
+      :size="16"
+    >
+      <NFormItem
+        :label="t('settings.appearance.theme')"
+        label-placement="left"
+        :show-feedback="false"
+      >
         <NRadioGroup v-model:value="theme">
           <NSpace>
-            <NRadio value="light">{{ t('settings.appearance.themeLight') }}</NRadio>
-            <NRadio value="dark">{{ t('settings.appearance.themeDark') }}</NRadio>
-            <NRadio value="system">{{ t('settings.appearance.themeSystem') }}</NRadio>
+            <NRadio value="light">
+              {{ t('settings.appearance.themeLight') }}
+            </NRadio>
+            <NRadio value="dark">
+              {{ t('settings.appearance.themeDark') }}
+            </NRadio>
+            <NRadio value="system">
+              {{ t('settings.appearance.themeSystem') }}
+            </NRadio>
           </NSpace>
         </NRadioGroup>
       </NFormItem>
 
-      <NFormItem :label="t('settings.appearance.language')" label-placement="left" :show-feedback="false">
+      <NFormItem
+        :label="t('settings.appearance.language')"
+        label-placement="left"
+        :show-feedback="false"
+      >
         <NSelect
           v-model:value="currentLocale"
           :options="localeOptions"

@@ -57,38 +57,76 @@ const paramTags = computed(() => {
 </script>
 
 <template>
-  <NDrawer v-model:show="visible" :width="720" placement="right">
+  <NDrawer
+    v-model:show="visible"
+    :width="720"
+    placement="right"
+  >
     <NDrawerContent
       v-if="props.task"
       :title="props.task.job_id ?? t('tasks.drawer.untitled')"
       :native-scrollbar="false"
     >
-      <NDescriptions :column="2" size="small" label-placement="left">
+      <NDescriptions
+        :column="2"
+        size="small"
+        label-placement="left"
+      >
         <NDescriptionsItem :label="t('tasks.col.jobId')">
           <code>{{ props.task.job_id }}</code>
         </NDescriptionsItem>
         <NDescriptionsItem :label="t('tasks.col.kind')">
-          <NTag size="small" round>{{ taskKind || '—' }}</NTag>
+          <NTag
+            size="small"
+            round
+          >
+            {{ taskKind || '—' }}
+          </NTag>
         </NDescriptionsItem>
-        <NDescriptionsItem :label="t('tasks.col.mode')">{{ props.task.mode ?? '—' }}</NDescriptionsItem>
+        <NDescriptionsItem :label="t('tasks.col.mode')">
+          {{ props.task.mode ?? '—' }}
+        </NDescriptionsItem>
         <NDescriptionsItem :label="t('tasks.col.status')">
           <StatusBadge :status="(props.task.status as string)" />
         </NDescriptionsItem>
-        <NDescriptionsItem v-if="taskUrl" :label="t('tasks.col.url')" :span="2">
+        <NDescriptionsItem
+          v-if="taskUrl"
+          :label="t('tasks.col.url')"
+          :span="2"
+        >
           <code style="font-size: 12px; word-break: break-all;">{{ taskUrl }}</code>
         </NDescriptionsItem>
-        <NDescriptionsItem :label="t('tasks.col.started')">{{ formatTimestamp(startedAt) }}</NDescriptionsItem>
-        <NDescriptionsItem v-if="endedAt" :label="t('tasks.col.ended')">{{ formatTimestamp(endedAt) }}</NDescriptionsItem>
-        <NDescriptionsItem :label="t('tasks.col.duration')">{{ formatDuration(duration) }}</NDescriptionsItem>
-        <NDescriptionsItem v-if="props.task.session_id" :label="t('tasks.col.sessionId')">
+        <NDescriptionsItem :label="t('tasks.col.started')">
+          {{ formatTimestamp(startedAt) }}
+        </NDescriptionsItem>
+        <NDescriptionsItem
+          v-if="endedAt"
+          :label="t('tasks.col.ended')"
+        >
+          {{ formatTimestamp(endedAt) }}
+        </NDescriptionsItem>
+        <NDescriptionsItem :label="t('tasks.col.duration')">
+          {{ formatDuration(duration) }}
+        </NDescriptionsItem>
+        <NDescriptionsItem
+          v-if="props.task.session_id"
+          :label="t('tasks.col.sessionId')"
+        >
           <code>{{ props.task.session_id }}</code>
         </NDescriptionsItem>
-        <NDescriptionsItem v-if="props.task.error" :label="t('tasks.col.error')">
+        <NDescriptionsItem
+          v-if="props.task.error"
+          :label="t('tasks.col.error')"
+        >
           <span class="error-text">{{ props.task.error }}</span>
         </NDescriptionsItem>
       </NDescriptions>
 
-      <NSpace v-if="paramTags.length > 0" :size="6" style="margin-top: 12px;">
+      <NSpace
+        v-if="paramTags.length > 0"
+        :size="6"
+        style="margin-top: 12px;"
+      >
         <NTag
           v-for="tag in paramTags"
           :key="tag.label"
@@ -102,7 +140,9 @@ const paramTags = computed(() => {
 
       <NDivider />
 
-      <h4 style="margin: 0 0 12px;">{{ t('tasks.drawer.logs') }}</h4>
+      <h4 style="margin: 0 0 12px;">
+        {{ t('tasks.drawer.logs') }}
+      </h4>
       <LogStreamView :job-id="props.task.job_id ?? ''" />
     </NDrawerContent>
   </NDrawer>

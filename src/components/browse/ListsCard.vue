@@ -21,7 +21,11 @@ async function open(): Promise<void> {
 </script>
 
 <template>
-  <button class="lists-card" type="button" @click="open">
+  <button
+    class="lists-card"
+    type="button"
+    @click="open"
+  >
     <div class="thumb-wrap">
       <img
         v-if="props.card.thumbnail"
@@ -30,15 +34,29 @@ async function open(): Promise<void> {
         class="thumb"
         loading="lazy"
         decoding="async"
-      />
-      <div v-else class="thumb thumb-placeholder">—</div>
+      >
+      <div
+        v-else
+        class="thumb thumb-placeholder"
+      >
+        —
+      </div>
       <span class="dot-overlay">
-        <D1StatusDot :status="props.status" :meta="props.meta" />
+        <D1StatusDot
+          :status="props.status"
+          :meta="props.meta"
+        />
       </span>
     </div>
     <div class="meta-row">
-      <span v-if="props.card.code" class="code">{{ props.card.code }}</span>
-      <span class="title" :title="props.card.title">{{ props.card.title || '—' }}</span>
+      <span
+        v-if="props.card.code"
+        class="code"
+      >{{ props.card.code }}</span>
+      <span
+        class="title"
+        :title="props.card.title"
+      >{{ props.card.title || '—' }}</span>
     </div>
   </button>
 </template>

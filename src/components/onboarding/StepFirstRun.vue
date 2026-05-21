@@ -56,12 +56,22 @@ function back() {
 <template>
   <div class="step-content">
     <h2>{{ t('onboarding.firstRun.title') }}</h2>
-    <p class="lead">{{ t('onboarding.firstRun.body') }}</p>
+    <p class="lead">
+      {{ t('onboarding.firstRun.body') }}
+    </p>
 
-    <NSpace vertical size="large">
-      <NCard size="small" class="option-card">
+    <NSpace
+      vertical
+      size="large"
+    >
+      <NCard
+        size="small"
+        class="option-card"
+      >
         <h3>{{ t('onboarding.firstRun.runNowTitle') }}</h3>
-        <p class="card-body">{{ t('onboarding.firstRun.runNowBody') }}</p>
+        <p class="card-body">
+          {{ t('onboarding.firstRun.runNowBody') }}
+        </p>
         <NButton
           type="primary"
           size="large"
@@ -73,9 +83,14 @@ function back() {
         </NButton>
       </NCard>
 
-      <NCard size="small" class="option-card">
+      <NCard
+        size="small"
+        class="option-card"
+      >
         <h3>{{ t('onboarding.firstRun.skipTitle') }}</h3>
-        <p class="card-body">{{ t('onboarding.firstRun.skipBody') }}</p>
+        <p class="card-body">
+          {{ t('onboarding.firstRun.skipBody') }}
+        </p>
         <NButton
           size="large"
           :loading="completing"
@@ -86,13 +101,22 @@ function back() {
         </NButton>
       </NCard>
 
-      <NAlert v-if="errorMsg" type="error" :title="t('errors.generic.title')">
+      <NAlert
+        v-if="errorMsg"
+        type="error"
+        :title="t('errors.generic.title')"
+      >
         {{ errorMsg }}
       </NAlert>
     </NSpace>
 
     <div class="actions">
-      <NButton :disabled="runningTest || completing" @click="back">{{ t('common.back') }}</NButton>
+      <NButton
+        :disabled="runningTest || completing"
+        @click="back"
+      >
+        {{ t('common.back') }}
+      </NButton>
     </div>
   </div>
 </template>

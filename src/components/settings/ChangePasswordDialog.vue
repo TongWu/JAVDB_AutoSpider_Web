@@ -84,7 +84,11 @@ function onCancel(): void {
 </script>
 
 <template>
-  <NModal :show="props.show" :mask-closable="false" @update:show="emit('update:show', $event)">
+  <NModal
+    :show="props.show"
+    :mask-closable="false"
+    @update:show="emit('update:show', $event)"
+  >
     <NCard
       style="max-width: 480px;"
       :title="t('settings.auth.changePassword.title')"
@@ -102,7 +106,11 @@ function onCancel(): void {
         {{ serverError }}
       </NAlert>
 
-      <NForm label-placement="top" size="medium" :show-feedback="true">
+      <NForm
+        label-placement="top"
+        size="medium"
+        :show-feedback="true"
+      >
         <NFormItem :label="t('settings.auth.changePassword.current')">
           <NInput
             v-model:value="form.currentPassword"
@@ -142,10 +150,18 @@ function onCancel(): void {
 
       <template #footer>
         <NSpace justify="end">
-          <NButton :disabled="submitting" @click="onCancel">
+          <NButton
+            :disabled="submitting"
+            @click="onCancel"
+          >
             {{ t('settings.auth.changePassword.cancel') }}
           </NButton>
-          <NButton type="primary" :loading="submitting" :disabled="!canSubmit" @click="onSubmit">
+          <NButton
+            type="primary"
+            :loading="submitting"
+            :disabled="!canSubmit"
+            @click="onSubmit"
+          >
             {{ t('settings.auth.changePassword.submit') }}
           </NButton>
         </NSpace>

@@ -32,7 +32,10 @@ function handleRetry() {
 
 <template>
   <div class="outage-wrap">
-    <NCard :title="t('errors.outage.title')" style="max-width: 560px;">
+    <NCard
+      :title="t('errors.outage.title')"
+      style="max-width: 560px;"
+    >
       <p>{{ t('errors.outage.body') }}</p>
       <p style="color: var(--n-text-color-disabled); font-size: 12px;">
         VITE_API_BASE_URL: <code>{{ baseURL }}</code>
@@ -44,7 +47,10 @@ function handleRetry() {
         <li>{{ t('errors.outage.checkCors') }}</li>
       </ul>
       <NSpace justify="end">
-        <NButton type="primary" @click="handleRetry">
+        <NButton
+          type="primary"
+          @click="handleRetry"
+        >
           {{ t('errors.outage.retry') }} ({{ countdown }}s)
         </NButton>
       </NSpace>

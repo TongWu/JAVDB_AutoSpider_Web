@@ -41,7 +41,11 @@ function removeEntry(idx: number) {
 <template>
   <div class="proxy-pool">
     <div class="rows">
-      <div v-for="(entry, idx) in props.modelValue" :key="idx" class="row">
+      <div
+        v-for="(entry, idx) in props.modelValue"
+        :key="idx"
+        class="row"
+      >
         <NInput
           :value="entry.name"
           :placeholder="t('proxyPool.namePlaceholder')"
@@ -60,16 +64,29 @@ function removeEntry(idx: number) {
           class="cell-url"
           @update:value="(v: string) => updateField(idx, 'https', v)"
         />
-        <NButton tertiary type="error" size="small" @click="removeEntry(idx)">
+        <NButton
+          tertiary
+          type="error"
+          size="small"
+          @click="removeEntry(idx)"
+        >
           {{ t('common.delete') }}
         </NButton>
       </div>
-      <div v-if="!props.modelValue || props.modelValue.length === 0" class="empty">
+      <div
+        v-if="!props.modelValue || props.modelValue.length === 0"
+        class="empty"
+      >
         {{ t('proxyPool.empty') }}
       </div>
     </div>
 
-    <NButton type="primary" tertiary size="small" @click="addEntry">
+    <NButton
+      type="primary"
+      tertiary
+      size="small"
+      @click="addEntry"
+    >
       + {{ t('proxyPool.addEntry') }}
     </NButton>
   </div>

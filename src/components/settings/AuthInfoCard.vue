@@ -27,25 +27,48 @@ async function signOut(): Promise<void> {
 
 <template>
   <NCard size="small">
-    <NDescriptions :column="1" size="small" label-placement="left" bordered>
+    <NDescriptions
+      :column="1"
+      size="small"
+      label-placement="left"
+      bordered
+    >
       <NDescriptionsItem :label="t('settings.auth.username')">
         {{ auth.username ?? '—' }}
       </NDescriptionsItem>
       <NDescriptionsItem :label="t('settings.auth.role')">
-        <NTag :type="roleType" size="small" round>{{ role }}</NTag>
+        <NTag
+          :type="roleType"
+          size="small"
+          round
+        >
+          {{ role }}
+        </NTag>
       </NDescriptionsItem>
       <NDescriptionsItem :label="t('settings.auth.tokenStatus')">
-        <NTag :type="auth.isAuthenticated ? 'success' : 'default'" size="small" round>
+        <NTag
+          :type="auth.isAuthenticated ? 'success' : 'default'"
+          size="small"
+          round
+        >
           {{ auth.isAuthenticated ? t('settings.auth.active') : t('settings.auth.inactive') }}
         </NTag>
       </NDescriptionsItem>
     </NDescriptions>
 
-    <NSpace style="margin-top: 16px;" justify="space-between">
+    <NSpace
+      style="margin-top: 16px;"
+      justify="space-between"
+    >
       <NButton @click="showChangePassword = true">
         {{ t('settings.auth.changePassword.open') }}
       </NButton>
-      <NButton type="error" @click="signOut">{{ t('settings.auth.signOut') }}</NButton>
+      <NButton
+        type="error"
+        @click="signOut"
+      >
+        {{ t('settings.auth.signOut') }}
+      </NButton>
     </NSpace>
 
     <ChangePasswordDialog v-model:show="showChangePassword" />

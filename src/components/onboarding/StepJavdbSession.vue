@@ -131,11 +131,23 @@ function next() {
 <template>
   <div class="step-content">
     <h2>{{ t('onboarding.javdbSession.title') }}</h2>
-    <p class="lead">{{ t('onboarding.javdbSession.body') }}</p>
+    <p class="lead">
+      {{ t('onboarding.javdbSession.body') }}
+    </p>
 
-    <NTabs v-model:value="activeTab" type="line" animated>
-      <NTabPane name="cookie" :tab="t('onboarding.javdbSession.tabCookie')">
-        <NSpace vertical size="large">
+    <NTabs
+      v-model:value="activeTab"
+      type="line"
+      animated
+    >
+      <NTabPane
+        name="cookie"
+        :tab="t('onboarding.javdbSession.tabCookie')"
+      >
+        <NSpace
+          vertical
+          size="large"
+        >
           <div>
             <label class="label">{{ t('onboarding.javdbSession.cookieLabel') }}</label>
             <NInput
@@ -144,7 +156,9 @@ function next() {
               :placeholder="t('onboarding.javdbSession.cookiePlaceholder')"
               :rows="3"
             />
-            <p class="hint">{{ t('onboarding.javdbSession.cookieHint') }}</p>
+            <p class="hint">
+              {{ t('onboarding.javdbSession.cookieHint') }}
+            </p>
           </div>
 
           <NSpace>
@@ -168,15 +182,25 @@ function next() {
         </NSpace>
       </NTabPane>
 
-      <NTabPane name="credentials" :tab="t('onboarding.javdbSession.tabCredentials')">
-        <NSpace vertical size="large">
+      <NTabPane
+        name="credentials"
+        :tab="t('onboarding.javdbSession.tabCredentials')"
+      >
+        <NSpace
+          vertical
+          size="large"
+        >
           <div>
             <label class="label">{{ t('login.username') }}</label>
             <NInput v-model:value="username" />
           </div>
           <div>
             <label class="label">{{ t('login.password') }}</label>
-            <NInput v-model:value="password" type="password" show-password-on="click" />
+            <NInput
+              v-model:value="password"
+              type="password"
+              show-password-on="click"
+            />
           </div>
 
           <NSpace>
@@ -207,10 +231,21 @@ function next() {
     </NTabs>
 
     <div class="actions">
-      <NButton @click="back">{{ t('common.back') }}</NButton>
+      <NButton @click="back">
+        {{ t('common.back') }}
+      </NButton>
       <NSpace>
-        <NButton tertiary @click="skip">{{ t('common.skip') }}</NButton>
-        <NButton type="primary" :disabled="!anySuccess" @click="next">
+        <NButton
+          tertiary
+          @click="skip"
+        >
+          {{ t('common.skip') }}
+        </NButton>
+        <NButton
+          type="primary"
+          :disabled="!anySuccess"
+          @click="next"
+        >
           {{ t('common.continue') }}
         </NButton>
       </NSpace>

@@ -51,12 +51,19 @@ watch(highlightJobId, (id) => {
   <div class="tasks-page">
     <header class="page-header">
       <h1>{{ t('nav.tasks') }}</h1>
-      <p class="subtitle">{{ t('tasks.subtitle') }}</p>
+      <p class="subtitle">
+        {{ t('tasks.subtitle') }}
+      </p>
     </header>
 
     <TaskFilters />
 
-    <NAlert v-if="tasks.error" type="error" :title="t('errors.generic.title')" closable>
+    <NAlert
+      v-if="tasks.error"
+      type="error"
+      :title="t('errors.generic.title')"
+      closable
+    >
       {{ tasks.error instanceof Error ? tasks.error.message : String(tasks.error) }}
     </NAlert>
 
@@ -69,7 +76,10 @@ watch(highlightJobId, (id) => {
       />
     </NCard>
 
-    <TaskDrawer v-model:show="drawerOpen" :task="selected" />
+    <TaskDrawer
+      v-model:show="drawerOpen"
+      :task="selected"
+    />
   </div>
 </template>
 

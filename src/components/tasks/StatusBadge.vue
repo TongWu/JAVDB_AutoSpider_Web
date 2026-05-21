@@ -15,5 +15,11 @@ const variant = computed(() => {
 </script>
 
 <template>
-  <NTag :type="variant.type" size="small" round>{{ variant.label }}</NTag>
+  <NTag
+    :type="variant.type"
+    size="small"
+    round
+  >
+    {{ variant.label }}
+  </NTag>
 </template>

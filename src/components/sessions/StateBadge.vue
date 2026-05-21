@@ -31,5 +31,11 @@ const label = computed(() => {
 </script>
 
 <template>
-  <NTag :type="tagType" size="small" round>{{ label }}</NTag>
+  <NTag
+    :type="tagType"
+    size="small"
+    round
+  >
+    {{ label }}
+  </NTag>
 </template>

@@ -66,7 +66,10 @@ function close(): void {
 </script>
 
 <template>
-  <NModal v-model:show="visible" :mask-closable="!submitting">
+  <NModal
+    v-model:show="visible"
+    :mask-closable="!submitting"
+  >
     <NCard
       style="max-width: 520px;"
       :title="t('sessions.commit.title')"
@@ -74,7 +77,10 @@ function close(): void {
       role="dialog"
       aria-modal="true"
     >
-      <NSpace vertical :size="14">
+      <NSpace
+        vertical
+        :size="14"
+      >
         <div>
           <p style="margin: 0 0 8px; font-size: 13px; color: var(--n-text-color-2);">
             {{ t('sessions.commit.subtitle') }}
@@ -82,25 +88,45 @@ function close(): void {
           <code style="font-size: 12px;">{{ props.sessionId ?? '—' }}</code>
         </div>
 
-        <NCheckbox v-model:checked="dropPending" :disabled="submitting">
+        <NCheckbox
+          v-model:checked="dropPending"
+          :disabled="submitting"
+        >
           {{ t('sessions.commit.dropPending') }}
         </NCheckbox>
 
-        <NAlert v-if="errorMsg" type="error" :show-icon="true">
+        <NAlert
+          v-if="errorMsg"
+          type="error"
+          :show-icon="true"
+        >
           {{ errorMsg }}
         </NAlert>
 
-        <NAlert type="warning" :show-icon="true">
+        <NAlert
+          type="warning"
+          :show-icon="true"
+        >
           {{ t('sessions.commit.warning') }}
         </NAlert>
       </NSpace>
 
       <template #footer>
-        <NSpace justify="end" :size="8">
-          <NButton :disabled="submitting" @click="close">
+        <NSpace
+          justify="end"
+          :size="8"
+        >
+          <NButton
+            :disabled="submitting"
+            @click="close"
+          >
             {{ t('sessions.commit.cancel') }}
           </NButton>
-          <NButton type="primary" :loading="submitting" @click="submit">
+          <NButton
+            type="primary"
+            :loading="submitting"
+            @click="submit"
+          >
             {{ t('sessions.commit.confirm') }}
           </NButton>
         </NSpace>

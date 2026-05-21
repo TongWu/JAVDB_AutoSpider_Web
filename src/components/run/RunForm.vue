@@ -98,47 +98,106 @@ defineExpose({ reset() { submitting.value = false } })
 
 <template>
   <div class="run-form">
-    <div v-if="showWhereToggle" class="row">
+    <div
+      v-if="showWhereToggle"
+      class="row"
+    >
       <label class="label">{{ t('run.runOnLabel') }}</label>
       <NSpace>
-        <NButton :type="where === 'local' ? 'primary' : 'default'" size="small" @click="where = 'local'">
+        <NButton
+          :type="where === 'local' ? 'primary' : 'default'"
+          size="small"
+          @click="where = 'local'"
+        >
           {{ t('run.runLocal') }}
         </NButton>
-        <NButton :type="where === 'github' ? 'primary' : 'default'" size="small" @click="where = 'github'">
+        <NButton
+          :type="where === 'github' ? 'primary' : 'default'"
+          size="small"
+          @click="where = 'github'"
+        >
           {{ t('run.runGithub') }}
         </NButton>
       </NSpace>
     </div>
 
-    <div v-if="props.mode === 'adhoc'" class="row">
+    <div
+      v-if="props.mode === 'adhoc'"
+      class="row"
+    >
       <label class="label">{{ t('run.adhoc.urlLabel') }}</label>
-      <NInput v-model:value="url" :placeholder="t('run.adhoc.urlPlaceholder')" />
+      <NInput
+        v-model:value="url"
+        :placeholder="t('run.adhoc.urlPlaceholder')"
+      />
     </div>
 
-    <div v-if="props.mode === 'daily'" class="row2">
+    <div
+      v-if="props.mode === 'daily'"
+      class="row2"
+    >
       <div>
         <label class="label">{{ t('run.daily.startPage') }}</label>
-        <NInputNumber v-model:value="startPage" :min="1" :max="200" />
+        <NInputNumber
+          v-model:value="startPage"
+          :min="1"
+          :max="200"
+        />
       </div>
       <div>
         <label class="label">{{ t('run.daily.endPage') }}</label>
-        <NInputNumber v-model:value="endPage" :min="1" :max="200" />
+        <NInputNumber
+          v-model:value="endPage"
+          :min="1"
+          :max="200"
+        />
       </div>
     </div>
 
     <div class="row inline">
-      <NSpace align="center" size="large">
-        <NSpace align="center" size="small">
+      <NSpace
+        align="center"
+        size="large"
+      >
+        <NSpace
+          align="center"
+          size="small"
+        >
           <NSwitch v-model:value="dryRun" />
           <span class="inline-label">{{ t('run.dryRun') }}</span>
         </NSpace>
-        <NSpace align="center" size="small">
+        <NSpace
+          align="center"
+          size="small"
+        >
           <span class="inline-label">{{ t('run.useProxy') }}:</span>
-          <NButton size="tiny" :type="useProxyTri === 'auto' ? 'primary' : 'default'" @click="useProxyTri = 'auto'">auto</NButton>
-          <NButton size="tiny" :type="useProxyTri === 'on' ? 'primary' : 'default'" @click="useProxyTri = 'on'">on</NButton>
-          <NButton size="tiny" :type="useProxyTri === 'off' ? 'primary' : 'default'" @click="useProxyTri = 'off'">off</NButton>
+          <NButton
+            size="tiny"
+            :type="useProxyTri === 'auto' ? 'primary' : 'default'"
+            @click="useProxyTri = 'auto'"
+          >
+            auto
+          </NButton>
+          <NButton
+            size="tiny"
+            :type="useProxyTri === 'on' ? 'primary' : 'default'"
+            @click="useProxyTri = 'on'"
+          >
+            on
+          </NButton>
+          <NButton
+            size="tiny"
+            :type="useProxyTri === 'off' ? 'primary' : 'default'"
+            @click="useProxyTri = 'off'"
+          >
+            off
+          </NButton>
         </NSpace>
-        <NSpace v-if="props.mode === 'adhoc'" align="center" size="small">
+        <NSpace
+          v-if="props.mode === 'adhoc'"
+          align="center"
+          size="small"
+        >
           <NSwitch v-model:value="ignoreReleaseDate" />
           <span class="inline-label">{{ t('run.adhoc.ignoreReleaseDate') }}</span>
         </NSpace>
@@ -146,11 +205,19 @@ defineExpose({ reset() { submitting.value = false } })
     </div>
 
     <NCollapse>
-      <NCollapseItem :title="t('run.advancedTitle')" name="advanced">
+      <NCollapseItem
+        :title="t('run.advancedTitle')"
+        name="advanced"
+      >
         <div class="advanced">
           <div class="row inline">
-            <NCheckbox v-model:checked="useAdvanced">{{ t('run.advancedActivate') }}</NCheckbox>
-            <span class="hint" style="margin-left: 12px;">{{ t('run.advancedHint') }}</span>
+            <NCheckbox v-model:checked="useAdvanced">
+              {{ t('run.advancedActivate') }}
+            </NCheckbox>
+            <span
+              class="hint"
+              style="margin-left: 12px;"
+            >{{ t('run.advancedHint') }}</span>
           </div>
 
           <NDivider style="margin: 8px 0" />
@@ -167,7 +234,10 @@ defineExpose({ reset() { submitting.value = false } })
                 ]"
               />
             </div>
-            <NSpace align="center" size="small">
+            <NSpace
+              align="center"
+              size="small"
+            >
               <NSwitch v-model:value="ignoreHistory" />
               <span class="inline-label">{{ t('run.advanced.ignoreHistory') }}</span>
             </NSpace>
@@ -176,32 +246,60 @@ defineExpose({ reset() { submitting.value = false } })
           <div class="row2">
             <div>
               <label class="label">{{ t('run.advanced.maxMoviesPhase1') }}</label>
-              <NInputNumber v-model:value="maxMoviesPhase1" :min="0" :max="9999" clearable />
+              <NInputNumber
+                v-model:value="maxMoviesPhase1"
+                :min="0"
+                :max="9999"
+                clearable
+              />
             </div>
             <div>
               <label class="label">{{ t('run.advanced.maxMoviesPhase2') }}</label>
-              <NInputNumber v-model:value="maxMoviesPhase2" :min="0" :max="9999" clearable />
+              <NInputNumber
+                v-model:value="maxMoviesPhase2"
+                :min="0"
+                :max="9999"
+                clearable
+              />
             </div>
           </div>
 
           <div class="row2">
-            <NSpace align="center" size="small">
+            <NSpace
+              align="center"
+              size="small"
+            >
               <NSwitch v-model:value="enableDedup" />
               <span class="inline-label">{{ t('run.advanced.enableDedup') }}</span>
             </NSpace>
             <div>
               <label class="label">{{ t('run.advanced.redownloadThreshold') }}</label>
-              <NInputNumber v-model:value="redownloadThreshold" :min="0" :max="1" :step="0.05" clearable />
+              <NInputNumber
+                v-model:value="redownloadThreshold"
+                :min="0"
+                :max="1"
+                :step="0.05"
+                clearable
+              />
             </div>
           </div>
 
           <div class="row inline">
-            <NSpace align="center" size="large">
-              <NSpace align="center" size="small">
+            <NSpace
+              align="center"
+              size="large"
+            >
+              <NSpace
+                align="center"
+                size="small"
+              >
                 <NSwitch v-model:value="noRcloneFilter" />
                 <span class="inline-label">{{ t('run.advanced.noRcloneFilter') }}</span>
               </NSpace>
-              <NSpace align="center" size="small">
+              <NSpace
+                align="center"
+                size="small"
+              >
                 <NSwitch v-model:value="disableAllFilters" />
                 <span class="inline-label">{{ t('run.advanced.disableAllFilters') }}</span>
               </NSpace>
@@ -212,7 +310,13 @@ defineExpose({ reset() { submitting.value = false } })
     </NCollapse>
 
     <div class="submit-row">
-      <NButton type="primary" size="large" :loading="submitting" :disabled="submitting" @click="onSubmit">
+      <NButton
+        type="primary"
+        size="large"
+        :loading="submitting"
+        :disabled="submitting"
+        @click="onSubmit"
+      >
         {{ t('run.submitButton') }}
       </NButton>
     </div>

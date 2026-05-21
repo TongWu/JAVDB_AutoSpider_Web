@@ -50,10 +50,22 @@ function lineClass(line: string): string {
         :placeholder="t('run.log.filterPlaceholder')"
         style="max-width: 320px"
       />
-      <NSpace align="center" size="small">
-        <NSwitch v-model:value="autoScroll" size="small" />
+      <NSpace
+        align="center"
+        size="small"
+      >
+        <NSwitch
+          v-model:value="autoScroll"
+          size="small"
+        />
         <span style="font-size: 12px; color: var(--n-text-color-2)">{{ t('run.log.autoScroll') }}</span>
-        <NButton size="small" tertiary @click="copyAll">{{ t('run.log.copyAll') }}</NButton>
+        <NButton
+          size="small"
+          tertiary
+          @click="copyAll"
+        >
+          {{ t('run.log.copyAll') }}
+        </NButton>
         <NTag
           v-if="stream"
           :type="stream.done ? 'success' : 'info'"
@@ -65,10 +77,23 @@ function lineClass(line: string): string {
       </NSpace>
     </div>
 
-    <NScrollbar ref="scrollbarRef" style="max-height: 480px; min-height: 200px;">
-      <div ref="contentRef" class="log-content">
-        <NEmpty v-if="filtered.length === 0" :description="t('run.log.empty')" />
-        <div v-for="(line, idx) in filtered" :key="idx" :class="['log-line', lineClass(line)]">
+    <NScrollbar
+      ref="scrollbarRef"
+      style="max-height: 480px; min-height: 200px;"
+    >
+      <div
+        ref="contentRef"
+        class="log-content"
+      >
+        <NEmpty
+          v-if="filtered.length === 0"
+          :description="t('run.log.empty')"
+        />
+        <div
+          v-for="(line, idx) in filtered"
+          :key="idx"
+          :class="['log-line', lineClass(line)]"
+        >
           {{ line }}
         </div>
       </div>
