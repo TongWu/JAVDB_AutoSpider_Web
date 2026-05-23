@@ -8,7 +8,7 @@ import SessionDrawer from '@/components/sessions/SessionDrawer.vue'
 import RollbackDialog from '@/components/sessions/RollbackDialog.vue'
 import CommitDialog from '@/components/sessions/CommitDialog.vue'
 import { useSessionsStore } from '@/stores/sessions'
-import { usePolling } from '@/composables/usePolling'
+import { useSharedPolling } from '@/composables/useSharedPolling'
 import type { SessionItem } from '@/api/sessions'
 
 const { t } = useI18n()
@@ -54,13 +54,13 @@ onMounted(async () => {
   await sessions.fetchList()
 })
 
-usePolling(
+useSharedPolling(
   async () => {
     if (sessions.hasActiveSession) {
       await sessions.fetchList()
     }
   },
-  { intervalMs: 10000, immediate: false },
+  { channelName: 'sessions-poll', intervalMs: 10000, immediate: false },
 )
 </script>
 

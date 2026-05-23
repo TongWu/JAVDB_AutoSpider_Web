@@ -27,6 +27,9 @@
     "runs": "実行履歴",
     "workflows": "ワークフロー",
     "secrets": "シークレット",
+    "migrations": "マイグレーション",
+    "logs": "ログ",
+    "stats": "統計",
     "settings": "設定",
     "config": "構成",
     "auth": "認証",
@@ -1153,5 +1156,63 @@
       "noUrl": "まず javdb.com の URL を入力してください。",
       "empty": "URL を入力して「プレビューを取得」をクリックすると、サニタイズ済み HTML が表示されます。"
     }
+  },
+  "logs": {
+    "subtitle": "キーワードでタスク実行ログを検索。",
+    "searchPlaceholder": "ログテキストを検索...",
+    "jobIdPlaceholder": "ジョブ ID で絞り込み",
+    "search": "検索",
+    "col": {
+      "jobId": "ジョブ ID",
+      "lineNumber": "行",
+      "text": "ログテキスト",
+      "kind": "種類",
+      "createdAt": "日時"
+    },
+    "showing": "{total} 件中 {shown} 件を表示",
+    "truncated": "結果が切り詰められました。検索条件を絞ってください。",
+    "empty": "検索語を入力してタスクログを検索してください。",
+    "noResults": "一致するログ行が見つかりません。"
+  },
+  "stats": {
+    "subtitle": "すべてのインジェスト実行の集計メトリクスとトレンド。",
+    "totalRuns": "合計実行数",
+    "successRate": "成功率",
+    "avgDuration": "平均所要時間",
+    "totalMovies": "合計動画数",
+    "totalTorrents": "合計トレント数",
+    "pikpakVolume": "PikPak 転送数",
+    "dedupFreed": "重複排除解放量",
+    "proxyBans": "プロキシ BAN（7日間）",
+    "period": {
+      "7d": "7日間",
+      "30d": "30日間",
+      "90d": "90日間"
+    },
+    "tabs": {
+      "runs": "実行メトリクス",
+      "growth": "成長",
+      "system": "システム"
+    },
+    "noData": "データはまだありません。",
+    "seconds": "{n}秒",
+    "na": "N/A"
+  },
+  "migrations": {
+    "subtitle": "D1 SQL マイグレーションファイルの表示とプレビュー。",
+    "col": {
+      "filename": "ファイル名",
+      "status": "ステータス",
+      "appliedAt": "適用日時"
+    },
+    "status": {
+      "applied": "適用済み",
+      "pending": "未適用"
+    },
+    "preview": "プレビュー",
+    "previewTitle": "SQL プレビュー",
+    "statements": "{n} ステートメント",
+    "applyDisabled": "リモート実行は未対応です。Wrangler CLI をご利用ください。",
+    "unappliedCount": "{n} 件未適用"
   }
 }

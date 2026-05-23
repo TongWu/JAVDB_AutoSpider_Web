@@ -7,7 +7,7 @@ import TaskFilters from '@/components/tasks/TaskFilters.vue'
 import TaskTable from '@/components/tasks/TaskTable.vue'
 import TaskDrawer from '@/components/tasks/TaskDrawer.vue'
 import { useTasksStore } from '@/stores/tasks'
-import { usePolling } from '@/composables/usePolling'
+import { useSharedPolling } from '@/composables/useSharedPolling'
 import type { TaskItem } from '@/api/tasks'
 
 const { t } = useI18n()
@@ -32,12 +32,12 @@ onMounted(async () => {
   }
 })
 
-// Poll every 5s while any task is running. usePolling auto-pauses when tab hidden.
-usePolling(async () => {
+// Poll every 5s while any task is running. Only the leader tab polls; others skip.
+useSharedPolling(async () => {
   if (tasks.hasRunningTask) {
     await tasks.fetchList()
   }
-}, { intervalMs: 5000, immediate: false })
+}, { channelName: 'tasks-poll', intervalMs: 5000, immediate: false })
 
 watch(highlightJobId, (id) => {
   if (id && tasks.items.length > 0) {
