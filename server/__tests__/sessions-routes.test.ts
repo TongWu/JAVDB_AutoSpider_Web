@@ -12,6 +12,16 @@ async function getToken(): Promise<string> {
   return data.access_token;
 }
 
+async function getCsrf() {
+  const res = await app.request("/api/auth/login", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username: "admin", password: "testpassword123" }),
+  }, env);
+  const data = (await res.json()) as any;
+  return { token: data.access_token, csrfToken: data.csrf_token, csrfCookie: `csrf_token=${data.csrf_token}` };
+}
+
 async function seedSessions(db: D1Database) {
   await db.prepare("CREATE TABLE IF NOT EXISTS ReportSessions (Id TEXT PRIMARY KEY, ReportType TEXT NOT NULL, ReportDate TEXT NOT NULL, UrlType TEXT, DisplayName TEXT, Url TEXT, StartPage INTEGER, EndPage INTEGER, CsvFilename TEXT NOT NULL, DateTimeCreated TEXT NOT NULL, Status TEXT DEFAULT 'in_progress', RunId TEXT, RunAttempt INTEGER, FailureReason TEXT, WriteMode TEXT DEFAULT 'pending')").run();
   await db.prepare("CREATE TABLE IF NOT EXISTS ReportMovies (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, Href TEXT, VideoCode TEXT, Page INTEGER, Actor TEXT, Rate REAL, CommentNumber INTEGER)").run();
@@ -67,5 +77,96 @@ describe("Sessions routes", () => {
       headers: { Authorization: `Bearer ${token}` },
     }, env);
     expect(res.status).toBe(404);
+  });
+
+  // ---------- POST /:session_id/commit ----------
+
+  it("POST /api/sessions/:id/commit updates session to committed", async () => {
+    // sess-003 is seeded with status 'in_progress'
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const res = await app.request("/api/sessions/sess-003/commit", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({}),
+    }, env);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.session_id).toBe("sess-003");
+    expect(data.new_state).toBe("committed");
+    expect(data.pending_dropped).toBe(0);
+  });
+
+  it("POST /api/sessions/:id/commit returns 404 for unknown session", async () => {
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const res = await app.request("/api/sessions/nonexistent/commit", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({}),
+    }, env);
+    expect(res.status).toBe(404);
+  });
+
+  it("POST /api/sessions/:id/commit returns 409 for already-committed session", async () => {
+    // sess-001 is seeded with status 'committed'
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const res = await app.request("/api/sessions/sess-001/commit", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({}),
+    }, env);
+    expect(res.status).toBe(409);
+  });
+
+  // ---------- POST /:session_id/rollback ----------
+
+  it("POST /api/sessions/:id/rollback returns 503 without GH_ACTIONS_TOKEN", async () => {
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const res = await app.request("/api/sessions/sess-001/rollback", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({}),
+    }, env);
+    expect(res.status).toBe(503);
+  });
+
+  it("POST /api/sessions/:id/rollback with dry_run=true returns preview without 503", async () => {
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const res = await app.request("/api/sessions/sess-001/rollback", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({ dry_run: true }),
+    }, env);
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.session_id).toBe("sess-001");
+    expect(data.dry_run).toBe(true);
+    expect(data.actions).toHaveLength(1);
+    expect(data.actions[0].type).toBe("preview");
+    expect(data.summary.dispatched).toBe(false);
   });
 });
