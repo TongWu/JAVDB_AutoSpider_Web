@@ -53,17 +53,30 @@ const resolutionOptions = computed(() => [
   { label: t('torrents.resolution.4k'), value: 4 },
 ])
 
-function buildParams(cursor?: string): TorrentSearchParams {
-  const params: TorrentSearchParams = { limit: 50 }
+function toLocalYmd(ts: number): string {
+  const d = new Date(ts)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function buildFilterParams(): TorrentSearchParams {
+  const params: TorrentSearchParams = {}
   if (searchQuery.value) params.q = searchQuery.value
   if (resolutionFilter.value != null) params.resolution_type = resolutionFilter.value
   if (subtitleFilter.value != null) params.has_subtitle = subtitleFilter.value
   if (uncensoredFilter.value != null) params.uncensored = uncensoredFilter.value
   if (sessionIdFilter.value) params.session_id = sessionIdFilter.value
   if (dateRange.value) {
-    params.date_from = new Date(dateRange.value[0]).toISOString().split('T')[0]
-    params.date_to = new Date(dateRange.value[1]).toISOString().split('T')[0]
+    params.date_from = toLocalYmd(dateRange.value[0])
+    params.date_to = toLocalYmd(dateRange.value[1])
   }
+  return params
+}
+
+function buildParams(cursor?: string): TorrentSearchParams {
+  const params: TorrentSearchParams = { ...buildFilterParams(), limit: 50 }
   if (cursor) params.cursor = cursor
   return params
 }
@@ -101,7 +114,7 @@ async function loadMore() {
 async function handleExport() {
   exporting.value = true
   try {
-    const blob = await exportTorrentsCsv(buildParams())
+    const blob = await exportTorrentsCsv(buildFilterParams())
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -145,9 +158,9 @@ function formatRelative(ts?: string | null): string {
   const d = new Date(ts).getTime()
   if (isNaN(d)) return ts
   const diff = Date.now() - d
-  if (diff < 60_000) return `${Math.max(1, Math.floor(diff / 1000))}s ago`
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
+  if (diff < 60_000) return t('common.time.secondsAgo', { n: Math.max(1, Math.floor(diff / 1000)) })
+  if (diff < 3_600_000) return t('common.time.minutesAgo', { n: Math.floor(diff / 60_000) })
+  if (diff < 86_400_000) return t('common.time.hoursAgo', { n: Math.floor(diff / 3_600_000) })
   return new Date(ts).toLocaleString()
 }
 
@@ -244,7 +257,7 @@ const columns = computed<DataTableColumns<TorrentSearchItem>>(() => [
       h(
         NTag,
         { size: 'small', round: true, type: row.subtitle_indicator === 1 ? 'success' : 'default' },
-        () => (row.subtitle_indicator === 1 ? 'Yes' : 'No'),
+        () => (row.subtitle_indicator === 1 ? t('common.yes') : t('common.no')),
       ),
   },
   {
@@ -254,7 +267,7 @@ const columns = computed<DataTableColumns<TorrentSearchItem>>(() => [
       h(
         NTag,
         { size: 'small', round: true, type: row.censor_indicator === 1 ? 'warning' : 'default' },
-        () => (row.censor_indicator === 1 ? 'Uncensored' : 'Censored'),
+        () => (row.censor_indicator === 1 ? t('torrents.label.uncensored') : t('torrents.label.censored')),
       ),
   },
   {

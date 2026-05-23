@@ -46,7 +46,12 @@
     "yes": "はい",
     "no": "いいえ",
     "delete": "削除",
-    "dismiss": "閉じる"
+    "dismiss": "閉じる",
+    "time": {
+      "secondsAgo": "{n}秒前",
+      "minutesAgo": "{n}分前",
+      "hoursAgo": "{n}時間前"
+    }
   },
   "login": {
     "title": "AutoSpider にサインイン",
@@ -901,7 +906,11 @@
     "loadMore": "さらに読み込む",
     "totalEstimate": "約 {count} 件",
     "noResults": "トレントが見つかりません",
-    "exportFailed": "CSV エクスポートに失敗しました"
+    "exportFailed": "CSV エクスポートに失敗しました",
+    "label": {
+      "uncensored": "無修正",
+      "censored": "修正済み"
+    }
   },
   "browse": {
     "title": "ブラウズ",

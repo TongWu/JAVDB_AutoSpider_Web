@@ -43,17 +43,30 @@ const dateRange = ref<[number, number] | null>(null)
 // Debounce
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
 
-function buildParams(cursor?: string): MovieSearchParams {
-  const params: MovieSearchParams = { limit: 50 }
+function toLocalYmd(ts: number): string {
+  const d = new Date(ts)
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function buildFilterParams(): MovieSearchParams {
+  const params: MovieSearchParams = {}
   if (searchQuery.value) params.q = searchQuery.value
   if (actorFilter.value) params.actor = actorFilter.value
   if (perfectMatchFilter.value != null) params.perfect_match = perfectMatchFilter.value
   if (hiResFilter.value != null) params.hi_res = hiResFilter.value
   if (sessionIdFilter.value) params.session_id = sessionIdFilter.value
   if (dateRange.value) {
-    params.date_from = new Date(dateRange.value[0]).toISOString().split('T')[0]
-    params.date_to = new Date(dateRange.value[1]).toISOString().split('T')[0]
+    params.date_from = toLocalYmd(dateRange.value[0])
+    params.date_to = toLocalYmd(dateRange.value[1])
   }
+  return params
+}
+
+function buildParams(cursor?: string): MovieSearchParams {
+  const params: MovieSearchParams = { ...buildFilterParams(), limit: 50 }
   if (cursor) params.cursor = cursor
   return params
 }
@@ -91,7 +104,7 @@ async function loadMore() {
 async function handleExport() {
   exporting.value = true
   try {
-    const blob = await exportMoviesCsv(buildParams())
+    const blob = await exportMoviesCsv(buildFilterParams())
     const url = URL.createObjectURL(blob)
     const a = document.createElement('a')
     a.href = url
@@ -135,9 +148,9 @@ function formatRelative(ts?: string | null): string {
   const d = new Date(ts).getTime()
   if (isNaN(d)) return ts
   const diff = Date.now() - d
-  if (diff < 60_000) return `${Math.max(1, Math.floor(diff / 1000))}s ago`
-  if (diff < 3_600_000) return `${Math.floor(diff / 60_000)}m ago`
-  if (diff < 86_400_000) return `${Math.floor(diff / 3_600_000)}h ago`
+  if (diff < 60_000) return t('common.time.secondsAgo', { n: Math.max(1, Math.floor(diff / 1000)) })
+  if (diff < 3_600_000) return t('common.time.minutesAgo', { n: Math.floor(diff / 60_000) })
+  if (diff < 86_400_000) return t('common.time.hoursAgo', { n: Math.floor(diff / 3_600_000) })
   return new Date(ts).toLocaleString()
 }
 
@@ -164,7 +177,7 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
       h(
         NTag,
         { size: 'small', round: true, type: row.perfect_match ? 'success' : 'default' },
-        () => (row.perfect_match ? 'Yes' : 'No'),
+        () => (row.perfect_match ? t('common.yes') : t('common.no')),
       ),
   },
   {
@@ -174,7 +187,7 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
       h(
         NTag,
         { size: 'small', round: true, type: row.hi_res ? 'info' : 'default' },
-        () => (row.hi_res ? 'Yes' : 'No'),
+        () => (row.hi_res ? t('common.yes') : t('common.no')),
       ),
   },
   {

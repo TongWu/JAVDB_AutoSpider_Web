@@ -46,7 +46,12 @@
     "yes": "Yes",
     "no": "No",
     "delete": "Delete",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "time": {
+      "secondsAgo": "{n}s ago",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago"
+    }
   },
   "login": {
     "title": "Sign in to AutoSpider",
@@ -901,7 +906,11 @@
     "loadMore": "Load more",
     "totalEstimate": "~{count} results",
     "noResults": "No torrents found",
-    "exportFailed": "CSV export failed"
+    "exportFailed": "CSV export failed",
+    "label": {
+      "uncensored": "Uncensored",
+      "censored": "Censored"
+    }
   },
   "browse": {
     "title": "Browse",

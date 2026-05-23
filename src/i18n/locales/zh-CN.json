@@ -46,7 +46,12 @@
     "yes": "是",
     "no": "否",
     "delete": "删除",
-    "dismiss": "忽略"
+    "dismiss": "忽略",
+    "time": {
+      "secondsAgo": "{n}秒前",
+      "minutesAgo": "{n}分钟前",
+      "hoursAgo": "{n}小时前"
+    }
   },
   "login": {
     "title": "登录 AutoSpider",
@@ -901,7 +906,11 @@
     "loadMore": "加载更多",
     "totalEstimate": "约 {count} 条结果",
     "noResults": "未找到种子",
-    "exportFailed": "CSV 导出失败"
+    "exportFailed": "CSV 导出失败",
+    "label": {
+      "uncensored": "无码",
+      "censored": "有码"
+    }
   },
   "browse": {
     "title": "浏览",
