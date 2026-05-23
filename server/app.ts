@@ -16,6 +16,7 @@ import { tasksRoutes } from "./routes/tasks";
 import { ghActionsRoutes } from "./routes/gh-actions";
 import { operationsRoutes } from "./routes/operations";
 import { statsRoutes } from "./routes/stats";
+import { stubRoutes } from "./routes/stubs";
 
 type AppEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -41,6 +42,7 @@ app.route("/api/tasks", tasksRoutes);
 app.route("/api/gh-actions", ghActionsRoutes);
 app.route("/api/ops", operationsRoutes);
 app.route("/api/stats", statsRoutes);
+app.route("/api", stubRoutes);
 
 // 404 fallback
 app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
