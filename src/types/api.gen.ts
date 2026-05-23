@@ -158,6 +158,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/javdb-session": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Javdb Session Status
+         * @description Return current JavDB session cookie status.
+         */
+        get: operations["get_javdb_session_status_api_diag_javdb_session_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/javdb-session/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Refresh Javdb Session Diag
+         * @description Refresh the JavDB session via headless login or cookie paste.
+         */
+        post: operations["refresh_javdb_session_diag_api_diag_javdb_session_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/explore/download-magnet": {
         parameters: {
             query?: never;
@@ -277,6 +317,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gh-actions/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Runs
+         * @description List workflow runs, optionally filtered by workflow ID.
+         */
+        get: operations["list_runs_api_gh_actions_runs_get"];
+        put?: never;
+        /**
+         * Dispatch Run
+         * @description Dispatch a workflow run (admin only).
+         */
+        post: operations["dispatch_run_api_gh_actions_runs_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gh-actions/runs/{run_id}/logs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Run Logs
+         * @description Return the logs download URL for a run.
+         */
+        get: operations["get_run_logs_api_gh_actions_runs__run_id__logs_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gh-actions/workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Workflows
+         * @description List workflows, each enriched with its latest run.
+         */
+        get: operations["list_workflows_api_gh_actions_workflows_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -305,6 +409,74 @@ export interface paths {
         put?: never;
         /** Run Health Check */
         post: operations["run_health_check_api_health_check_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/history/movies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Movies */
+        get: operations["search_movies_api_history_movies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/history/movies/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Movies Csv */
+        get: operations["export_movies_csv_api_history_movies_export_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/history/torrents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Torrents */
+        get: operations["search_torrents_api_history_torrents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/history/torrents/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Export Torrents Csv */
+        get: operations["export_torrents_csv_api_history_torrents_export_get"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -424,6 +596,231 @@ export interface paths {
         put?: never;
         /** Test Component */
         post: operations["test_component_api_onboarding_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/cleanup/claim-stages": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cleanup Claim Stages
+         * @description Sweep orphaned MovieClaim staged completions.
+         */
+        post: operations["cleanup_claim_stages_api_ops_cleanup_claim_stages_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/cleanup/stale-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Cleanup Stale Sessions
+         * @description Roll back or resume stale in-progress/finalizing sessions.
+         */
+        post: operations["cleanup_stale_sessions_api_ops_cleanup_stale_sessions_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/email/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Email History
+         * @description List EmailNotificationHistory, newest first.
+         */
+        get: operations["email_history_api_ops_email_history_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/email/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email Test
+         * @description Send a test email to the configured recipient.
+         *
+         *     ``body.recipient`` is accepted for forward-compatibility but is currently
+         *     ignored — ``send_email`` targets the module-level ``EMAIL_TO`` constant and
+         *     has no per-call recipient override.  If a custom recipient is provided, the
+         *     email still goes to the configured address and the response notes this.
+         */
+        post: operations["email_test_api_ops_email_test_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/email/{record_id}/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Email Resend
+         * @description Resend a previously failed email notification.
+         */
+        post: operations["email_resend_api_ops_email__record_id__resend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/pikpak/queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Pikpak Queue
+         * @description Return PikPak transfer queue from PikpakHistory.
+         */
+        get: operations["get_pikpak_queue_api_ops_pikpak_queue_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/pikpak/transfer": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pikpak Transfer
+         * @description Trigger a batch PikPak transfer run.
+         */
+        post: operations["pikpak_transfer_api_ops_pikpak_transfer_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/qb/filter-small": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Qb Filter Small
+         * @description Trigger the qBittorrent file-size filter via ``run_file_filter``.
+         */
+        post: operations["qb_filter_small_api_ops_qb_filter_small_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/qb/torrents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Qb Torrents
+         * @description List torrents from qBittorrent (proxied through the API).
+         */
+        get: operations["list_qb_torrents_api_ops_qb_torrents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/rclone/last": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Rclone Last
+         * @description Return last RcloneInventory scan stats and DedupRecords summary.
+         */
+        get: operations["rclone_last_api_ops_rclone_last_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/ops/rclone/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Rclone Run
+         * @description Run rclone manager with the given phase flags.
+         */
+        post: operations["rclone_run_api_ops_rclone_run_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -823,6 +1220,66 @@ export interface components {
             /** New Password */
             new_password: string;
         };
+        /** CleanupClaimStagesRequest */
+        CleanupClaimStagesRequest: {
+            /**
+             * Older Than Hours
+             * @default 6
+             */
+            older_than_hours: number;
+            /** Shard Dates */
+            shard_dates?: string[] | null;
+        };
+        /** CleanupClaimStagesResponse */
+        CleanupClaimStagesResponse: {
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            }[];
+            /** Shards Processed */
+            shards_processed: number;
+            /** Stages Reaped */
+            stages_reaped: number;
+        };
+        /** CleanupStaleRequest */
+        CleanupStaleRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /**
+             * Include Legacy
+             * @default false
+             */
+            include_legacy: boolean;
+            /**
+             * Older Than Hours
+             * @default 48
+             */
+            older_than_hours: number;
+            /**
+             * Scope
+             * @default all
+             * @enum {string}
+             */
+            scope: "reports" | "operations" | "history" | "all";
+        };
+        /** CleanupStaleResponse */
+        CleanupStaleResponse: {
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            }[];
+            /** Dry Run */
+            dry_run: boolean;
+            /** Sessions Cleaned */
+            sessions_cleaned: number;
+            /** Sessions Failed */
+            sessions_failed: number;
+            /** Sessions Found */
+            sessions_found: number;
+        };
         /**
          * ConfigResponse
          * @description GET /api/config returns the masked runtime config dict verbatim.
@@ -940,6 +1397,56 @@ export interface components {
         DismissHintPayload: {
             /** Hint Id */
             hint_id: string;
+        };
+        /** DispatchRequest */
+        DispatchRequest: {
+            /** Inputs */
+            inputs?: {
+                [key: string]: unknown;
+            } | null;
+            /**
+             * Ref
+             * @default main
+             */
+            ref: string;
+            /** Workflow Id */
+            workflow_id: number;
+        };
+        /** DispatchResponse */
+        DispatchResponse: {
+            /** Dispatched */
+            dispatched: boolean;
+        };
+        /** EmailHistoryItem */
+        EmailHistoryItem: {
+            /** Error Message */
+            error_message: string | null;
+            /** Id */
+            id: number;
+            /** Recipient */
+            recipient: string | null;
+            /** Resent At */
+            resent_at: string | null;
+            /** Sent At */
+            sent_at: string | null;
+            /** Session Id */
+            session_id: string | null;
+            /** Status */
+            status: string | null;
+            /** Subject */
+            subject: string | null;
+        };
+        /** EmailHistoryResponse */
+        EmailHistoryResponse: {
+            /** Items */
+            items: components["schemas"]["EmailHistoryItem"][];
+            /** Next Cursor */
+            next_cursor: string | null;
+        };
+        /** EmailTestRequest */
+        EmailTestRequest: {
+            /** Recipient */
+            recipient?: string | null;
         };
         /** ExploreCookiePayload */
         ExploreCookiePayload: {
@@ -1184,6 +1691,49 @@ export interface components {
             status: "ok" | "failed";
         };
         /**
+         * JavdbSessionRefreshRequest
+         * @description Request body for POST /api/diag/javdb-session/refresh.
+         */
+        JavdbSessionRefreshRequest: {
+            /** Cookie Value */
+            cookie_value?: string | null;
+            /**
+             * Method
+             * @default headless
+             */
+            method: string;
+        };
+        /**
+         * JavdbSessionRefreshResponse
+         * @description Response for POST /api/diag/javdb-session/refresh.
+         */
+        JavdbSessionRefreshResponse: {
+            /** Error */
+            error?: string | null;
+            /** Method */
+            method: string;
+            /** New Cookie Preview */
+            new_cookie_preview?: string | null;
+            /** Success */
+            success: boolean;
+        };
+        /**
+         * JavdbSessionStatus
+         * @description Status of the current JavDB session cookie.
+         */
+        JavdbSessionStatus: {
+            /** Cookie Present */
+            cookie_present: boolean;
+            /** Cookie Value Preview */
+            cookie_value_preview: string | null;
+            /** Estimated Expiry */
+            estimated_expiry: string | null;
+            /** Is Likely Valid */
+            is_likely_valid: boolean;
+            /** Last Refresh Time */
+            last_refresh_time: string | null;
+        };
+        /**
          * JobSummaryResponse
          * @description Per-job summary returned by /api/tasks endpoints.
          */
@@ -1247,6 +1797,48 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /**
+         * MovieSearchItem
+         * @description A single MovieHistory row in the search response.
+         */
+        MovieSearchItem: {
+            /** Actor Gender */
+            actor_gender?: string | null;
+            /** Actor Name */
+            actor_name?: string | null;
+            /** Datetime Created */
+            datetime_created?: string | null;
+            /** Datetime Updated */
+            datetime_updated?: string | null;
+            /** Hi Res */
+            hi_res: boolean;
+            /** Href */
+            href: string;
+            /** Id */
+            id: number;
+            /** Perfect Match */
+            perfect_match: boolean;
+            /** Session Id */
+            session_id?: string | null;
+            /** Supporting Actors */
+            supporting_actors?: string | null;
+            /** Torrent Count */
+            torrent_count: number;
+            /** Video Code */
+            video_code: string;
+        };
+        /**
+         * MovieSearchResponse
+         * @description Paginated response for GET /api/history/movies.
+         */
+        MovieSearchResponse: {
+            /** Items */
+            items: components["schemas"]["MovieSearchItem"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Total Estimate */
+            total_estimate: number;
+        };
         /** NextScheduleInfo */
         NextScheduleInfo: {
             /** Cron Pipeline */
@@ -1288,6 +1880,170 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /** PikPakQueueItem */
+        PikPakQueueItem: {
+            /** Category */
+            category: string | null;
+            /** Datetime Added To Qb */
+            datetime_added_to_qb: string | null;
+            /** Error Message */
+            error_message: string | null;
+            /** Id */
+            id: number;
+            /** Torrent Hash */
+            torrent_hash: string | null;
+            /** Torrent Name */
+            torrent_name: string | null;
+            /** Transfer Status */
+            transfer_status: string | null;
+        };
+        /** PikPakQueueResponse */
+        PikPakQueueResponse: {
+            /** Items */
+            items: components["schemas"]["PikPakQueueItem"][];
+            /** Total */
+            total: number;
+        };
+        /** PikPakTransferRequest */
+        PikPakTransferRequest: {
+            /**
+             * Days
+             * @default 7
+             */
+            days: number;
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+        };
+        /** PikPakTransferResponse */
+        PikPakTransferResponse: {
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            }[];
+            /** Dry Run */
+            dry_run: boolean;
+            /** Failed */
+            failed: number | null;
+            /** Skipped */
+            skipped: number | null;
+            /** Transferred */
+            transferred: number | null;
+        };
+        /** QbFilterSmallRequest */
+        QbFilterSmallRequest: {
+            /** Categories */
+            categories?: string[] | null;
+            /**
+             * Days
+             * @default 2
+             */
+            days: number;
+            /**
+             * Delete Local Files
+             * @default false
+             */
+            delete_local_files: boolean;
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /**
+             * Min Size Mb
+             * @default 100
+             */
+            min_size_mb: number;
+        };
+        /** QbFilterSmallResponse */
+        QbFilterSmallResponse: {
+            /** Details */
+            details: {
+                [key: string]: unknown;
+            }[];
+            /** Dry Run */
+            dry_run: boolean;
+            /** Filtered Count */
+            filtered_count: number;
+            /** Torrents Scanned */
+            torrents_scanned: number;
+        };
+        /** QbTorrentItem */
+        QbTorrentItem: {
+            /** Added On */
+            added_on: number;
+            /** Category */
+            category: string;
+            /** Completion On */
+            completion_on: number;
+            /** Hash */
+            hash: string;
+            /** Name */
+            name: string;
+            /** Progress */
+            progress: number;
+            /** Size */
+            size: number;
+            /** State */
+            state: string;
+        };
+        /** QbTorrentsResponse */
+        QbTorrentsResponse: {
+            /** Items */
+            items: components["schemas"]["QbTorrentItem"][];
+            /** Total */
+            total: number;
+        };
+        /** RcloneLastResponse */
+        RcloneLastResponse: {
+            /** Dedup Completed */
+            dedup_completed: number;
+            /** Dedup Pending */
+            dedup_pending: number;
+            /** Inventory Count */
+            inventory_count: number;
+            /** Last Scan Time */
+            last_scan_time: string | null;
+            /**
+             * Total Freed Bytes
+             * @description Estimated bytes reclaimed by dedup, summed from the pre-deletion ExistingFolderSize of completed records. Approximate, not exact.
+             */
+            total_freed_bytes: number;
+        };
+        /** RcloneRunRequest */
+        RcloneRunRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+            /**
+             * Execute
+             * @default false
+             */
+            execute: boolean;
+            /**
+             * Report
+             * @default true
+             */
+            report: boolean;
+            /**
+             * Scan
+             * @default true
+             */
+            scan: boolean;
+        };
+        /** RcloneRunResponse */
+        RcloneRunResponse: {
+            /** Dry Run */
+            dry_run: boolean;
+            /** Phase Results */
+            phase_results: {
+                [key: string]: unknown;
+            };
+        };
         /** RefreshTokenResponse */
         RefreshTokenResponse: {
             /** Access Token */
@@ -1298,6 +2054,39 @@ export interface components {
             token_type: string;
         } & {
             [key: string]: unknown;
+        };
+        /** RunItem */
+        RunItem: {
+            /** Conclusion */
+            conclusion?: string | null;
+            /** Created At */
+            created_at?: string | null;
+            /** Display Title */
+            display_title?: string | null;
+            /** Event */
+            event?: string | null;
+            /** Head Sha */
+            head_sha?: string | null;
+            /** Id */
+            id: number;
+            /** Name */
+            name?: string | null;
+            /** Run Number */
+            run_number?: number | null;
+            /** Status */
+            status?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+        };
+        /** RunLogsResponse */
+        RunLogsResponse: {
+            /** Logs Url */
+            logs_url: string;
+        };
+        /** RunsResponse */
+        RunsResponse: {
+            /** Runs */
+            runs: components["schemas"]["RunItem"][];
         };
         /** SessionCommitPayload */
         SessionCommitPayload: {
@@ -1382,11 +2171,6 @@ export interface components {
              * @default true
              */
             include_pending: boolean;
-            /**
-             * Restore From Audit
-             * @default true
-             */
-            restore_from_audit: boolean;
         };
         /** SessionRollbackResponse */
         SessionRollbackResponse: {
@@ -1556,6 +2340,46 @@ export interface components {
             [key: string]: unknown;
         };
         /**
+         * TorrentSearchItem
+         * @description A single TorrentHistory row (with joined movie data) in the search response.
+         */
+        TorrentSearchItem: {
+            /** Censor Indicator */
+            censor_indicator: number;
+            /** Datetime Created */
+            datetime_created?: string | null;
+            /** File Count */
+            file_count: number;
+            /** Id */
+            id: number;
+            /** Magnet Uri */
+            magnet_uri?: string | null;
+            /** Movie Href */
+            movie_href?: string | null;
+            /** Movie Video Code */
+            movie_video_code?: string | null;
+            /** Resolution Type */
+            resolution_type: number;
+            /** Session Id */
+            session_id?: string | null;
+            /** Size */
+            size?: string | null;
+            /** Subtitle Indicator */
+            subtitle_indicator: number;
+        };
+        /**
+         * TorrentSearchResponse
+         * @description Paginated response for GET /api/history/torrents.
+         */
+        TorrentSearchResponse: {
+            /** Items */
+            items: components["schemas"]["TorrentSearchItem"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
+            /** Total Estimate */
+            total_estimate: number;
+        };
+        /**
          * TriggerTaskResponse
          * @description Returned by POST /api/tasks/daily and POST /api/tasks/adhoc.
          */
@@ -1645,6 +2469,21 @@ export interface components {
             video_code: string;
         } & {
             [key: string]: unknown;
+        };
+        /** WorkflowItem */
+        WorkflowItem: {
+            /** Id */
+            id: number;
+            last_run?: components["schemas"]["RunItem"] | null;
+            /** Name */
+            name: string;
+            /** State */
+            state?: string | null;
+        };
+        /** WorkflowsResponse */
+        WorkflowsResponse: {
+            /** Workflows */
+            workflows: components["schemas"]["WorkflowItem"][];
         };
     };
     responses: never;
@@ -1934,6 +2773,59 @@ export interface operations {
             };
         };
     };
+    get_javdb_session_status_api_diag_javdb_session_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JavdbSessionStatus"];
+                };
+            };
+        };
+    };
+    refresh_javdb_session_diag_api_diag_javdb_session_refresh_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["JavdbSessionRefreshRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JavdbSessionRefreshResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     explore_download_magnet_api_explore_download_magnet_post: {
         parameters: {
             query?: never;
@@ -2163,6 +3055,122 @@ export interface operations {
             };
         };
     };
+    list_runs_api_gh_actions_runs_get: {
+        parameters: {
+            query?: {
+                /** @description Workflow ID to filter by */
+                workflow?: number | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    dispatch_run_api_gh_actions_runs_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DispatchRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DispatchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_run_logs_api_gh_actions_runs__run_id__logs_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                run_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunLogsResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_workflows_api_gh_actions_workflows_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowsResponse"];
+                };
+            };
+        };
+    };
     health_check_api_health_get: {
         parameters: {
             query?: never;
@@ -2195,6 +3203,162 @@ export interface operations {
                 "application/json": components["schemas"]["HealthCheckPayload"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_movies_api_history_movies_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                actor?: string | null;
+                perfect_match?: boolean | null;
+                hi_res?: boolean | null;
+                session_id?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovieSearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_movies_csv_api_history_movies_export_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                actor?: string | null;
+                perfect_match?: boolean | null;
+                hi_res?: boolean | null;
+                session_id?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_torrents_api_history_torrents_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                resolution_type?: number | null;
+                has_subtitle?: boolean | null;
+                uncensored?: boolean | null;
+                session_id?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TorrentSearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    export_torrents_csv_api_history_torrents_export_get: {
+        parameters: {
+            query?: {
+                q?: string | null;
+                resolution_type?: number | null;
+                has_subtitle?: boolean | null;
+                uncensored?: boolean | null;
+                session_id?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
@@ -2408,6 +3572,344 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OnboardingTestResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cleanup_claim_stages_api_ops_cleanup_claim_stages_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanupClaimStagesRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupClaimStagesResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    cleanup_stale_sessions_api_ops_cleanup_stale_sessions_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CleanupStaleRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CleanupStaleResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    email_history_api_ops_email_history_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                cursor?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EmailHistoryResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    email_test_api_ops_email_test_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailTestRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    email_resend_api_ops_email__record_id__resend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                record_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_pikpak_queue_api_ops_pikpak_queue_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                cursor?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PikPakQueueResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    pikpak_transfer_api_ops_pikpak_transfer_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PikPakTransferRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PikPakTransferResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    qb_filter_small_api_ops_qb_filter_small_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QbFilterSmallRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QbFilterSmallResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_qb_torrents_api_ops_qb_torrents_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QbTorrentsResponse"];
+                };
+            };
+        };
+    };
+    rclone_last_api_ops_rclone_last_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RcloneLastResponse"];
+                };
+            };
+        };
+    };
+    rclone_run_api_ops_rclone_run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RcloneRunRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RcloneRunResponse"];
                 };
             };
             /** @description Validation Error */

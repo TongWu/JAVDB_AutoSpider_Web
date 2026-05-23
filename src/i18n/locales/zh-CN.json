@@ -46,7 +46,12 @@
     "yes": "是",
     "no": "否",
     "delete": "删除",
-    "dismiss": "忽略"
+    "dismiss": "忽略",
+    "time": {
+      "secondsAgo": "{n}秒前",
+      "minutesAgo": "{n}分钟前",
+      "hoursAgo": "{n}小时前"
+    }
   },
   "login": {
     "title": "登录 AutoSpider",
@@ -837,6 +842,75 @@
     "empty": "暂无代理配置。点击「添加代理」添加一条。",
     "confirmDeleteTitle": "移除此代理？",
     "confirmDeleteBody": "这将从代理池中移除该条目，其他代理不受影响。"
+  },
+  "movies": {
+    "subtitle": "搜索和浏览影片历史记录",
+    "search": "按番号、演员搜索...",
+    "filters": {
+      "actor": "演员",
+      "actorPlaceholder": "按演员名筛选",
+      "perfectMatch": "完美匹配",
+      "hiRes": "高清",
+      "sessionId": "会话 ID",
+      "sessionIdPlaceholder": "按会话筛选",
+      "dateRange": "日期范围",
+      "reset": "重置"
+    },
+    "col": {
+      "videoCode": "番号",
+      "actorName": "演员",
+      "perfectMatch": "完美匹配",
+      "hiRes": "高清",
+      "created": "创建时间",
+      "torrents": "种子数",
+      "sessionId": "会话"
+    },
+    "exportCsv": "导出 CSV",
+    "loadMore": "加载更多",
+    "totalEstimate": "约 {count} 条结果",
+    "noResults": "未找到影片",
+    "exportFailed": "CSV 导出失败"
+  },
+  "torrents": {
+    "subtitle": "搜索和浏览种子历史记录",
+    "search": "按番号搜索...",
+    "filters": {
+      "resolution": "分辨率",
+      "resolutionPlaceholder": "所有分辨率",
+      "subtitle": "有字幕",
+      "uncensored": "无码",
+      "sessionId": "会话 ID",
+      "sessionIdPlaceholder": "按会话筛选",
+      "dateRange": "日期范围",
+      "reset": "重置"
+    },
+    "col": {
+      "videoCode": "番号",
+      "magnet": "磁力链接",
+      "size": "大小",
+      "resolution": "分辨率",
+      "subtitle": "字幕",
+      "censor": "审查",
+      "fileCount": "文件数",
+      "created": "创建时间",
+      "sessionId": "会话"
+    },
+    "resolution": {
+      "unknown": "未知",
+      "sd": "SD",
+      "hd": "HD",
+      "fhd": "FHD",
+      "4k": "4K"
+    },
+    "exportCsv": "导出 CSV",
+    "loadMore": "加载更多",
+    "totalEstimate": "约 {count} 条结果",
+    "noResults": "未找到种子",
+    "exportFailed": "CSV 导出失败",
+    "label": {
+      "uncensored": "无码",
+      "censored": "有码"
+    }
   },
   "browse": {
     "title": "浏览",

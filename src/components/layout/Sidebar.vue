@@ -114,6 +114,8 @@ function onSelect(key: string) {
   else if (key === 'auth') void router.push('/settings/auth')
   else if (key === 'capabilities') void router.push('/settings/capabilities')
   else if (key === 'appearance') void router.push('/settings/appearance')
+  else if (key === 'movies') void router.push('/data/movies')
+  else if (key === 'torrents') void router.push('/data/torrents')
   // others still placeholder
 }
 </script>

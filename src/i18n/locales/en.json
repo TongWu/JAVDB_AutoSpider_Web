@@ -46,7 +46,12 @@
     "yes": "Yes",
     "no": "No",
     "delete": "Delete",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "time": {
+      "secondsAgo": "{n}s ago",
+      "minutesAgo": "{n}m ago",
+      "hoursAgo": "{n}h ago"
+    }
   },
   "login": {
     "title": "Sign in to AutoSpider",
@@ -837,6 +842,75 @@
     "empty": "No proxies configured yet. Click 'Add proxy' to add one.",
     "confirmDeleteTitle": "Remove this proxy?",
     "confirmDeleteBody": "This will remove the entry from your pool. Other proxies are unaffected."
+  },
+  "movies": {
+    "subtitle": "Search and explore movie history records",
+    "search": "Search by video code, actor...",
+    "filters": {
+      "actor": "Actor",
+      "actorPlaceholder": "Filter by actor name",
+      "perfectMatch": "Perfect match",
+      "hiRes": "Hi-res",
+      "sessionId": "Session ID",
+      "sessionIdPlaceholder": "Filter by session",
+      "dateRange": "Date range",
+      "reset": "Reset"
+    },
+    "col": {
+      "videoCode": "Video Code",
+      "actorName": "Actor",
+      "perfectMatch": "Perfect Match",
+      "hiRes": "Hi-Res",
+      "created": "Created",
+      "torrents": "Torrents",
+      "sessionId": "Session"
+    },
+    "exportCsv": "Export CSV",
+    "loadMore": "Load more",
+    "totalEstimate": "~{count} results",
+    "noResults": "No movies found",
+    "exportFailed": "CSV export failed"
+  },
+  "torrents": {
+    "subtitle": "Search and explore torrent history records",
+    "search": "Search by video code...",
+    "filters": {
+      "resolution": "Resolution",
+      "resolutionPlaceholder": "All resolutions",
+      "subtitle": "Has subtitle",
+      "uncensored": "Uncensored",
+      "sessionId": "Session ID",
+      "sessionIdPlaceholder": "Filter by session",
+      "dateRange": "Date range",
+      "reset": "Reset"
+    },
+    "col": {
+      "videoCode": "Video Code",
+      "magnet": "Magnet",
+      "size": "Size",
+      "resolution": "Resolution",
+      "subtitle": "Subtitle",
+      "censor": "Censor",
+      "fileCount": "Files",
+      "created": "Created",
+      "sessionId": "Session"
+    },
+    "resolution": {
+      "unknown": "Unknown",
+      "sd": "SD",
+      "hd": "HD",
+      "fhd": "FHD",
+      "4k": "4K"
+    },
+    "exportCsv": "Export CSV",
+    "loadMore": "Load more",
+    "totalEstimate": "~{count} results",
+    "noResults": "No torrents found",
+    "exportFailed": "CSV export failed",
+    "label": {
+      "uncensored": "Uncensored",
+      "censored": "Censored"
+    }
   },
   "browse": {
     "title": "Browse",

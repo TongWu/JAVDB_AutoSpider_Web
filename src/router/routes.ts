@@ -99,6 +99,18 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, layout: 'blank' },
   },
   {
+    path: '/data/movies',
+    name: 'data-movies',
+    component: () => import('@/pages/data/MoviesPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/data/torrents',
+    name: 'data-torrents',
+    component: () => import('@/pages/data/TorrentsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
   },

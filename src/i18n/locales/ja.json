@@ -46,7 +46,12 @@
     "yes": "はい",
     "no": "いいえ",
     "delete": "削除",
-    "dismiss": "閉じる"
+    "dismiss": "閉じる",
+    "time": {
+      "secondsAgo": "{n}秒前",
+      "minutesAgo": "{n}分前",
+      "hoursAgo": "{n}時間前"
+    }
   },
   "login": {
     "title": "AutoSpider にサインイン",
@@ -837,6 +842,75 @@
     "empty": "プロキシがまだ設定されていません。「プロキシを追加」をクリックして追加してください。",
     "confirmDeleteTitle": "このプロキシを削除しますか？",
     "confirmDeleteBody": "このエントリをプールから削除します。他のプロキシには影響しません。"
+  },
+  "movies": {
+    "subtitle": "動画履歴レコードを検索・閲覧",
+    "search": "動画コード、俳優で検索...",
+    "filters": {
+      "actor": "俳優",
+      "actorPlaceholder": "俳優名で絞り込み",
+      "perfectMatch": "完全一致",
+      "hiRes": "高画質",
+      "sessionId": "セッション ID",
+      "sessionIdPlaceholder": "セッションで絞り込み",
+      "dateRange": "日付範囲",
+      "reset": "リセット"
+    },
+    "col": {
+      "videoCode": "動画コード",
+      "actorName": "俳優",
+      "perfectMatch": "完全一致",
+      "hiRes": "高画質",
+      "created": "作成日時",
+      "torrents": "トレント",
+      "sessionId": "セッション"
+    },
+    "exportCsv": "CSV エクスポート",
+    "loadMore": "さらに読み込む",
+    "totalEstimate": "約 {count} 件",
+    "noResults": "動画が見つかりません",
+    "exportFailed": "CSV エクスポートに失敗しました"
+  },
+  "torrents": {
+    "subtitle": "トレント履歴レコードを検索・閲覧",
+    "search": "動画コードで検索...",
+    "filters": {
+      "resolution": "解像度",
+      "resolutionPlaceholder": "すべての解像度",
+      "subtitle": "字幕あり",
+      "uncensored": "無修正",
+      "sessionId": "セッション ID",
+      "sessionIdPlaceholder": "セッションで絞り込み",
+      "dateRange": "日付範囲",
+      "reset": "リセット"
+    },
+    "col": {
+      "videoCode": "動画コード",
+      "magnet": "マグネット",
+      "size": "サイズ",
+      "resolution": "解像度",
+      "subtitle": "字幕",
+      "censor": "検閲",
+      "fileCount": "ファイル数",
+      "created": "作成日時",
+      "sessionId": "セッション"
+    },
+    "resolution": {
+      "unknown": "不明",
+      "sd": "SD",
+      "hd": "HD",
+      "fhd": "FHD",
+      "4k": "4K"
+    },
+    "exportCsv": "CSV エクスポート",
+    "loadMore": "さらに読み込む",
+    "totalEstimate": "約 {count} 件",
+    "noResults": "トレントが見つかりません",
+    "exportFailed": "CSV エクスポートに失敗しました",
+    "label": {
+      "uncensored": "無修正",
+      "censored": "修正済み"
+    }
   },
   "browse": {
     "title": "ブラウズ",
