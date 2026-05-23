@@ -8,6 +8,10 @@ import { capabilitiesRoutes } from "./routes/capabilities";
 import { systemStateRoutes } from "./routes/system-state";
 import { historyRoutes } from "./routes/history";
 import { sessionsRoutes } from "./routes/sessions";
+import { configRoutes } from "./routes/config";
+import { onboardingRoutes } from "./routes/onboarding";
+import { diagnosticsRoutes } from "./routes/diagnostics";
+import { exploreRoutes } from "./routes/explore";
 
 type AppEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -25,6 +29,10 @@ app.route("/api/capabilities", capabilitiesRoutes);
 app.route("/api/system", systemStateRoutes);
 app.route("/api/history", historyRoutes);
 app.route("/api/sessions", sessionsRoutes);
+app.route("/api/config", configRoutes);
+app.route("/api/onboarding", onboardingRoutes);
+app.route("/api/diag", diagnosticsRoutes);
+app.route("/api/explore", exploreRoutes);
 
 // 404 fallback
 app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));

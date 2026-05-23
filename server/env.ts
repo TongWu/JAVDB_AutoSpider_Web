@@ -33,4 +33,10 @@ export interface Env {
   SMTP_HOST?: string;
   SMTP_SERVER?: string;
   JAVDB_USERNAME?: string;
+
+  // Config encryption
+  SECRETS_ENCRYPTION_KEY?: string;
+
+  // JavDB session cookie (stored in D1 config, also readable from env for initial seed)
+  JAVDB_SESSION_COOKIE?: string;
 }
