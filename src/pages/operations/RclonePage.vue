@@ -124,9 +124,10 @@ const phaseColumns = computed<DataTableColumns<Record<string, unknown>>>(() => [
     ellipsis: { tooltip: true },
     minWidth: 200,
     render: (row) => {
-      const { phase: _p, key: _k, status: _s, result: _r, ...rest } = row
-      const keys = Object.keys(rest)
-      return keys.length > 0 ? JSON.stringify(rest) : '—'
+      const rest = Object.fromEntries(
+        Object.entries(row).filter(([k]) => !['phase', 'key', 'status', 'result'].includes(k)),
+      )
+      return Object.keys(rest).length > 0 ? JSON.stringify(rest) : '—'
     },
   },
 ])

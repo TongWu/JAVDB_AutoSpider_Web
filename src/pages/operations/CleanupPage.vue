@@ -118,9 +118,10 @@ const staleDetailColumns = computed<DataTableColumns<Record<string, unknown>>>((
     ellipsis: { tooltip: true },
     minWidth: 200,
     render: (row) => {
-      const { session_id: _s, status: _st, action: _a, ...rest } = row
-      const keys = Object.keys(rest)
-      return keys.length > 0 ? JSON.stringify(rest) : '—'
+      const rest = Object.fromEntries(
+        Object.entries(row).filter(([k]) => !['session_id', 'status', 'action'].includes(k)),
+      )
+      return Object.keys(rest).length > 0 ? JSON.stringify(rest) : '—'
     },
   },
 ])
@@ -149,9 +150,10 @@ const claimDetailColumns = computed<DataTableColumns<Record<string, unknown>>>((
     ellipsis: { tooltip: true },
     minWidth: 200,
     render: (row) => {
-      const { shard: _sh, shard_date: _sd, status: _st, result: _r, ...rest } = row
-      const keys = Object.keys(rest)
-      return keys.length > 0 ? JSON.stringify(rest) : '—'
+      const rest = Object.fromEntries(
+        Object.entries(row).filter(([k]) => !['shard', 'shard_date', 'status', 'result'].includes(k)),
+      )
+      return Object.keys(rest).length > 0 ? JSON.stringify(rest) : '—'
     },
   },
 ])
