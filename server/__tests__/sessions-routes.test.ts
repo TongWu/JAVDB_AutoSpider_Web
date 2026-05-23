@@ -13,53 +13,14 @@ async function getToken(): Promise<string> {
 }
 
 async function seedSessions(db: D1Database) {
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS ReportSessions (
-      Id TEXT PRIMARY KEY,
-      ReportType TEXT NOT NULL,
-      ReportDate TEXT NOT NULL,
-      UrlType TEXT,
-      DisplayName TEXT,
-      Url TEXT,
-      StartPage INTEGER,
-      EndPage INTEGER,
-      CsvFilename TEXT NOT NULL,
-      DateTimeCreated TEXT NOT NULL,
-      Status TEXT DEFAULT 'in_progress',
-      RunId TEXT,
-      RunAttempt INTEGER,
-      FailureReason TEXT,
-      WriteMode TEXT DEFAULT 'pending'
-    );
-    CREATE TABLE IF NOT EXISTS ReportMovies (
-      Id INTEGER PRIMARY KEY AUTOINCREMENT,
-      SessionId TEXT NOT NULL,
-      Href TEXT,
-      VideoCode TEXT,
-      Page INTEGER,
-      Actor TEXT,
-      Rate REAL,
-      CommentNumber INTEGER
-    );
-    CREATE TABLE IF NOT EXISTS ReportTorrents (
-      Id INTEGER PRIMARY KEY AUTOINCREMENT,
-      ReportMovieId INTEGER NOT NULL,
-      VideoCode TEXT,
-      MagnetUri TEXT,
-      SubtitleIndicator INTEGER,
-      CensorIndicator INTEGER,
-      ResolutionType INTEGER,
-      Size TEXT,
-      FileCount INTEGER
-    );
-    INSERT INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode, RunId, RunAttempt)
-    VALUES
-      ('sess-001', 'daily', '2026-01-01', 'report1.csv', '2026-01-01 10:00:00', 'committed', 'pending', 'run-1', 1),
-      ('sess-002', 'daily', '2026-01-02', 'report2.csv', '2026-01-02 10:00:00', 'committed', 'pending', 'run-2', 1),
-      ('sess-003', 'adhoc', '2026-01-03', 'report3.csv', '2026-01-03 10:00:00', 'in_progress', 'pending', 'run-3', 1);
-    INSERT INTO ReportMovies (SessionId, Href, VideoCode, Page, Actor) VALUES ('sess-001', '/v/abc', 'ABC-001', 1, 'Actor A');
-    INSERT INTO ReportTorrents (ReportMovieId, VideoCode, MagnetUri) VALUES (1, 'ABC-001', 'magnet:?xt=urn:btih:xxx');
-  `);
+  await db.prepare("CREATE TABLE IF NOT EXISTS ReportSessions (Id TEXT PRIMARY KEY, ReportType TEXT NOT NULL, ReportDate TEXT NOT NULL, UrlType TEXT, DisplayName TEXT, Url TEXT, StartPage INTEGER, EndPage INTEGER, CsvFilename TEXT NOT NULL, DateTimeCreated TEXT NOT NULL, Status TEXT DEFAULT 'in_progress', RunId TEXT, RunAttempt INTEGER, FailureReason TEXT, WriteMode TEXT DEFAULT 'pending')").run();
+  await db.prepare("CREATE TABLE IF NOT EXISTS ReportMovies (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, Href TEXT, VideoCode TEXT, Page INTEGER, Actor TEXT, Rate REAL, CommentNumber INTEGER)").run();
+  await db.prepare("CREATE TABLE IF NOT EXISTS ReportTorrents (Id INTEGER PRIMARY KEY AUTOINCREMENT, ReportMovieId INTEGER NOT NULL, VideoCode TEXT, MagnetUri TEXT, SubtitleIndicator INTEGER, CensorIndicator INTEGER, ResolutionType INTEGER, Size TEXT, FileCount INTEGER)").run();
+  await db.prepare("INSERT INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode, RunId, RunAttempt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").bind("sess-001", "daily", "2026-01-01", "report1.csv", "2026-01-01 10:00:00", "committed", "pending", "run-1", 1).run();
+  await db.prepare("INSERT INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode, RunId, RunAttempt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").bind("sess-002", "daily", "2026-01-02", "report2.csv", "2026-01-02 10:00:00", "committed", "pending", "run-2", 1).run();
+  await db.prepare("INSERT INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode, RunId, RunAttempt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").bind("sess-003", "adhoc", "2026-01-03", "report3.csv", "2026-01-03 10:00:00", "in_progress", "pending", "run-3", 1).run();
+  await db.prepare("INSERT INTO ReportMovies (SessionId, Href, VideoCode, Page, Actor) VALUES (?, ?, ?, ?, ?)").bind("sess-001", "/v/abc", "ABC-001", 1, "Actor A").run();
+  await db.prepare("INSERT INTO ReportTorrents (ReportMovieId, VideoCode, MagnetUri) VALUES (?, ?, ?)").bind(1, "ABC-001", "magnet:?xt=urn:btih:xxx").run();
 }
 
 describe("Sessions routes", () => {

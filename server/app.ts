@@ -7,6 +7,7 @@ import { authRoutes } from "./routes/auth";
 import { capabilitiesRoutes } from "./routes/capabilities";
 import { systemStateRoutes } from "./routes/system-state";
 import { historyRoutes } from "./routes/history";
+import { sessionsRoutes } from "./routes/sessions";
 
 type AppEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -22,6 +23,7 @@ app.use("/api/*", requireAuth());
 app.route("/api/capabilities", capabilitiesRoutes);
 app.route("/api/system", systemStateRoutes);
 app.route("/api/history", historyRoutes);
+app.route("/api/sessions", sessionsRoutes);
 
 // 404 fallback
 app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
