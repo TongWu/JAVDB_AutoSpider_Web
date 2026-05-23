@@ -32,7 +32,10 @@ export async function getAuthHeaders(request: APIRequestContext): Promise<Record
   const csrf = body.csrf_token as string | undefined
   const headers: Record<string, string> = {}
   if (token) headers['Authorization'] = `Bearer ${token}`
-  if (csrf) headers['X-CSRF-Token'] = csrf
+  if (csrf) {
+    headers['X-CSRF-Token'] = csrf
+    headers['Cookie'] = `csrf_token=${csrf}`
+  }
   return headers
 }
 
