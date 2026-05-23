@@ -838,6 +838,34 @@
     "confirmDeleteTitle": "このプロキシを削除しますか？",
     "confirmDeleteBody": "このエントリをプールから削除します。他のプロキシには影響しません。"
   },
+  "movies": {
+    "subtitle": "動画履歴レコードを検索・閲覧",
+    "search": "動画コード、俳優で検索...",
+    "filters": {
+      "actor": "俳優",
+      "actorPlaceholder": "俳優名で絞り込み",
+      "perfectMatch": "完全一致",
+      "hiRes": "高画質",
+      "sessionId": "セッション ID",
+      "sessionIdPlaceholder": "セッションで絞り込み",
+      "dateRange": "日付範囲",
+      "reset": "リセット"
+    },
+    "col": {
+      "videoCode": "動画コード",
+      "actorName": "俳優",
+      "perfectMatch": "完全一致",
+      "hiRes": "高画質",
+      "created": "作成日時",
+      "torrents": "トレント",
+      "sessionId": "セッション"
+    },
+    "exportCsv": "CSV エクスポート",
+    "loadMore": "さらに読み込む",
+    "totalEstimate": "約 {count} 件",
+    "noResults": "動画が見つかりません",
+    "exportFailed": "CSV エクスポートに失敗しました"
+  },
   "browse": {
     "title": "ブラウズ",
     "subtitle": "動画コードまたは javdb URL を解決し、ランキングを閲覧し、バックエンドがパースしたページを確認します。",

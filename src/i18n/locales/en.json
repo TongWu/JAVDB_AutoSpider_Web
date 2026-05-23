@@ -838,6 +838,34 @@
     "confirmDeleteTitle": "Remove this proxy?",
     "confirmDeleteBody": "This will remove the entry from your pool. Other proxies are unaffected."
   },
+  "movies": {
+    "subtitle": "Search and explore movie history records",
+    "search": "Search by video code, actor...",
+    "filters": {
+      "actor": "Actor",
+      "actorPlaceholder": "Filter by actor name",
+      "perfectMatch": "Perfect match",
+      "hiRes": "Hi-res",
+      "sessionId": "Session ID",
+      "sessionIdPlaceholder": "Filter by session",
+      "dateRange": "Date range",
+      "reset": "Reset"
+    },
+    "col": {
+      "videoCode": "Video Code",
+      "actorName": "Actor",
+      "perfectMatch": "Perfect Match",
+      "hiRes": "Hi-Res",
+      "created": "Created",
+      "torrents": "Torrents",
+      "sessionId": "Session"
+    },
+    "exportCsv": "Export CSV",
+    "loadMore": "Load more",
+    "totalEstimate": "~{count} results",
+    "noResults": "No movies found",
+    "exportFailed": "CSV export failed"
+  },
   "browse": {
     "title": "Browse",
     "subtitle": "Resolve a video code or javdb URL, explore lists, and preview pages parsed by the backend.",

@@ -838,6 +838,34 @@
     "confirmDeleteTitle": "移除此代理？",
     "confirmDeleteBody": "这将从代理池中移除该条目，其他代理不受影响。"
   },
+  "movies": {
+    "subtitle": "搜索和浏览影片历史记录",
+    "search": "按番号、演员搜索...",
+    "filters": {
+      "actor": "演员",
+      "actorPlaceholder": "按演员名筛选",
+      "perfectMatch": "完美匹配",
+      "hiRes": "高清",
+      "sessionId": "会话 ID",
+      "sessionIdPlaceholder": "按会话筛选",
+      "dateRange": "日期范围",
+      "reset": "重置"
+    },
+    "col": {
+      "videoCode": "番号",
+      "actorName": "演员",
+      "perfectMatch": "完美匹配",
+      "hiRes": "高清",
+      "created": "创建时间",
+      "torrents": "种子数",
+      "sessionId": "会话"
+    },
+    "exportCsv": "导出 CSV",
+    "loadMore": "加载更多",
+    "totalEstimate": "约 {count} 条结果",
+    "noResults": "未找到影片",
+    "exportFailed": "CSV 导出失败"
+  },
   "browse": {
     "title": "浏览",
     "subtitle": "通过番号或 javdb URL 查询、浏览榜单页，并查看后端解析后的页面快照。",

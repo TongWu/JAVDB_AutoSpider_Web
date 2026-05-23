@@ -99,6 +99,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true, layout: 'blank' },
   },
   {
+    path: '/data/movies',
+    name: 'data-movies',
+    component: () => import('@/pages/data/MoviesPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
   },
