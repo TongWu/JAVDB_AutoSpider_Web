@@ -3,7 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
-import { createJobRunsRepo } from "../services/job-runs";
+import { createJobRunsRepo, type JobRun } from "../services/job-runs";
 import { createGhClient } from "../services/gh-client";
 
 type TasksEnv = { Bindings: Env; Variables: { user: JwtPayload } };
@@ -25,6 +25,52 @@ function requireGhActions(env: Env): void {
       message: "GitHub Actions not configured",
     });
   }
+}
+
+const TERMINAL_STATUSES = new Set(["completed", "failure", "cancelled"]);
+
+/**
+ * Extract the kind prefix from a job_id (e.g. "daily-20260524-100000-abcd" → "daily").
+ * Handles compound kinds like "qb-filter" by checking known multi-segment prefixes first.
+ */
+function extractKind(jobId: string): string | null {
+  const knownCompound = ["qb-filter"];
+  for (const prefix of knownCompound) {
+    if (jobId.startsWith(prefix + "-")) return prefix;
+  }
+  const first = jobId.split("-")[0];
+  return first || null;
+}
+
+/**
+ * Transform a JobRun row into the JobSummaryResponse shape expected by the frontend.
+ */
+export function mapJobToSummary(job: JobRun) {
+  const kind = extractKind(job.job_id);
+
+  let url: string | null = null;
+  if (job.inputs) {
+    try {
+      const parsed = JSON.parse(job.inputs);
+      url = parsed.url ?? null;
+    } catch {
+      // malformed JSON — leave url as null
+    }
+  }
+
+  return {
+    job_id: job.job_id,
+    status: job.status,
+    kind,
+    mode: kind === "daily" ? "pipeline" : null,
+    url,
+    command: null,
+    log: null,
+    log_size: null,
+    source: "gh_actions" as const,
+    created_at: job.created_at ?? null,
+    completed_at: TERMINAL_STATUSES.has(job.status) ? job.updated_at : null,
+  };
 }
 
 // POST /daily — dispatch DailyIngestion workflow
@@ -115,15 +161,38 @@ tasksRoutes.get("/", async (c) => {
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
   await repo.ensureTable();
   const items = await repo.list(limit);
-  return c.json({ items });
+  return c.json({
+    tasks: items.map(mapJobToSummary),
+    next_schedule: {
+      cron_pipeline: "N/A",
+      cron_spider: "N/A",
+      source: "cloudflare",
+    },
+  });
 });
 
 // GET /stats — job statistics for last 7 days
 tasksRoutes.get("/stats", async (c) => {
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
   await repo.ensureTable();
-  const stats = await repo.stats();
-  return c.json(stats);
+
+  const row = await c.env.OPERATIONS_DB
+    .prepare(
+      `SELECT
+        SUM(CASE WHEN job_id LIKE 'daily-%' AND status = 'completed' THEN 1 ELSE 0 END) AS daily_success,
+        SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('failure','cancelled') THEN 1 ELSE 0 END) AS daily_failed,
+        SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('dispatched','in_progress','queued') THEN 1 ELSE 0 END) AS daily_running,
+        SUM(CASE WHEN job_id LIKE 'adhoc-%' AND status IN ('dispatched','in_progress','queued') THEN 1 ELSE 0 END) AS adhoc_running
+      FROM job_runs WHERE created_at >= datetime('now', '-7 days')`,
+    )
+    .first<Record<string, number>>();
+
+  return c.json({
+    daily_success: row?.daily_success ?? 0,
+    daily_failed: row?.daily_failed ?? 0,
+    daily_running: row?.daily_running ?? 0,
+    adhoc_running: row?.adhoc_running ?? 0,
+  });
 });
 
 // GET /:job_id — single job detail
@@ -135,7 +204,7 @@ tasksRoutes.get("/:job_id", async (c) => {
   if (!job) {
     return c.json({ error: { code: "job.not_found" } }, 404);
   }
-  return c.json(job);
+  return c.json(mapJobToSummary(job));
 });
 
 // GET /:job_id/logs — get logs URL for a job

@@ -65,7 +65,7 @@ describe("Tasks routes", () => {
     await seedJobRunsTable(env.OPERATIONS_DB);
   });
 
-  it("GET /api/tasks lists jobs", async () => {
+  it("GET /api/tasks lists jobs with summary shape", async () => {
     const token = await getToken();
     const res = await app.request(
       "/api/tasks",
@@ -74,11 +74,38 @@ describe("Tasks routes", () => {
     );
     expect(res.status).toBe(200);
     const data = (await res.json()) as any;
-    expect(data.items).toBeInstanceOf(Array);
-    expect(data.items.length).toBeGreaterThanOrEqual(2);
+    expect(data.tasks).toBeInstanceOf(Array);
+    expect(data.tasks.length).toBeGreaterThanOrEqual(2);
+
+    // Verify next_schedule shape
+    expect(data.next_schedule).toEqual({
+      cron_pipeline: "N/A",
+      cron_spider: "N/A",
+      source: "cloudflare",
+    });
+
+    // Verify summary shape of first task
+    const daily = data.tasks.find((t: any) => t.job_id === "daily-20260524-100000-abcd");
+    expect(daily).toBeDefined();
+    expect(daily.kind).toBe("daily");
+    expect(daily.mode).toBe("pipeline");
+    expect(daily.source).toBe("gh_actions");
+    expect(daily.command).toBeNull();
+    expect(daily.log).toBeNull();
+    expect(daily.log_size).toBeNull();
+    // completed status → completed_at should be set
+    expect(daily.completed_at).not.toBeNull();
+
+    const adhoc = data.tasks.find((t: any) => t.job_id === "adhoc-20260524-110000-ef01");
+    expect(adhoc).toBeDefined();
+    expect(adhoc.kind).toBe("adhoc");
+    expect(adhoc.mode).toBeNull();
+    expect(adhoc.url).toBe("https://javdb.com/actors/test");
+    // in_progress status → completed_at should be null
+    expect(adhoc.completed_at).toBeNull();
   });
 
-  it("GET /api/tasks/stats returns stats", async () => {
+  it("GET /api/tasks/stats returns frontend-compatible stats", async () => {
     const token = await getToken();
     const res = await app.request(
       "/api/tasks/stats",
@@ -87,11 +114,17 @@ describe("Tasks routes", () => {
     );
     expect(res.status).toBe(200);
     const data = (await res.json()) as any;
-    expect(data).toHaveProperty("total");
-    expect(data).toHaveProperty("completed");
+    expect(data).toHaveProperty("daily_success");
+    expect(data).toHaveProperty("daily_failed");
+    expect(data).toHaveProperty("daily_running");
+    expect(data).toHaveProperty("adhoc_running");
+    expect(typeof data.daily_success).toBe("number");
+    expect(typeof data.daily_failed).toBe("number");
+    expect(typeof data.daily_running).toBe("number");
+    expect(typeof data.adhoc_running).toBe("number");
   });
 
-  it("GET /api/tasks/:job_id returns single job", async () => {
+  it("GET /api/tasks/:job_id returns summary shape", async () => {
     const token = await getToken();
     const res = await app.request(
       "/api/tasks/daily-20260524-100000-abcd",
@@ -102,6 +135,13 @@ describe("Tasks routes", () => {
     const data = (await res.json()) as any;
     expect(data.job_id).toBe("daily-20260524-100000-abcd");
     expect(data.status).toBe("completed");
+    expect(data.kind).toBe("daily");
+    expect(data.mode).toBe("pipeline");
+    expect(data.source).toBe("gh_actions");
+    expect(data.command).toBeNull();
+    expect(data.log).toBeNull();
+    expect(data.log_size).toBeNull();
+    expect(data.completed_at).not.toBeNull();
   });
 
   it("GET /api/tasks/:job_id returns 404 for unknown job", async () => {
