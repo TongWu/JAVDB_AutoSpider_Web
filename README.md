@@ -80,11 +80,129 @@ This frontend supports three topologies. Pick the one that matches your setup:
 
 | Topology | FE host | BE host | Guide |
 | --- | --- | --- | --- |
+| **Cloudflare Pages** | Cloudflare CDN | Hono + D1 (Pages Functions) | [Deploy to Cloudflare](#deploy-to-cloudflare) |
 | Colocated | Local (Docker) | Local (Docker, GHCR image) | [docs/deploy-colocated.md](docs/deploy-colocated.md) |
 | Split | Static host (Cloudflare Pages / Vercel / GH Pages) | Separate VPS or Cloudflare Workers | [docs/deploy-split.md](docs/deploy-split.md) |
 | GitHub-managed ingestion | Local or static | BE in either, `INGESTION_MODE=github` | [docs/deploy-github-mode.md](docs/deploy-github-mode.md) |
 
 The FE is mode-agnostic — it talks to a single abstract backend via `VITE_API_BASE_URL` and discovers its capabilities at runtime via `GET /api/capabilities`. Switching topologies only changes how you deploy the BE; the FE binary is the same.
+
+## Deploy to Cloudflare
+
+<!-- Cloudflare Deploy Buttons do not support Pages projects yet (Workers only).
+     See: https://developers.cloudflare.com/workers/platform/deploy-buttons/
+     When support is added, replace the link below with:
+     [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/TongWu/JAVDB_AutoSpider_Web) -->
+
+> **Note:** One-click [Deploy Buttons](https://developers.cloudflare.com/workers/platform/deploy-buttons/) are not yet supported for Cloudflare Pages projects. Follow the manual steps below.
+
+This project includes a Hono-based TypeScript API that runs as Cloudflare Pages Functions, with native D1 database bindings. The Free plan is sufficient for personal use.
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) >= 20
+- A [Cloudflare account](https://dash.cloudflare.com/sign-up) (Free plan works)
+- [Wrangler CLI](https://developers.cloudflare.com/workers/wrangler/install-and-update/) (`npm i -g wrangler && wrangler login`)
+- Three D1 databases: `javdb-history`, `javdb-reports`, `javdb-operations`
+
+### Step 1 — Clone & install
+
+```bash
+git clone https://github.com/TongWu/JAVDB_AutoSpider_Web.git
+cd JAVDB_AutoSpider_Web
+npm install
+```
+
+### Step 2 — Look up your D1 database IDs
+
+```bash
+wrangler d1 list
+```
+
+Find the UUIDs for `javdb-history`, `javdb-reports`, `javdb-operations`. If you don't have them yet:
+
+```bash
+wrangler d1 create javdb-history
+wrangler d1 create javdb-reports
+wrangler d1 create javdb-operations
+```
+
+### Step 3 — Configure `wrangler.toml`
+
+Replace the three `placeholder-fill-in-before-deploy` values with the real UUIDs from step 2:
+
+```toml
+[[d1_databases]]
+binding = "HISTORY_DB"
+database_name = "javdb-history"
+database_id = "<paste your javdb-history UUID>"
+
+[[d1_databases]]
+binding = "REPORTS_DB"
+database_name = "javdb-reports"
+database_id = "<paste your javdb-reports UUID>"
+
+[[d1_databases]]
+binding = "OPERATIONS_DB"
+database_name = "javdb-operations"
+database_id = "<paste your javdb-operations UUID>"
+```
+
+### Step 4 — Set production secrets
+
+Each command prompts for the value interactively:
+
+```bash
+wrangler pages secret put API_SECRET_KEY          # JWT signing key, min 32 chars
+wrangler pages secret put ADMIN_USERNAME           # e.g. "admin"
+wrangler pages secret put ADMIN_PASSWORD_HASH      # bcrypt hash (see below)
+```
+
+Generate a bcrypt hash for your password:
+
+```bash
+# Option A: Python (if passlib is installed)
+python3 -c "from passlib.hash import bcrypt; print(bcrypt.hash('yourpassword'))"
+
+# Option B: Node one-liner
+node -e "import('bcryptjs').then(b=>b.hash('yourpassword',12).then(console.log))"
+```
+
+See [`.dev.vars.example`](.dev.vars.example) for all available environment variables and their descriptions.
+
+### Step 5 — Build & deploy
+
+```bash
+npm run build                    # compiles Vue SPA → dist/
+wrangler pages deploy dist       # deploys to Cloudflare Pages
+```
+
+The deployment URL is printed on success (e.g. `https://javdb-autospider-web.pages.dev`).
+
+### Step 6 — Verify
+
+```bash
+PROD_URL=https://javdb-autospider-web.pages.dev
+
+# Login
+curl -s -X POST $PROD_URL/api/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"yourpassword"}' | jq .
+
+# Capabilities (paste the access_token from login)
+curl -s $PROD_URL/api/capabilities \
+  -H "Authorization: Bearer <access_token>" | jq .
+```
+
+Open the URL in a browser → login → verify history and sessions pages load.
+
+### Local development (Cloudflare mode)
+
+```bash
+cp .dev.vars.example .dev.vars   # edit with your local secrets
+npm run build
+npm run dev:api                  # http://localhost:8788 (SPA + API)
+```
 
 ## Develop locally
 
@@ -134,6 +252,10 @@ The FE also captures `csrf_token` from the login response body and sends it as t
 | `npm run test:contract` | Verify generated types match upstream OpenAPI |
 | `npm run test:e2e` | Playwright (boots the FE; assumes BE is running) |
 | `npm run gen:api-types` | Regenerate `src/types/api.gen.ts` from main repo's `openapi.json` (set `OPENAPI_PATH=...` for a local file) |
+| `npm run dev:api` | Start Wrangler Pages dev server on `:8788` (SPA + API, requires `npm run build` first) |
+| `npm run test:server` | Vitest server-side tests (Hono routes, JWT, middleware) |
+| `npm run typecheck:server` | TypeScript check for `server/` code |
+| `npm run cf:deploy` | Build + deploy to Cloudflare Pages (`wrangler pages deploy`) |
 
 ## Project layout
 

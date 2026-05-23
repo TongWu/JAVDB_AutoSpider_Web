@@ -1,0 +1,28 @@
+# Required — JWT signing key (min 32 characters)
+API_SECRET_KEY=change-me-to-a-random-string-at-least-32-chars
+
+# Required — Admin credentials
+ADMIN_USERNAME=admin
+# For local dev, use "plain:<password>" (e.g. "plain:admin123")
+# For production, use a bcrypt hash (e.g. "$2b$12$...")
+# Generate with: python3 -c "from passlib.hash import bcrypt; print(bcrypt.hash('yourpassword'))"
+ADMIN_PASSWORD_HASH=plain:admin123
+
+# Optional — Read-only user
+# READONLY_USERNAME=viewer
+# READONLY_PASSWORD_HASH=plain:viewer123
+
+# Optional — Token expiry (seconds)
+# ACCESS_TOKEN_EXPIRE_SECONDS=1800
+# REFRESH_TOKEN_EXPIRE_SECONDS=604800
+
+# Optional — Feature flags
+# INGESTION_MODE=github
+# BACKEND_VERSION=2.0.0
+# GH_ACTIONS_TIER=pro
+# GH_ACTIONS_REPO=owner/repo
+# GH_ACTIONS_TOKEN=ghp_xxxx
+# FEATURE_PIKPAK=true
+# FEATURE_RCLONE=true
+# SMTP_HOST=smtp.example.com
+# JAVDB_USERNAME=user@example.com
