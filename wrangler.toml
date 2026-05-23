@@ -11,6 +11,8 @@ binding = "ASSETS"
 ENVIRONMENT = "production"
 INGESTION_MODE = "github"
 BACKEND_VERSION = "2.0.0"
+GH_ACTIONS_REPO = "TongWu/JAVDB_AutoSpider_CICD"
+GH_ACTIONS_TIER = "admin"
 
 [[d1_databases]]
 binding = "HISTORY_DB"
