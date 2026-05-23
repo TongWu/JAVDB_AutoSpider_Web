@@ -27,6 +27,7 @@
   "dependencies": {
     "@vueuse/core": "^11.0.0",
     "axios": "^1.0.0",
+    "bcryptjs": "^3.0.3",
     "date-fns": "^3.0.0",
     "hono": "^4.12.22",
     "naive-ui": "^2.40.0",
@@ -41,6 +42,7 @@
     "@cloudflare/workers-types": "^4.20260523.1",
     "@intlify/eslint-plugin-vue-i18n": "^4.0.0",
     "@playwright/test": "^1.48.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.0.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
