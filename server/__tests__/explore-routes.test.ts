@@ -2,20 +2,6 @@ import { describe, it, expect, beforeAll } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
 
-async function getToken(): Promise<string> {
-  const res = await app.request(
-    "/api/auth/login",
-    {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username: "admin", password: "testpassword123" }),
-    },
-    env,
-  );
-  const data = (await res.json()) as any;
-  return data.access_token;
-}
-
 async function getCsrf(): Promise<{ token: string; csrfToken: string; csrfCookie: string }> {
   const res = await app.request(
     "/api/auth/login",
