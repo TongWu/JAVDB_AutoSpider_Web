@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 
 const emit = defineEmits<{ retry: [] }>()
 const { t } = useI18n()
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8100'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 const countdown = ref(5)
 let intervalId: ReturnType<typeof setInterval> | undefined

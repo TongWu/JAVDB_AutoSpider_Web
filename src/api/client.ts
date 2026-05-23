@@ -14,7 +14,7 @@ type QueuedRequest = {
   reject: (reason: unknown) => void
 }
 
-const baseURL = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8100'
+const baseURL = import.meta.env.VITE_API_BASE_URL ?? ''
 
 export const http = axios.create({
   baseURL,
