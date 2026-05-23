@@ -25,7 +25,6 @@ const { t } = useI18n()
 const message = useMessage()
 
 const includePending = ref(true)
-const restoreFromAudit = ref(true)
 const preview = ref<SessionRollbackResponse | null>(null)
 const previewing = ref(false)
 const applying = ref(false)
@@ -43,7 +42,6 @@ watch(
       preview.value = null
       errorMsg.value = null
       includePending.value = true
-      restoreFromAudit.value = true
     }
   },
 )
@@ -56,7 +54,6 @@ async function runPreview(): Promise<void> {
     preview.value = await apiRollbackSession(props.sessionId, {
       dry_run: true,
       include_pending: includePending.value,
-      restore_from_audit: restoreFromAudit.value,
     })
   } catch (err) {
     errorMsg.value = extractErrorMessage(err)
@@ -74,7 +71,6 @@ async function applyRollback(): Promise<void> {
     const resp = await apiRollbackSession(props.sessionId, {
       dry_run: false,
       include_pending: includePending.value,
-      restore_from_audit: restoreFromAudit.value,
     })
     message.success(t('sessions.rollback.applied'))
     emit('applied', resp)
@@ -130,12 +126,6 @@ function formatSummaryEntries(summary: Record<string, unknown>): { label: string
             :disabled="previewing || applying"
           >
             {{ t('sessions.rollback.includePending') }}
-          </NCheckbox>
-          <NCheckbox
-            v-model:checked="restoreFromAudit"
-            :disabled="previewing || applying"
-          >
-            {{ t('sessions.rollback.restoreFromAudit') }}
           </NCheckbox>
         </NSpace>
 

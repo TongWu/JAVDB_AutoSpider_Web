@@ -210,7 +210,7 @@ const columns = computed<DataTableColumns<TorrentSearchItem>>(() => [
               h(
                 'span',
                 { style: 'word-break: break-all; font-size: 11px;' },
-                row.magnet_uri,
+                row.magnet_uri!,
               ),
           },
         )

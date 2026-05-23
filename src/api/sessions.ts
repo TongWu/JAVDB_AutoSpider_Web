@@ -36,7 +36,6 @@ export async function apiRollbackSession(
   const body: SessionRollbackPayload = {
     dry_run: payload.dry_run ?? true,
     include_pending: payload.include_pending ?? true,
-    restore_from_audit: payload.restore_from_audit ?? true,
   }
   const { data } = await http.post<SessionRollbackResponse>(
     `/api/sessions/${encodeURIComponent(sessionId)}/rollback`,
