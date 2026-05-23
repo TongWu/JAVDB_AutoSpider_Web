@@ -18,12 +18,17 @@
     "test:unit:watch": "vitest",
     "test:contract": "vitest run --config vitest.contract.config.ts",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
-    "gen:api-types": "node scripts/fetch-openapi.mjs"
+    "gen:api-types": "node scripts/fetch-openapi.mjs",
+    "dev:api": "wrangler pages dev dist --d1=HISTORY_DB --d1=REPORTS_DB --d1=OPERATIONS_DB",
+    "test:server": "vitest run --config vitest.server.config.ts",
+    "typecheck:server": "tsc --noEmit -p server/tsconfig.json",
+    "cf:deploy": "npm run build && wrangler pages deploy dist"
   },
   "dependencies": {
     "@vueuse/core": "^11.0.0",
     "axios": "^1.0.0",
     "date-fns": "^3.0.0",
+    "hono": "^4.12.22",
     "naive-ui": "^2.40.0",
     "pinia": "^2.0.0",
     "vfonts": "^0.1.0",
@@ -32,6 +37,7 @@
     "vue-router": "^4.0.0"
   },
   "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260523.1",
     "@intlify/eslint-plugin-vue-i18n": "^4.0.0",
     "@playwright/test": "^1.48.0",
     "@types/node": "^22.0.0",
@@ -50,6 +56,7 @@
     "typescript": "^5.0.0",
     "vite": "^6.0.0",
     "vitest": "^2.0.0",
-    "vue-tsc": "^2.0.0"
+    "vue-tsc": "^2.0.0",
+    "wrangler": "^4.94.0"
   }
 }

@@ -1,0 +1,24 @@
+name = "javdb-autospider-web"
+compatibility_date = "2026-05-01"
+compatibility_flags = ["nodejs_compat"]
+pages_build_output_dir = "dist"
+
+[vars]
+ENVIRONMENT = "production"
+INGESTION_MODE = "github"
+BACKEND_VERSION = "2.0.0"
+
+[[d1_databases]]
+binding = "HISTORY_DB"
+database_name = "javdb-history"
+database_id = "placeholder-fill-in-before-deploy"
+
+[[d1_databases]]
+binding = "REPORTS_DB"
+database_name = "javdb-reports"
+database_id = "placeholder-fill-in-before-deploy"
+
+[[d1_databases]]
+binding = "OPERATIONS_DB"
+database_name = "javdb-operations"
+database_id = "placeholder-fill-in-before-deploy"

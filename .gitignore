@@ -13,3 +13,7 @@ tmp/
 coverage/
 playwright-report/
 test-results/
+
+# Cloudflare
+.wrangler/
+.dev.vars
