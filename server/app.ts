@@ -16,6 +16,7 @@ export const app = new Hono<AppEnv>();
 app.use("*", corsMiddleware());
 
 // Public routes
+app.get("/api/health", (c) => c.json({ status: "ok" }));
 app.route("/api/auth", authRoutes);
 
 // Protected routes
