@@ -16,6 +16,8 @@ export default defineConfig({
           ADMIN_USERNAME: "admin",
           ADMIN_PASSWORD_HASH: "plain:testpassword123",
           ENVIRONMENT: "test",
+          GH_ACTIONS_TIER: "admin",
+          GH_ACTIONS_REPO: "test-owner/test-repo",
         },
       },
     }),

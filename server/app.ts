@@ -12,6 +12,7 @@ import { configRoutes } from "./routes/config";
 import { onboardingRoutes } from "./routes/onboarding";
 import { diagnosticsRoutes } from "./routes/diagnostics";
 import { exploreRoutes } from "./routes/explore";
+import { tasksRoutes } from "./routes/tasks";
 
 type AppEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -33,6 +34,7 @@ app.route("/api/config", configRoutes);
 app.route("/api/onboarding", onboardingRoutes);
 app.route("/api/diag", diagnosticsRoutes);
 app.route("/api/explore", exploreRoutes);
+app.route("/api/tasks", tasksRoutes);
 
 // 404 fallback
 app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
