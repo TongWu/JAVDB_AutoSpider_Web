@@ -1122,6 +1122,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/stats/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stats Summary
+         * @description Aggregate statistics across all databases.
+         */
+        get: operations["stats_summary_api_stats_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/stats/trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stats Trend
+         * @description Time-series data for a given metric over the requested period.
+         */
+        get: operations["stats_trend_api_stats_trend_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/state": {
         parameters: {
             query?: never;
@@ -2519,6 +2559,25 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** StatsSummary */
+        StatsSummary: {
+            /** Avg Duration Seconds */
+            avg_duration_seconds?: number | null;
+            /** Proxy Bans Last 7D */
+            proxy_bans_last_7d: number;
+            /** Success Rate */
+            success_rate?: number | null;
+            /** Total Dedup Freed Bytes */
+            total_dedup_freed_bytes: number;
+            /** Total Movies */
+            total_movies: number;
+            /** Total Pikpak */
+            total_pikpak: number;
+            /** Total Runs */
+            total_runs: number;
+            /** Total Torrents */
+            total_torrents: number;
+        };
         /** StatusOkResponse */
         StatusOkResponse: {
             /**
@@ -2593,6 +2652,22 @@ export interface components {
             next_cursor?: string | null;
             /** Total Estimate */
             total_estimate: number;
+        };
+        /** TrendDataPoint */
+        TrendDataPoint: {
+            /** Date */
+            date: string;
+            /** Value */
+            value: number;
+        };
+        /** TrendResponse */
+        TrendResponse: {
+            /** Data Points */
+            data_points: components["schemas"]["TrendDataPoint"][];
+            /** Metric */
+            metric: string;
+            /** Period */
+            period: string;
         };
         /**
          * TriggerTaskResponse
@@ -4729,6 +4804,58 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SessionRollbackResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stats_summary_api_stats_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StatsSummary"];
+                };
+            };
+        };
+    };
+    stats_trend_api_stats_trend_get: {
+        parameters: {
+            query: {
+                metric: string;
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrendResponse"];
                 };
             };
             /** @description Validation Error */
