@@ -13,6 +13,7 @@ export default defineConfigWithVueTs(
     ignores: [
       '**/dist/**',
       '**/node_modules/**',
+      '.claude/**',
       'vite.config.ts',
       'vitest*.config.ts',
       'playwright.config.ts',
@@ -35,6 +36,14 @@ export default defineConfigWithVueTs(
     files: ['tests/**/*.{ts,tsx,vue}'],
     rules: {
       'vue/one-component-per-file': 'off',
+    },
+  },
+
+  {
+    name: 'app/server-test-files',
+    files: ['server/__tests__/**/*.{ts,tsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
     },
   },
 
