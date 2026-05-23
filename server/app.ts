@@ -5,6 +5,7 @@ import { corsMiddleware } from "./middleware/cors";
 import { requireAuth } from "./middleware/auth";
 import { authRoutes } from "./routes/auth";
 import { capabilitiesRoutes } from "./routes/capabilities";
+import { systemStateRoutes } from "./routes/system-state";
 
 type AppEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -18,6 +19,7 @@ app.route("/api/auth", authRoutes);
 // Protected routes
 app.use("/api/*", requireAuth());
 app.route("/api/capabilities", capabilitiesRoutes);
+app.route("/api/system", systemStateRoutes);
 
 // 404 fallback
 app.all("/api/*", (c) => c.json({ error: "Not found" }, 404));
