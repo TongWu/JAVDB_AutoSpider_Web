@@ -82,7 +82,7 @@ sessionsRoutes.get("/", async (c) => {
 
   const items = rows.results.map(mapSession);
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.session_id) : undefined;
+  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.session_id) : null;
 
   return c.json({ items, next_cursor: nextCursor });
 });
