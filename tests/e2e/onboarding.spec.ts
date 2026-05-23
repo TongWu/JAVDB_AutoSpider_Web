@@ -23,9 +23,9 @@ test.describe('Journey 1: First-run onboarding wizard', () => {
     await expect(page.getByText(/connect qbittorrent/i)).toBeVisible({ timeout: 5_000 })
     await page.getByRole('button', { name: /^skip$/i }).click()
 
-    // Step 4 — Proxy: mode None then continue
+    // Step 4 — Proxy: select None (config may pre-populate Pool) then continue
     await expect(page.getByText(/proxy configuration/i)).toBeVisible({ timeout: 5_000 })
-    // Default mode is 'none' — just continue
+    await page.getByText('None', { exact: true }).click()
     await page.getByRole('button', { name: /^continue$/i }).click()
 
     // Step 5 — First run: choose Skip and explore

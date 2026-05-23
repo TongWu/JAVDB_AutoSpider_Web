@@ -12,14 +12,14 @@ test.describe('Journey 3: Ad Hoc with Advanced spider options', () => {
     await page.goto('/run')
     await expect(page.getByRole('heading', { name: /run/i })).toBeVisible({ timeout: 10_000 })
 
-    // Switch to Ad Hoc tab
-    await page.getByRole('tab', { name: /ad ?hoc/i }).click()
+    // Switch to Ad Hoc tab (NTabs renders as generic divs, not role="tab")
+    await page.getByText('Ad Hoc', { exact: true }).click()
 
     // Fill URL
     await page.getByPlaceholder(/javdb.com\/actors/i).fill('https://javdb.com/actors/EvkJ')
 
-    // Expand Advanced
-    await page.getByText(/advanced.*spider options/i).click()
+    // Expand Advanced (both Daily and Ad Hoc have one; use first visible)
+    await page.getByText(/advanced.*spider options/i).first().click()
 
     // Activate advanced
     await page.getByRole('checkbox', { name: /use advanced/i }).check()

@@ -78,9 +78,8 @@ test.describe('Journey 5/5a/5b: Sessions list + rollback + force-commit', () => 
 
     await page.getByRole('button', { name: /rollback/i }).click()
 
-    // Both checkboxes default to true per Plan D — verify the form is visible.
+    // "Include pending writes" checkbox visible (audit mode retired by ADR-005)
     await expect(page.getByText(/include pending/i)).toBeVisible({ timeout: 5_000 })
-    await expect(page.getByText(/restore from audit/i)).toBeVisible({ timeout: 5_000 })
 
     // Run dry-run
     await page.getByRole('button', { name: /(run )?dry.?run|preview/i }).click()

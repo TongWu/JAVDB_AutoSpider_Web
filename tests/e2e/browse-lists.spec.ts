@@ -13,8 +13,8 @@ test.describe('Journey 4a: Browse → Lists tab → badges → cookie sync', () 
     await loginViaUi(page)
     await page.goto('/browse?mode=lists')
 
-    // Tabs visible
-    await expect(page.getByRole('tab', { name: /^top$|排行榜|ランキング/i })).toBeVisible({
+    // Sub-tabs visible (NTabs renders as generic divs, not role="tab")
+    await expect(page.getByText('Top', { exact: true })).toBeVisible({
       timeout: 10_000,
     })
 
