@@ -866,6 +866,43 @@
     "noResults": "No movies found",
     "exportFailed": "CSV export failed"
   },
+  "torrents": {
+    "subtitle": "Search and explore torrent history records",
+    "search": "Search by video code...",
+    "filters": {
+      "resolution": "Resolution",
+      "resolutionPlaceholder": "All resolutions",
+      "subtitle": "Has subtitle",
+      "uncensored": "Uncensored",
+      "sessionId": "Session ID",
+      "sessionIdPlaceholder": "Filter by session",
+      "dateRange": "Date range",
+      "reset": "Reset"
+    },
+    "col": {
+      "videoCode": "Video Code",
+      "magnet": "Magnet",
+      "size": "Size",
+      "resolution": "Resolution",
+      "subtitle": "Subtitle",
+      "censor": "Censor",
+      "fileCount": "Files",
+      "created": "Created",
+      "sessionId": "Session"
+    },
+    "resolution": {
+      "unknown": "Unknown",
+      "sd": "SD",
+      "hd": "HD",
+      "fhd": "FHD",
+      "4k": "4K"
+    },
+    "exportCsv": "Export CSV",
+    "loadMore": "Load more",
+    "totalEstimate": "~{count} results",
+    "noResults": "No torrents found",
+    "exportFailed": "CSV export failed"
+  },
   "browse": {
     "title": "Browse",
     "subtitle": "Resolve a video code or javdb URL, explore lists, and preview pages parsed by the backend.",
