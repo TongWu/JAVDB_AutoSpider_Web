@@ -361,6 +361,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/gh-actions/secrets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Secrets
+         * @description List repository Actions secrets metadata (admin tier).
+         */
+        get: operations["list_secrets_api_gh_actions_secrets_get"];
+        put?: never;
+        /**
+         * Create Secret
+         * @description Create or update a repository Actions secret (admin tier, admin role).
+         */
+        post: operations["create_secret_api_gh_actions_secrets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gh-actions/secrets/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete Secret
+         * @description Delete a repository Actions secret (admin tier, admin role).
+         */
+        delete: operations["delete_secret_api_gh_actions_secrets__name__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/gh-actions/workflows": {
         parameters: {
             query?: never;
@@ -374,6 +418,30 @@ export interface paths {
          */
         get: operations["list_workflows_api_gh_actions_workflows_get"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/gh-actions/workflows/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Workflow Content
+         * @description Return the decoded content of a workflow YAML file.
+         */
+        get: operations["get_workflow_content_api_gh_actions_workflows__name__get"];
+        /**
+         * Update Workflow Content
+         * @description Validate and commit an updated workflow YAML file (admin only).
+         */
+        put: operations["update_workflow_content_api_gh_actions_workflows__name__put"];
         post?: never;
         delete?: never;
         options?: never;
@@ -528,6 +596,63 @@ export interface paths {
         put?: never;
         /** Refresh Javdb Session */
         post: operations["refresh_javdb_session_api_login_refresh_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/logs/search": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Search Logs */
+        get: operations["search_logs_api_logs_search_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/migrations/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Migrations
+         * @description List all D1 SQL migration files with their applied state.
+         */
+        get: operations["list_migrations_api_migrations__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/migrations/{migration_id}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Migration
+         * @description Preview or run a migration.
+         */
+        post: operations["run_migration_api_migrations__migration_id__run_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1329,6 +1454,18 @@ export interface components {
              */
             use_proxy: boolean;
         };
+        /** CreateSecretRequest */
+        CreateSecretRequest: {
+            /** Name */
+            name: string;
+            /** Value */
+            value: string;
+        };
+        /** CreateSecretResponse */
+        CreateSecretResponse: {
+            /** Created */
+            created: boolean;
+        };
         /** DailyTaskPayload */
         DailyTaskPayload: {
             /**
@@ -1392,6 +1529,11 @@ export interface components {
              * @default false
              */
             use_proxy: boolean;
+        };
+        /** DeleteSecretResponse */
+        DeleteSecretResponse: {
+            /** Deleted */
+            deleted: boolean;
         };
         /** DismissHintPayload */
         DismissHintPayload: {
@@ -1771,6 +1913,28 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** LogSearchItem */
+        LogSearchItem: {
+            /** Created At */
+            created_at: string;
+            /** Job Id */
+            job_id: string;
+            /** Kind */
+            kind: string;
+            /** Line Number */
+            line_number: number;
+            /** Text */
+            text: string;
+        };
+        /** LogSearchResponse */
+        LogSearchResponse: {
+            /** Results */
+            results: components["schemas"]["LogSearchItem"][];
+            /** Total Matched */
+            total_matched: number;
+            /** Truncated */
+            truncated: boolean;
+        };
         /** LoginPayload */
         LoginPayload: {
             /** Password */
@@ -1796,6 +1960,22 @@ export interface components {
             username: string;
         } & {
             [key: string]: unknown;
+        };
+        /** MigrationItem */
+        MigrationItem: {
+            /** Applied */
+            applied: boolean;
+            /** Applied At */
+            applied_at?: string | null;
+            /** Filename */
+            filename: string;
+            /** Id */
+            id: string;
+        };
+        /** MigrationListResponse */
+        MigrationListResponse: {
+            /** Migrations */
+            migrations: components["schemas"]["MigrationItem"][];
         };
         /**
          * MovieSearchItem
@@ -2083,10 +2263,45 @@ export interface components {
             /** Logs Url */
             logs_url: string;
         };
+        /** RunMigrationRequest */
+        RunMigrationRequest: {
+            /**
+             * Dry Run
+             * @default true
+             */
+            dry_run: boolean;
+        };
+        /** RunMigrationResponse */
+        RunMigrationResponse: {
+            /** Applied */
+            applied?: boolean | null;
+            /** Dry Run */
+            dry_run: boolean;
+            /** Migration Id */
+            migration_id: string;
+            /** Sql Preview */
+            sql_preview: string;
+            /** Statements */
+            statements: number;
+        };
         /** RunsResponse */
         RunsResponse: {
             /** Runs */
             runs: components["schemas"]["RunItem"][];
+        };
+        /** SecretItem */
+        SecretItem: {
+            /** Created At */
+            created_at: string;
+            /** Name */
+            name: string;
+            /** Updated At */
+            updated_at: string;
+        };
+        /** SecretsResponse */
+        SecretsResponse: {
+            /** Secrets */
+            secrets: components["schemas"]["SecretItem"][];
         };
         /** SessionCommitPayload */
         SessionCommitPayload: {
@@ -2470,6 +2685,15 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** WorkflowContentResponse */
+        WorkflowContentResponse: {
+            /** Content */
+            content: string;
+            /** Path */
+            path: string;
+            /** Sha */
+            sha: string;
+        };
         /** WorkflowItem */
         WorkflowItem: {
             /** Id */
@@ -2479,6 +2703,29 @@ export interface components {
             name: string;
             /** State */
             state?: string | null;
+        };
+        /** WorkflowUpdateRequest */
+        WorkflowUpdateRequest: {
+            /**
+             * Branch
+             * @default main
+             */
+            branch: string;
+            /** Commit Message */
+            commit_message: string;
+            /** Content */
+            content: string;
+            /** Sha */
+            sha: string;
+        };
+        /** WorkflowUpdateResponse */
+        WorkflowUpdateResponse: {
+            /** Commit Sha */
+            commit_sha: string;
+            /** Updated */
+            updated: boolean;
+            /** Validation Warnings */
+            validation_warnings: string[];
         };
         /** WorkflowsResponse */
         WorkflowsResponse: {
@@ -3151,6 +3398,90 @@ export interface operations {
             };
         };
     };
+    list_secrets_api_gh_actions_secrets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecretsResponse"];
+                };
+            };
+        };
+    };
+    create_secret_api_gh_actions_secrets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateSecretRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateSecretResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_secret_api_gh_actions_secrets__name__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeleteSecretResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_workflows_api_gh_actions_workflows_get: {
         parameters: {
             query?: never;
@@ -3167,6 +3498,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["WorkflowsResponse"];
+                };
+            };
+        };
+    };
+    get_workflow_content_api_gh_actions_workflows__name__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowContentResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_workflow_content_api_gh_actions_workflows__name__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                name: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowUpdateRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkflowUpdateResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3464,6 +3861,96 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JavdbLoginRefreshResponseV2"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    search_logs_api_logs_search_get: {
+        parameters: {
+            query: {
+                q: string;
+                job_id?: string | null;
+                date_from?: string | null;
+                date_to?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LogSearchResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_migrations_api_migrations__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MigrationListResponse"];
+                };
+            };
+        };
+    };
+    run_migration_api_migrations__migration_id__run_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                migration_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RunMigrationRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RunMigrationResponse"];
                 };
             };
             /** @description Validation Error */
