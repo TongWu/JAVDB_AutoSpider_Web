@@ -1,4 +1,5 @@
 import * as cheerio from "cheerio";
+import type { Element as DomElement } from "domhandler";
 
 export type PageType = "detail" | "index" | "unknown";
 
@@ -163,7 +164,7 @@ export function sanitizeHtml(html: string): string {
   $("meta[http-equiv]").remove();
 
   $("*").each((_, el) => {
-    const attribs = (el as any).attribs ?? {};
+    const attribs = (el as DomElement).attribs ?? {};
     for (const attr of Object.keys(attribs)) {
       if (attr.startsWith("on")) {
         $(el).removeAttr(attr);
