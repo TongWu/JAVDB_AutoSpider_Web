@@ -31,7 +31,10 @@
     "config": "Config",
     "auth": "Auth",
     "capabilities": "Capabilities",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "migrations": "Migrations",
+    "logs": "Logs",
+    "stats": "Statistics"
   },
   "common": {
     "save": "Save",
@@ -1153,5 +1156,63 @@
       "noUrl": "Enter a javdb.com URL first.",
       "empty": "Enter a URL and click Fetch preview to see the sanitized HTML."
     }
+  },
+  "logs": {
+    "subtitle": "Search task execution logs by keyword.",
+    "searchPlaceholder": "Search log text...",
+    "jobIdPlaceholder": "Filter by job ID",
+    "search": "Search",
+    "col": {
+      "jobId": "Job ID",
+      "lineNumber": "Line",
+      "text": "Log Text",
+      "kind": "Kind",
+      "createdAt": "Date"
+    },
+    "showing": "Showing {shown} of {total} matches",
+    "truncated": "Results truncated. Refine your search for more precise results.",
+    "empty": "Enter a search term to search task logs.",
+    "noResults": "No matching log lines found."
+  },
+  "stats": {
+    "subtitle": "Aggregated metrics and trends across all ingestion runs.",
+    "totalRuns": "Total Runs",
+    "successRate": "Success Rate",
+    "avgDuration": "Avg Duration",
+    "totalMovies": "Total Movies",
+    "totalTorrents": "Total Torrents",
+    "pikpakVolume": "PikPak Transfers",
+    "dedupFreed": "Dedup Freed",
+    "proxyBans": "Proxy Bans (7d)",
+    "period": {
+      "7d": "7 days",
+      "30d": "30 days",
+      "90d": "90 days"
+    },
+    "tabs": {
+      "runs": "Run Metrics",
+      "growth": "Growth",
+      "system": "System"
+    },
+    "noData": "No data available yet.",
+    "seconds": "{n}s",
+    "na": "N/A"
+  },
+  "migrations": {
+    "subtitle": "View and preview D1 SQL migration files.",
+    "col": {
+      "filename": "Filename",
+      "status": "Status",
+      "appliedAt": "Applied At"
+    },
+    "status": {
+      "applied": "Applied",
+      "pending": "Pending"
+    },
+    "preview": "Preview",
+    "previewTitle": "SQL Preview",
+    "statements": "{n} statement(s)",
+    "applyDisabled": "Remote execution not yet supported. Use Wrangler CLI.",
+    "unappliedCount": "{n} unapplied"
   }
 }

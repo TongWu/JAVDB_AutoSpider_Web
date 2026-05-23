@@ -23,6 +23,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/stats',
+    name: 'stats',
+    component: () => import('@/pages/stats/StatsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/run',
     name: 'run',
     component: () => import('@/pages/RunPage.vue'),
@@ -144,6 +150,30 @@ export const routes: RouteRecordRaw[] = [
     path: '/gh-actions',
     name: 'gh-actions-runs',
     component: () => import('@/pages/gh-actions/RunsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/gh-actions/workflows',
+    name: 'gh-actions-workflows',
+    component: () => import('@/pages/gh-actions/WorkflowEditorPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/gh-actions/secrets',
+    name: 'gh-actions-secrets',
+    component: () => import('@/pages/gh-actions/SecretsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/migrations',
+    name: 'migrations',
+    component: () => import('@/pages/migrations/MigrationsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
+    path: '/logs',
+    name: 'logs',
+    component: () => import('@/pages/logs/LogSearchPage.vue'),
     meta: { requiresAuth: true },
   },
   {

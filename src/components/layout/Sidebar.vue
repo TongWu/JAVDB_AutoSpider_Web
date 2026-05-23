@@ -18,6 +18,7 @@ const options = computed<MenuOption[]>(() => {
 
   const items: MenuOption[] = [
     { label: t('nav.home'), key: 'home', icon: () => '🏠' },
+    { label: t('nav.stats'), key: 'stats', icon: () => '📊' },
     { label: t('nav.run'), key: 'run', icon: () => '⚡' },
     {
       label: t('nav.activity'),
@@ -89,6 +90,18 @@ const options = computed<MenuOption[]>(() => {
   }
 
   items.push({
+    label: t('nav.migrations'),
+    key: 'migrations',
+    icon: () => '🗄️',
+  })
+
+  items.push({
+    label: t('nav.logs'),
+    key: 'logs',
+    icon: () => '📜',
+  })
+
+  items.push({
     label: t('nav.settings'),
     key: 'settings',
     icon: () => '🔧',
@@ -105,6 +118,7 @@ const options = computed<MenuOption[]>(() => {
 
 const routeMap: Record<string, string> = {
   home: '/',
+  stats: '/stats',
   run: '/run',
   tasks: '/tasks',
   sessions: '/sessions',
@@ -125,6 +139,10 @@ const routeMap: Record<string, string> = {
   parseTester: '/diag/parse',
   javdbSession: '/diag/javdb',
   runs: '/gh-actions',
+  workflows: '/gh-actions/workflows',
+  secrets: '/gh-actions/secrets',
+  migrations: '/migrations',
+  logs: '/logs',
 }
 
 function onSelect(key: string) {

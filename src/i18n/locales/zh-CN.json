@@ -31,7 +31,10 @@
     "config": "配置",
     "auth": "认证",
     "capabilities": "功能权限",
-    "appearance": "外观"
+    "appearance": "外观",
+    "migrations": "数据迁移",
+    "logs": "日志",
+    "stats": "统计"
   },
   "common": {
     "save": "保存",
@@ -1153,5 +1156,63 @@
       "noUrl": "请先输入 javdb.com URL。",
       "empty": "输入 URL 并点击「获取预览」以查看清理后的 HTML。"
     }
+  },
+  "logs": {
+    "subtitle": "按关键词搜索任务执行日志。",
+    "searchPlaceholder": "搜索日志内容...",
+    "jobIdPlaceholder": "按任务 ID 筛选",
+    "search": "搜索",
+    "col": {
+      "jobId": "任务 ID",
+      "lineNumber": "行号",
+      "text": "日志内容",
+      "kind": "类型",
+      "createdAt": "日期"
+    },
+    "showing": "显示 {shown} / {total} 条匹配",
+    "truncated": "结果已截断，请缩小搜索范围以获取更精确的结果。",
+    "empty": "输入搜索词以搜索任务日志。",
+    "noResults": "未找到匹配的日志行。"
+  },
+  "stats": {
+    "subtitle": "所有 ingestion 运行的汇总指标和趋势。",
+    "totalRuns": "总运行次数",
+    "successRate": "成功率",
+    "avgDuration": "平均耗时",
+    "totalMovies": "总影片数",
+    "totalTorrents": "总种子数",
+    "pikpakVolume": "PikPak 传输量",
+    "dedupFreed": "去重释放空间",
+    "proxyBans": "代理封禁 (7天)",
+    "period": {
+      "7d": "7 天",
+      "30d": "30 天",
+      "90d": "90 天"
+    },
+    "tabs": {
+      "runs": "运行指标",
+      "growth": "增长",
+      "system": "系统"
+    },
+    "noData": "暂无数据。",
+    "seconds": "{n}秒",
+    "na": "N/A"
+  },
+  "migrations": {
+    "subtitle": "查看和预览 D1 SQL 迁移文件。",
+    "col": {
+      "filename": "文件名",
+      "status": "状态",
+      "appliedAt": "应用时间"
+    },
+    "status": {
+      "applied": "已应用",
+      "pending": "待应用"
+    },
+    "preview": "预览",
+    "previewTitle": "SQL 预览",
+    "statements": "{n} 条语句",
+    "applyDisabled": "远程执行暂不支持，请使用 Wrangler CLI。",
+    "unappliedCount": "{n} 条待应用"
   }
 }
