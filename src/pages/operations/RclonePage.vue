@@ -303,7 +303,7 @@ function phaseResultsToArray(phaseResults: Record<string, unknown>): Record<stri
           v-if="Object.keys(dedupResult.phase_results).length > 0"
           :columns="phaseColumns"
           :data="phaseResultsToArray(dedupResult.phase_results)"
-          :row-key="(_row: Record<string, unknown>, idx: number) => idx"
+          :row-key="(row: Record<string, unknown>) => JSON.stringify(row)"
           striped
           style="margin-top: 12px"
           :max-height="300"

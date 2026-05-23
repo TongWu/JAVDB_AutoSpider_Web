@@ -262,7 +262,7 @@ const transferDetailColumns = computed<DataTableColumns<Record<string, unknown>>
           v-if="transferResult.details.length > 0"
           :columns="transferDetailColumns"
           :data="transferResult.details"
-          :row-key="(_row: Record<string, unknown>, idx: number) => idx"
+          :row-key="(row: Record<string, unknown>) => JSON.stringify(row)"
           striped
           style="margin-top: 12px"
           :max-height="300"
