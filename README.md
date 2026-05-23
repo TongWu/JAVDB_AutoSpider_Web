@@ -80,7 +80,7 @@ This frontend supports three topologies. Pick the one that matches your setup:
 
 | Topology | FE host | BE host | Guide |
 | --- | --- | --- | --- |
-| **Cloudflare Pages** | Cloudflare CDN | Hono + D1 (Pages Functions) | [Deploy to Cloudflare](#deploy-to-cloudflare) |
+| **Cloudflare Workers** | Cloudflare CDN | Hono + D1 (Workers + Assets) | [Deploy to Cloudflare](#deploy-to-cloudflare) |
 | Colocated | Local (Docker) | Local (Docker, GHCR image) | [docs/deploy-colocated.md](docs/deploy-colocated.md) |
 | Split | Static host (Cloudflare Pages / Vercel / GH Pages) | Separate VPS or Cloudflare Workers | [docs/deploy-split.md](docs/deploy-split.md) |
 | GitHub-managed ingestion | Local or static | BE in either, `INGESTION_MODE=github` | [docs/deploy-github-mode.md](docs/deploy-github-mode.md) |
@@ -89,14 +89,7 @@ The FE is mode-agnostic — it talks to a single abstract backend via `VITE_API_
 
 ## Deploy to Cloudflare
 
-<!-- Cloudflare Deploy Buttons do not support Pages projects yet (Workers only).
-     See: https://developers.cloudflare.com/workers/platform/deploy-buttons/
-     When support is added, replace the link below with:
-     [![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/TongWu/JAVDB_AutoSpider_Web) -->
-
-> **Note:** One-click [Deploy Buttons](https://developers.cloudflare.com/workers/platform/deploy-buttons/) are not yet supported for Cloudflare Pages projects. Follow the manual steps below.
-
-This project includes a Hono-based TypeScript API that runs as Cloudflare Pages Functions, with native D1 database bindings. The Free plan is sufficient for personal use.
+This project deploys as a single Cloudflare Worker with static assets (Workers + Assets). The Hono API and Vue SPA are served from one Worker with native D1 database bindings. The Free plan is sufficient for personal use.
 
 ### Prerequisites
 
@@ -174,15 +167,15 @@ See [`.dev.vars.example`](.dev.vars.example) for all available environment varia
 
 ```bash
 npm run build                    # compiles Vue SPA → dist/
-wrangler pages deploy dist       # deploys to Cloudflare Pages
+wrangler deploy                  # deploys Worker + static assets
 ```
 
-The deployment URL is printed on success (e.g. `https://javdb-autospider-web.pages.dev`).
+The deployment URL is printed on success (e.g. `https://javdb-autospider-web.<account>.workers.dev`).
 
 ### Step 6 — Verify
 
 ```bash
-PROD_URL=https://javdb-autospider-web.pages.dev
+PROD_URL=https://javdb-autospider-web.<account>.workers.dev
 
 # Login
 curl -s -X POST $PROD_URL/api/auth/login \
@@ -252,10 +245,10 @@ The FE also captures `csrf_token` from the login response body and sends it as t
 | `npm run test:contract` | Verify generated types match upstream OpenAPI |
 | `npm run test:e2e` | Playwright (boots the FE; assumes BE is running) |
 | `npm run gen:api-types` | Regenerate `src/types/api.gen.ts` from main repo's `openapi.json` (set `OPENAPI_PATH=...` for a local file) |
-| `npm run dev:api` | Start Wrangler Pages dev server on `:8788` (SPA + API, requires `npm run build` first) |
+| `npm run dev:api` | Start Wrangler dev server (Worker + Assets, requires `npm run build` first) |
 | `npm run test:server` | Vitest server-side tests (Hono routes, JWT, middleware) |
 | `npm run typecheck:server` | TypeScript check for `server/` code |
-| `npm run cf:deploy` | Build + deploy to Cloudflare Pages (`wrangler pages deploy`) |
+| `npm run cf:deploy` | Build + deploy to Cloudflare Workers (`wrangler deploy`) |
 
 ## Project layout
 

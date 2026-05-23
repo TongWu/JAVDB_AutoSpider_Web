@@ -1,4 +1,7 @@
 export interface Env {
+  // Static assets
+  ASSETS: Fetcher;
+
   // D1 databases
   HISTORY_DB: D1Database;
   REPORTS_DB: D1Database;

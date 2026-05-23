@@ -19,10 +19,10 @@
     "test:contract": "vitest run --config vitest.contract.config.ts",
     "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
     "gen:api-types": "node scripts/fetch-openapi.mjs",
-    "dev:api": "wrangler pages dev dist --d1=HISTORY_DB --d1=REPORTS_DB --d1=OPERATIONS_DB",
+    "dev:api": "wrangler dev",
     "test:server": "vitest run --config vitest.server.config.ts",
     "typecheck:server": "tsc --noEmit -p server/tsconfig.json",
-    "cf:deploy": "npm run build && wrangler pages deploy dist"
+    "cf:deploy": "npm run build && wrangler deploy"
   },
   "dependencies": {
     "@vueuse/core": "^11.0.0",
