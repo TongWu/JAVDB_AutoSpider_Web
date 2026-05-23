@@ -103,20 +103,33 @@ const options = computed<MenuOption[]>(() => {
   return items
 })
 
+const routeMap: Record<string, string> = {
+  home: '/',
+  run: '/run',
+  tasks: '/tasks',
+  sessions: '/sessions',
+  browse: '/browse',
+  settings: '/settings',
+  config: '/settings/config',
+  auth: '/settings/auth',
+  capabilities: '/settings/capabilities',
+  appearance: '/settings/appearance',
+  movies: '/data/movies',
+  torrents: '/data/torrents',
+  qbittorrent: '/ops/qb',
+  pikpak: '/ops/pikpak',
+  rclone: '/ops/rclone',
+  email: '/ops/email',
+  cleanup: '/ops/cleanup',
+  health: '/diag/health',
+  parseTester: '/diag/parse',
+  javdbSession: '/diag/javdb',
+  runs: '/gh-actions',
+}
+
 function onSelect(key: string) {
-  if (key === 'home') void router.push('/')
-  else if (key === 'run') void router.push('/run')
-  else if (key === 'tasks') void router.push('/tasks')
-  else if (key === 'sessions') void router.push('/sessions')
-  else if (key === 'browse') void router.push('/browse')
-  else if (key === 'settings') void router.push('/settings')
-  else if (key === 'config') void router.push('/settings/config')
-  else if (key === 'auth') void router.push('/settings/auth')
-  else if (key === 'capabilities') void router.push('/settings/capabilities')
-  else if (key === 'appearance') void router.push('/settings/appearance')
-  else if (key === 'movies') void router.push('/data/movies')
-  else if (key === 'torrents') void router.push('/data/torrents')
-  // others still placeholder
+  const path = routeMap[key]
+  if (path) void router.push(path)
 }
 </script>
 

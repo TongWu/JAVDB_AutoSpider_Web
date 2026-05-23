@@ -912,6 +912,176 @@
       "censored": "修正済み"
     }
   },
+  "ops": {
+    "qb": {
+      "subtitle": "qBittorrent のトレントを管理し、小さいファイルをフィルタリングします。",
+      "currentTorrents": "現在のトレント",
+      "filterSmall": "小ファイルフィルタ",
+      "total": "{count} 件のトレント",
+      "minSizeMb": "最小サイズ (MB)",
+      "days": "日数",
+      "dryRun": "ドライラン",
+      "runFilter": "フィルタ実行",
+      "filteredCount": "フィルタ済み",
+      "torrentsScanned": "スキャン済み",
+      "col": {
+        "name": "名前",
+        "size": "サイズ",
+        "progress": "進捗",
+        "state": "状態",
+        "category": "カテゴリ",
+        "addedOn": "追加日時"
+      }
+    },
+    "pikpak": {
+      "subtitle": "PikPak 転送キューの管理とトレントの一括転送。",
+      "transferQueue": "転送キュー",
+      "batchTransfer": "一括転送",
+      "total": "{count} 件",
+      "days": "日数",
+      "dryRun": "ドライラン",
+      "runTransfer": "転送実行",
+      "transferred": "転送済み",
+      "failed": "失敗",
+      "skipped": "スキップ",
+      "col": {
+        "name": "トレント名",
+        "category": "カテゴリ",
+        "status": "ステータス",
+        "error": "エラー",
+        "addedOn": "qB 追加日時"
+      }
+    },
+    "rclone": {
+      "subtitle": "rclone インベントリの確認と重複排除の実行。",
+      "lastScan": "最終スキャン概要",
+      "inventoryCount": "インベントリ",
+      "lastScanTime": "最終スキャン",
+      "dedupPending": "重複排除待ち",
+      "dedupCompleted": "重複排除済み",
+      "totalFreed": "解放済み容量",
+      "runDedup": "重複排除を実行",
+      "quickDedup": "クイック重複排除",
+      "advanced": "詳細設定",
+      "scan": "スキャン",
+      "report": "レポート",
+      "execute": "実行",
+      "dryRun": "ドライラン",
+      "col": {
+        "phase": "フェーズ",
+        "status": "ステータス",
+        "detail": "詳細"
+      }
+    },
+    "email": {
+      "subtitle": "テストメールの送信と通知履歴の確認。",
+      "sendTest": "テストメール送信",
+      "recipientPlaceholder": "宛先（デフォルトは設定から）",
+      "sendButton": "送信",
+      "history": "通知履歴",
+      "resend": "再送信",
+      "statusAll": "すべて",
+      "statusSent": "送信済み",
+      "statusFailed": "失敗",
+      "statusResent": "再送信済み",
+      "col": {
+        "subject": "件名",
+        "recipient": "宛先",
+        "status": "ステータス",
+        "sentAt": "送信日時",
+        "error": "エラー",
+        "action": "操作"
+      }
+    },
+    "cleanup": {
+      "subtitle": "期限切れセッションのクリーンアップとクレームステージのスイープ。",
+      "staleSessions": "期限切れセッション クリーンアップ",
+      "claimSweep": "クレームステージ スイープ",
+      "olderThanHours": "経過時間（時間）",
+      "scope": "スコープ",
+      "scopeAll": "すべて",
+      "scopeReports": "レポート",
+      "scopeOperations": "オペレーション",
+      "scopeHistory": "履歴",
+      "includeLegacy": "レガシーを含む",
+      "dryRun": "ドライラン",
+      "runCleanup": "クリーンアップ実行",
+      "sessionsFound": "検出数",
+      "sessionsCleaned": "クリーン済み",
+      "sessionsFailed": "失敗",
+      "shardDates": "シャード日付",
+      "addDate": "追加",
+      "runSweep": "スイープ実行",
+      "shardsProcessed": "処理済みシャード",
+      "stagesReaped": "削除済みステージ",
+      "col": {
+        "sessionId": "セッション ID",
+        "status": "ステータス",
+        "detail": "詳細",
+        "shard": "シャード"
+      }
+    }
+  },
+  "diag": {
+    "health": {
+      "subtitle": "バックエンドの各サブシステムの健全性と接続性を確認します。",
+      "quickStatus": "クイックステータス",
+      "deepCheck": "ディープヘルスチェック",
+      "runDeepCheck": "ディープチェックを実行",
+      "overall": "全体",
+      "noResult": "「ディープチェックを実行」をクリックしてすべてのサブシステムを検査します。"
+    },
+    "parse": {
+      "subtitle": "生 HTML またはライブ URL でバックエンドのパーサーをテストします。",
+      "input": "入力",
+      "result": "結果",
+      "modeHtml": "HTML",
+      "modeUrl": "URL",
+      "htmlPlaceholder": "生 HTML をここに貼り付け...",
+      "urlPlaceholder": "https://javdb.com/...",
+      "useProxy": "プロキシを使用",
+      "useCookie": "Cookie を使用",
+      "parserType": "パーサータイプ",
+      "parseButton": "パース",
+      "copy": "コピー",
+      "noResult": "HTML または URL を送信してパース結果を確認してください。"
+    },
+    "javdb": {
+      "subtitle": "JavDB セッション Cookie の確認と更新。",
+      "status": "セッションステータス",
+      "actions": "アクション",
+      "cookiePresent": "Cookie の有無",
+      "isValid": "有効と推定",
+      "cookiePreview": "Cookie プレビュー",
+      "lastRefresh": "最終更新",
+      "estimatedExpiry": "推定有効期限",
+      "refreshHeadless": "更新（ヘッドレス）",
+      "pasteCookie": "Cookie を貼り付け",
+      "cookiePlaceholder": "_jdb_session の Cookie 値をここに貼り付け...",
+      "refreshSuccess": "セッションを更新しました",
+      "refreshFailed": "更新に失敗しました",
+      "newCookiePreview": "新しい Cookie プレビュー"
+    }
+  },
+  "ghActions": {
+    "subtitle": "GitHub Actions ワークフローと実行を監視します。",
+    "dispatch": "ディスパッチ",
+    "dispatchTitle": "ワークフローをディスパッチ",
+    "selectWorkflow": "ワークフローを選択",
+    "workflowLabel": "ワークフロー",
+    "refLabel": "ブランチ / ref",
+    "inputsLabel": "入力パラメータ (JSON)",
+    "dispatched": "ワークフローが正常にディスパッチされました。",
+    "runDetail": "実行詳細",
+    "viewLogs": "ログを表示",
+    "col": {
+      "title": "タイトル",
+      "status": "ステータス",
+      "event": "イベント",
+      "createdAt": "作成日時",
+      "sha": "SHA"
+    }
+  },
   "browse": {
     "title": "ブラウズ",
     "subtitle": "動画コードまたは javdb URL を解決し、ランキングを閲覧し、バックエンドがパースしたページを確認します。",

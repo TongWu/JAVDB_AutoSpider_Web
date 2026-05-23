@@ -912,6 +912,176 @@
       "censored": "有码"
     }
   },
+  "ops": {
+    "qb": {
+      "subtitle": "管理 qBittorrent 种子并过滤小文件。",
+      "currentTorrents": "当前种子",
+      "filterSmall": "过滤小文件",
+      "total": "{count} 个种子",
+      "minSizeMb": "最小大小 (MB)",
+      "days": "天数",
+      "dryRun": "试运行",
+      "runFilter": "执行过滤",
+      "filteredCount": "已过滤",
+      "torrentsScanned": "已扫描",
+      "col": {
+        "name": "名称",
+        "size": "大小",
+        "progress": "进度",
+        "state": "状态",
+        "category": "分类",
+        "addedOn": "添加时间"
+      }
+    },
+    "pikpak": {
+      "subtitle": "管理 PikPak 传输队列并批量传输种子。",
+      "transferQueue": "传输队列",
+      "batchTransfer": "批量传输",
+      "total": "{count} 条记录",
+      "days": "天数",
+      "dryRun": "试运行",
+      "runTransfer": "执行传输",
+      "transferred": "已传输",
+      "failed": "失败",
+      "skipped": "已跳过",
+      "col": {
+        "name": "种子名称",
+        "category": "分类",
+        "status": "状态",
+        "error": "错误",
+        "addedOn": "添加到 qB"
+      }
+    },
+    "rclone": {
+      "subtitle": "查看 rclone 清单并运行去重。",
+      "lastScan": "最近扫描摘要",
+      "inventoryCount": "清单数量",
+      "lastScanTime": "最近扫描",
+      "dedupPending": "待去重",
+      "dedupCompleted": "已去重",
+      "totalFreed": "已释放空间",
+      "runDedup": "运行去重",
+      "quickDedup": "快速去重",
+      "advanced": "高级选项",
+      "scan": "扫描",
+      "report": "报告",
+      "execute": "执行",
+      "dryRun": "试运行",
+      "col": {
+        "phase": "阶段",
+        "status": "状态",
+        "detail": "详情"
+      }
+    },
+    "email": {
+      "subtitle": "发送测试邮件并查看通知历史。",
+      "sendTest": "发送测试邮件",
+      "recipientPlaceholder": "收件人（默认使用配置中的地址）",
+      "sendButton": "发送",
+      "history": "通知历史",
+      "resend": "重新发送",
+      "statusAll": "全部",
+      "statusSent": "已发送",
+      "statusFailed": "失败",
+      "statusResent": "已重发",
+      "col": {
+        "subject": "主题",
+        "recipient": "收件人",
+        "status": "状态",
+        "sentAt": "发送时间",
+        "error": "错误",
+        "action": "操作"
+      }
+    },
+    "cleanup": {
+      "subtitle": "清理过期会话并清扫认领阶段。",
+      "staleSessions": "过期会话清理",
+      "claimSweep": "认领阶段清扫",
+      "olderThanHours": "早于（小时）",
+      "scope": "范围",
+      "scopeAll": "全部",
+      "scopeReports": "报告",
+      "scopeOperations": "运维",
+      "scopeHistory": "历史",
+      "includeLegacy": "包含旧数据",
+      "dryRun": "试运行",
+      "runCleanup": "执行清理",
+      "sessionsFound": "已发现",
+      "sessionsCleaned": "已清理",
+      "sessionsFailed": "失败",
+      "shardDates": "分片日期",
+      "addDate": "添加",
+      "runSweep": "执行清扫",
+      "shardsProcessed": "已处理分片",
+      "stagesReaped": "已清除阶段",
+      "col": {
+        "sessionId": "会话 ID",
+        "status": "状态",
+        "detail": "详情",
+        "shard": "分片"
+      }
+    }
+  },
+  "diag": {
+    "health": {
+      "subtitle": "检查后端各子系统的健康状态和连通性。",
+      "quickStatus": "快速状态",
+      "deepCheck": "深度健康检查",
+      "runDeepCheck": "运行深度检查",
+      "overall": "总体",
+      "noResult": "点击「运行深度检查」以检查所有子系统。"
+    },
+    "parse": {
+      "subtitle": "使用原始 HTML 或在线 URL 测试后端解析器。",
+      "input": "输入",
+      "result": "结果",
+      "modeHtml": "HTML",
+      "modeUrl": "URL",
+      "htmlPlaceholder": "在此粘贴原始 HTML...",
+      "urlPlaceholder": "https://javdb.com/...",
+      "useProxy": "使用代理",
+      "useCookie": "使用 Cookie",
+      "parserType": "解析器类型",
+      "parseButton": "解析",
+      "copy": "复制",
+      "noResult": "提交 HTML 或 URL 以查看解析结果。"
+    },
+    "javdb": {
+      "subtitle": "查看和刷新 JavDB 会话 Cookie。",
+      "status": "会话状态",
+      "actions": "操作",
+      "cookiePresent": "Cookie 存在",
+      "isValid": "可能有效",
+      "cookiePreview": "Cookie 预览",
+      "lastRefresh": "上次刷新",
+      "estimatedExpiry": "预计过期",
+      "refreshHeadless": "刷新（无头浏览器）",
+      "pasteCookie": "粘贴 Cookie",
+      "cookiePlaceholder": "在此粘贴 _jdb_session Cookie 值...",
+      "refreshSuccess": "会话已刷新",
+      "refreshFailed": "刷新失败",
+      "newCookiePreview": "新 Cookie 预览"
+    }
+  },
+  "ghActions": {
+    "subtitle": "监控 GitHub Actions 工作流和运行记录。",
+    "dispatch": "触发",
+    "dispatchTitle": "触发工作流",
+    "selectWorkflow": "选择一个工作流",
+    "workflowLabel": "工作流",
+    "refLabel": "分支 / ref",
+    "inputsLabel": "输入参数 (JSON)",
+    "dispatched": "工作流已成功触发。",
+    "runDetail": "运行详情",
+    "viewLogs": "查看日志",
+    "col": {
+      "title": "标题",
+      "status": "状态",
+      "event": "事件",
+      "createdAt": "创建时间",
+      "sha": "SHA"
+    }
+  },
   "browse": {
     "title": "浏览",
     "subtitle": "通过番号或 javdb URL 查询、浏览榜单页，并查看后端解析后的页面快照。",

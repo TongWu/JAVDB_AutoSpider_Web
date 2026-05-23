@@ -912,6 +912,176 @@
       "censored": "Censored"
     }
   },
+  "ops": {
+    "qb": {
+      "subtitle": "Manage qBittorrent torrents and filter small files.",
+      "currentTorrents": "Current Torrents",
+      "filterSmall": "Filter Small Files",
+      "total": "{count} torrents",
+      "minSizeMb": "Min size (MB)",
+      "days": "Days",
+      "dryRun": "Dry run",
+      "runFilter": "Run Filter",
+      "filteredCount": "Filtered",
+      "torrentsScanned": "Scanned",
+      "col": {
+        "name": "Name",
+        "size": "Size",
+        "progress": "Progress",
+        "state": "State",
+        "category": "Category",
+        "addedOn": "Added"
+      }
+    },
+    "pikpak": {
+      "subtitle": "Manage PikPak transfer queue and batch transfer torrents.",
+      "transferQueue": "Transfer Queue",
+      "batchTransfer": "Batch Transfer",
+      "total": "{count} records",
+      "days": "Days",
+      "dryRun": "Dry run",
+      "runTransfer": "Run Transfer",
+      "transferred": "Transferred",
+      "failed": "Failed",
+      "skipped": "Skipped",
+      "col": {
+        "name": "Torrent Name",
+        "category": "Category",
+        "status": "Status",
+        "error": "Error",
+        "addedOn": "Added to qB"
+      }
+    },
+    "rclone": {
+      "subtitle": "View rclone inventory and run deduplication.",
+      "lastScan": "Last Scan Summary",
+      "inventoryCount": "Inventory",
+      "lastScanTime": "Last Scan",
+      "dedupPending": "Dedup Pending",
+      "dedupCompleted": "Dedup Completed",
+      "totalFreed": "Total Freed",
+      "runDedup": "Run Dedup",
+      "quickDedup": "Quick Dedup",
+      "advanced": "Advanced",
+      "scan": "Scan",
+      "report": "Report",
+      "execute": "Execute",
+      "dryRun": "Dry run",
+      "col": {
+        "phase": "Phase",
+        "status": "Status",
+        "detail": "Detail"
+      }
+    },
+    "email": {
+      "subtitle": "Send test emails and view notification history.",
+      "sendTest": "Send Test Email",
+      "recipientPlaceholder": "Recipient (default from config)",
+      "sendButton": "Send",
+      "history": "Notification History",
+      "resend": "Resend",
+      "statusAll": "All",
+      "statusSent": "Sent",
+      "statusFailed": "Failed",
+      "statusResent": "Resent",
+      "col": {
+        "subject": "Subject",
+        "recipient": "Recipient",
+        "status": "Status",
+        "sentAt": "Sent At",
+        "error": "Error",
+        "action": "Action"
+      }
+    },
+    "cleanup": {
+      "subtitle": "Clean up stale sessions and sweep claim stages.",
+      "staleSessions": "Stale Session Cleanup",
+      "claimSweep": "Claim Stage Sweep",
+      "olderThanHours": "Older than (hours)",
+      "scope": "Scope",
+      "scopeAll": "All",
+      "scopeReports": "Reports",
+      "scopeOperations": "Operations",
+      "scopeHistory": "History",
+      "includeLegacy": "Include legacy",
+      "dryRun": "Dry run",
+      "runCleanup": "Run Cleanup",
+      "sessionsFound": "Found",
+      "sessionsCleaned": "Cleaned",
+      "sessionsFailed": "Failed",
+      "shardDates": "Shard dates",
+      "addDate": "Add",
+      "runSweep": "Run Sweep",
+      "shardsProcessed": "Shards Processed",
+      "stagesReaped": "Stages Reaped",
+      "col": {
+        "sessionId": "Session ID",
+        "status": "Status",
+        "detail": "Detail",
+        "shard": "Shard"
+      }
+    }
+  },
+  "diag": {
+    "health": {
+      "subtitle": "Check backend subsystem health and connectivity.",
+      "quickStatus": "Quick Status",
+      "deepCheck": "Deep Health Check",
+      "runDeepCheck": "Run Deep Check",
+      "overall": "Overall",
+      "noResult": "Click \"Run Deep Check\" to inspect all subsystems."
+    },
+    "parse": {
+      "subtitle": "Test the backend HTML parser with raw HTML or a live URL.",
+      "input": "Input",
+      "result": "Result",
+      "modeHtml": "HTML",
+      "modeUrl": "URL",
+      "htmlPlaceholder": "Paste raw HTML here...",
+      "urlPlaceholder": "https://javdb.com/...",
+      "useProxy": "Use proxy",
+      "useCookie": "Use cookie",
+      "parserType": "Parser type",
+      "parseButton": "Parse",
+      "copy": "Copy",
+      "noResult": "Submit HTML or a URL to see the parsed result."
+    },
+    "javdb": {
+      "subtitle": "Inspect and refresh the JavDB session cookie.",
+      "status": "Session Status",
+      "actions": "Actions",
+      "cookiePresent": "Cookie present",
+      "isValid": "Likely valid",
+      "cookiePreview": "Cookie preview",
+      "lastRefresh": "Last refresh",
+      "estimatedExpiry": "Estimated expiry",
+      "refreshHeadless": "Refresh (headless)",
+      "pasteCookie": "Paste cookie",
+      "cookiePlaceholder": "Paste _jdb_session cookie value here...",
+      "refreshSuccess": "Session refreshed",
+      "refreshFailed": "Refresh failed",
+      "newCookiePreview": "New cookie preview"
+    }
+  },
+  "ghActions": {
+    "subtitle": "Monitor GitHub Actions workflows and runs.",
+    "dispatch": "Dispatch",
+    "dispatchTitle": "Dispatch Workflow",
+    "selectWorkflow": "Select a workflow",
+    "workflowLabel": "Workflow",
+    "refLabel": "Branch / ref",
+    "inputsLabel": "Inputs (JSON)",
+    "dispatched": "Workflow dispatched successfully.",
+    "runDetail": "Run detail",
+    "viewLogs": "View Logs",
+    "col": {
+      "title": "Title",
+      "status": "Status",
+      "event": "Event",
+      "createdAt": "Created",
+      "sha": "SHA"
+    }
+  },
   "browse": {
     "title": "Browse",
     "subtitle": "Resolve a video code or javdb URL, explore lists, and preview pages parsed by the backend.",
