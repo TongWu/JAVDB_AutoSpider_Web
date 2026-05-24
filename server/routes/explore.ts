@@ -45,9 +45,19 @@ async function fetchJavdbHtml(url: string, config: Record<string, unknown>): Pro
     headers.Cookie = `_jdb_session=${cookie}`;
   }
 
-  const response = await fetch(url, { headers, redirect: "follow" });
+  let response: Response;
+  try {
+    response = await fetch(url, { headers, redirect: "follow" });
+  } catch (err) {
+    throw new HTTPException(502, {
+      message: `Network error fetching javdb: ${err instanceof Error ? err.message : String(err)}`,
+    });
+  }
   if (!response.ok) {
-    throw new HTTPException(502, { message: `Failed to fetch page: HTTP ${response.status}` });
+    const snippet = await response.text().then((t) => t.slice(0, 200)).catch(() => "");
+    throw new HTTPException(502, {
+      message: `javdb returned HTTP ${response.status}${snippet ? `: ${snippet}` : ""}`,
+    });
   }
   return response.text();
 }

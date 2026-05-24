@@ -203,21 +203,21 @@ async function fetchTrendsForTab(tab: string) {
     if (tab === 'runs') {
       const [sr, mv] = await Promise.all([
         getStatsTrend('success_rate', period.value),
-        getStatsTrend('movies_per_run', period.value),
+        getStatsTrend('movies', period.value),
       ])
       successRateTrend.value = sr
       moviesTrend.value = mv
     } else if (tab === 'growth') {
       const [hg, pp] = await Promise.all([
         getStatsTrend('history_growth', period.value),
-        getStatsTrend('pikpak_volume', period.value),
+        getStatsTrend('pikpak', period.value),
       ])
       historyGrowthTrend.value = hg
       pikpakTrend.value = pp
     } else if (tab === 'system') {
       const [pb, dd] = await Promise.all([
         getStatsTrend('proxy_bans', period.value),
-        getStatsTrend('dedup_freed_bytes', period.value),
+        getStatsTrend('dedup', period.value),
       ])
       proxyBansTrend.value = pb
       dedupTrend.value = dd

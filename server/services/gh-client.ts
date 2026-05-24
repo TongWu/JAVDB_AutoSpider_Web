@@ -1,6 +1,8 @@
 // GitHub REST API client for Workers
 // Uses native fetch() — no external HTTP library needed
 
+import { HTTPException } from "hono/http-exception";
+
 export interface Workflow {
   id: number;
   name: string;
@@ -50,7 +52,9 @@ export function createGhClient(config: GhClientConfig) {
     });
     if (!res.ok && !(init?.redirect === "manual" && res.status === 302)) {
       const body = await res.text();
-      throw new Error(`GitHub API ${res.status}: ${body}`);
+      throw new HTTPException(502, {
+        message: `GitHub API ${res.status}: ${body.slice(0, 500)}`,
+      });
     }
     return res;
   }

@@ -65,7 +65,7 @@ export function parseDetailPage(html: string): ParsedDetailPage {
     if (label.includes("演員") || label.includes("Actor")) {
       $(el)
         .find("a")
-        .each((_, a) => actors.push($(a).text().trim()));
+        .each((_, a) => { actors.push($(a).text().trim()) });
     }
   });
 
@@ -89,7 +89,7 @@ export function parseDetailPage(html: string): ParsedDetailPage {
     const tags: string[] = [];
     $(el)
       .find(".tag, .label")
-      .each((_, tag) => tags.push($(tag).text().trim()));
+      .each((_, tag) => { tags.push($(tag).text().trim()) });
     const fileCountText = $(el).find(".file-count").text().trim();
     const fileCount = parseInt(fileCountText, 10) || 1;
     magnets.push({ name, magnet_uri: magnetUri, size, tags, file_count: fileCount });
@@ -113,7 +113,7 @@ export function parseIndexPage(html: string, pageNum: number): ParsedIndexPage {
     const tags: string[] = [];
     $(el)
       .find(".tag, .label")
-      .each((_, tag) => tags.push($(tag).text().trim()));
+      .each((_, tag) => { tags.push($(tag).text().trim()) });
     if (href) {
       movies.push({ href, video_code: videoCode, title, cover_url: coverUrl, release_date: releaseDate, score, tags });
     }

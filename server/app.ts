@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
 import type { Env } from "./env";
 import type { JwtPayload } from "./services/jwt";
 import { corsMiddleware } from "./middleware/cors";
@@ -21,6 +22,24 @@ import { stubRoutes } from "./routes/stubs";
 type AppEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const app = new Hono<AppEnv>();
+
+app.onError((err, c) => {
+  if (err instanceof HTTPException) {
+    const status = err.status;
+    let body: unknown;
+    try {
+      body = JSON.parse(err.message);
+    } catch {
+      body = { error: { code: "server_error", message: err.message } };
+    }
+    return c.json(body, status as 400);
+  }
+  console.error("Unhandled error:", err);
+  return c.json(
+    { error: { code: "internal_error", message: err.message || "Internal server error" } },
+    500,
+  );
+});
 
 app.use("*", corsMiddleware());
 

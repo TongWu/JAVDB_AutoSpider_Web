@@ -114,7 +114,16 @@ statsRoutes.get("/summary", async (c) => {
 
 // --- GET /trend ---
 
-const VALID_METRICS = new Set(["runs", "movies", "torrents"]);
+const VALID_METRICS = new Set([
+  "success_rate",
+  "duration",
+  "movies",
+  "torrents",
+  "history_growth",
+  "pikpak",
+  "dedup",
+  "proxy_bans",
+]);
 const VALID_PERIODS = new Set(["7d", "30d", "90d"]);
 
 function periodToDays(period: string): number {
@@ -131,7 +140,7 @@ function periodToDays(period: string): number {
 }
 
 statsRoutes.get("/trend", async (c) => {
-  const metric = c.req.query("metric") ?? "runs";
+  const metric = c.req.query("metric") ?? "success_rate";
   const period = c.req.query("period") ?? "30d";
 
   if (!VALID_METRICS.has(metric)) {
@@ -164,15 +173,45 @@ statsRoutes.get("/trend", async (c) => {
     let sql: string;
 
     switch (metric) {
-      case "runs":
+      case "success_rate":
         db = c.env.REPORTS_DB;
-        sql = `SELECT DATE(DateTimeCreated) AS date, COUNT(*) AS value
+        sql = `SELECT DATE(DateTimeCreated) AS date,
+                      CAST(SUM(CASE WHEN Status='committed' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) AS value
                FROM ReportSessions
                WHERE DateTimeCreated >= datetime('now', '-${days} days')
                GROUP BY DATE(DateTimeCreated)
                ORDER BY date`;
         break;
+      case "duration":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(DateTimeCreated) AS date,
+                      AVG(CAST((julianday(CommittedAt) - julianday(DateTimeCreated)) * 86400 AS INTEGER)) AS value
+               FROM ReportSessions
+               WHERE Status='committed' AND CommittedAt IS NOT NULL
+                 AND DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(DateTimeCreated)
+               ORDER BY date`;
+        break;
       case "movies":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(rs.DateTimeCreated) AS date, COUNT(rm.Id) AS value
+               FROM ReportSessions rs
+               LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id
+               WHERE rs.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY date
+               ORDER BY date`;
+        break;
+      case "torrents":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(rs.DateTimeCreated) AS date, COUNT(rt.Id) AS value
+               FROM ReportSessions rs
+               LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id
+               LEFT JOIN ReportTorrents rt ON rt.ReportMovieId = rm.Id
+               WHERE rs.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY date
+               ORDER BY date`;
+        break;
+      case "history_growth":
         db = c.env.HISTORY_DB;
         sql = `SELECT DATE(DateTimeCreated) AS date, COUNT(*) AS value
                FROM MovieHistory
@@ -180,22 +219,35 @@ statsRoutes.get("/trend", async (c) => {
                GROUP BY DATE(DateTimeCreated)
                ORDER BY date`;
         break;
-      case "torrents":
-        db = c.env.HISTORY_DB;
-        sql = `SELECT DATE(DateTimeCreated) AS date, COUNT(*) AS value
-               FROM TorrentHistory
-               WHERE DateTimeCreated >= datetime('now', '-${days} days')
-               GROUP BY DATE(DateTimeCreated)
+      case "pikpak":
+        db = c.env.OPERATIONS_DB;
+        sql = `SELECT DATE(DateTimeUploadedToPikpak) AS date, COUNT(*) AS value
+               FROM PikpakHistory
+               WHERE DateTimeUploadedToPikpak >= datetime('now', '-${days} days')
+               GROUP BY DATE(DateTimeUploadedToPikpak)
                ORDER BY date`;
         break;
+      case "dedup":
+        db = c.env.OPERATIONS_DB;
+        sql = `SELECT DATE(DateTimeDetected) AS date, COALESCE(SUM(ExistingFolderSize), 0) AS value
+               FROM DedupRecords
+               WHERE IsDeleted=1 AND DateTimeDetected >= datetime('now', '-${days} days')
+               GROUP BY DATE(DateTimeDetected)
+               ORDER BY date`;
+        break;
+      case "proxy_bans":
+        db = c.env.REPORTS_DB;
+        sql = "";
+        break;
       default:
-        // Already validated above
         db = c.env.REPORTS_DB;
         sql = "";
     }
 
-    const rows = await db.prepare(sql).all<{ date: string; value: number }>();
-    dataPoints = rows.results;
+    if (sql) {
+      const rows = await db.prepare(sql).all<{ date: string; value: number }>();
+      dataPoints = rows.results;
+    }
   } catch {
     // Table may not exist — return empty array
   }
