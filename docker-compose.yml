@@ -27,6 +27,13 @@ services:
       API_SECRET_KEY: ${API_SECRET_KEY:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
       TEST_MODE: ${TEST_MODE:-}
+      # Multiple uvicorn workers each hold an independent in-memory
+      # ACTIVE_TOKENS dict, so /api/test/reset can only clear sessions on
+      # the worker that handles the reset request — sessions on the peer
+      # workers keep accumulating and eventually trip MAX_SESSIONS_PER_USER,
+      # surfacing as 403 "Too many active sessions" on later logins. E2E
+      # sets WEB_CONCURRENCY=1 to force a single shared session store.
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-}
 
   web:
     build:

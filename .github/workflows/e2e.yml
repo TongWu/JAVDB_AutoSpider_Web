@@ -51,6 +51,11 @@ jobs:
           ADMIN_PASSWORD: "changeme"
           STORAGE_BACKEND: "sqlite"
           INGESTION_MODE: "local"
+          # Single uvicorn worker so /api/test/reset can clear ACTIVE_TOKENS
+          # completely. With the default 2 workers each worker keeps its own
+          # in-memory session dict and the 3-session-per-user cap eventually
+          # 403s. See docker-compose.yml WEB_CONCURRENCY note.
+          WEB_CONCURRENCY: "1"
         run: |
           # Generate a minimal config.py so the BE can start without the real
           # main-repo config.py (which is not available in this repo's CI).
