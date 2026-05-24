@@ -7,9 +7,11 @@ test.describe('Journey 1: First-run onboarding wizard', () => {
   })
 
   test('walks through all 5 steps and completes', async ({ page }) => {
-    // After login on a fresh BE state, expect auto-redirect to /onboarding
+    // After login on a fresh BE state, expect auto-redirect to /onboarding.
+    // The redirect is async: CapabilitiesGate.boot() fetches capabilities + health,
+    // then fetches onboarding status, then redirects. Allow 30s for slow browsers.
     await loginViaUi(page)
-    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 10_000 })
+    await expect(page).toHaveURL(/\/onboarding$/, { timeout: 30_000 })
 
     // Step 1 — Welcome
     await expect(page.getByText(/welcome to autospider/i)).toBeVisible()

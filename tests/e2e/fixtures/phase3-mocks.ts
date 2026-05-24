@@ -196,8 +196,28 @@ export async function mockStatsTrend(page: Page): Promise<void> {
   })
 }
 
+// ── Capabilities (admin tier for power-user pages) ─────────────────
+export async function mockCapabilitiesAdmin(page: Page): Promise<void> {
+  await page.route('**/api/capabilities', async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        version: '2.0.0',
+        ingestion_mode: 'local',
+        gh_actions: { tier: 'admin', repo: 'tedwu/javdb-autospider', token_configured: true },
+        storage_backend: 'sqlite',
+        features: {},
+        deployment: 'colocated',
+        build: { frontend_version: '0.1.0', backend_version: '2.0.0', git_sha: 'e2e' },
+      }),
+    })
+  })
+}
+
 // ── Composite installer ────────────────────────────────────────────
 export async function installPhase3Mocks(page: Page): Promise<void> {
+  await mockCapabilitiesAdmin(page)
   await installGhActionsMocks(page)
   await mockWorkflowContent(page)
   await mockSecrets(page)

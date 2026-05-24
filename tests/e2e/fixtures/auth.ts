@@ -19,8 +19,9 @@ export async function loginViaUi(page: Page, username = ADMIN_USERNAME, password
   await page.fill('input[type="text"]', username)
   await page.fill('input[type="password"]', password)
   await page.getByRole('button', { name: /sign in/i }).click()
-  // Wait for either redirect to home or onboarding
-  await page.waitForURL((url) => !/\/login$/.test(url.pathname), { timeout: 10_000 })
+  // Wait for either redirect to home or onboarding.
+  // Allow 30s for slow browsers (Firefox/WebKit) where CapabilitiesGate boot is async.
+  await page.waitForURL((url) => !/\/login$/.test(url.pathname), { timeout: 30_000 })
 }
 
 export async function getAuthHeaders(request: APIRequestContext): Promise<Record<string, string>> {
