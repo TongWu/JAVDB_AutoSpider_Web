@@ -57,7 +57,8 @@ export async function mockSecrets(page: Page): Promise<void> {
 
 // mockSecretCreate is intentionally a no-op: POST is handled inside mockSecrets
 // to avoid double-registration on the same URL pattern.
-export async function mockSecretCreate(_page: Page): Promise<void> {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export async function mockSecretCreate(page: Page): Promise<void> {
   // GET + POST for **/api/gh-actions/secrets are both handled by mockSecrets.
 }
 

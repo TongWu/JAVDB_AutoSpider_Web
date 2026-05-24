@@ -243,7 +243,9 @@ onMounted(() => {
   <div class="stats-page">
     <header class="page-header">
       <h1>{{ t('nav.stats') }}</h1>
-      <p class="subtitle">{{ t('stats.subtitle') }}</p>
+      <p class="subtitle">
+        {{ t('stats.subtitle') }}
+      </p>
     </header>
 
     <!-- Summary cards -->
