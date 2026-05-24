@@ -5,7 +5,7 @@ import { installBrowseMocks, SAMPLE_VIDEO_CODE } from './fixtures/javdb-mocks'
 test.describe('Journey 4: Browse → Resolve → magnet → one-click', () => {
   test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
     await installBrowseMocks(page)
   })
 

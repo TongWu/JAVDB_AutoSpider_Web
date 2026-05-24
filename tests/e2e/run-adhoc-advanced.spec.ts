@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test'
 import { loginViaUi, markOnboarded, resetBackend } from './fixtures/auth'
 
 test.describe('Journey 3: Ad Hoc with Advanced spider options', () => {
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
   })
 
   test('submits an Ad Hoc job via Advanced mode with custom URL', async ({ page }) => {

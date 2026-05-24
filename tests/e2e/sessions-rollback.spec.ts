@@ -5,7 +5,7 @@ import { installSessionMocks, COMMITTED_SESSION, FINALIZING_SESSION } from './fi
 test.describe('Journey 5/5a/5b: Sessions list + rollback + force-commit', () => {
   test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
     await installSessionMocks(page)
   })
 

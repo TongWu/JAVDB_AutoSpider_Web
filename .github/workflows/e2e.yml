@@ -92,6 +92,21 @@ jobs:
           path: playwright-report/
           retention-days: 7
 
+      - name: Capture BE logs
+        if: always()
+        run: |
+          mkdir -p be-logs
+          docker compose logs api > be-logs/api.log 2>&1 || true
+          docker compose ps -a > be-logs/ps.txt 2>&1 || true
+
+      - name: Upload BE logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: be-logs-${{ matrix.browser }}
+          path: be-logs/
+          retention-days: 7
+
       - name: Tear down
         if: always()
         run: docker compose down -v

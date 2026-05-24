@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test'
 import { loginViaUi, markOnboarded, resetBackend } from './fixtures/auth'
 
 test.describe('Journey 2: Login → Run Daily → see log stream', () => {
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
   })
 
   test('triggers a Daily run with dry-run and sees RunCard appear', async ({ page }) => {

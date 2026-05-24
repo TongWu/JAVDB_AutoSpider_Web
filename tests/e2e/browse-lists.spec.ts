@@ -5,7 +5,7 @@ import { installBrowseMocks } from './fixtures/javdb-mocks'
 test.describe('Journey 4a: Browse → Lists tab → badges → cookie sync', () => {
   test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
     await installBrowseMocks(page)
   })
 
