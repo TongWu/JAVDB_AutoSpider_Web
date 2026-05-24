@@ -33,7 +33,7 @@ jobs:
         run: npx playwright install --with-deps ${{ matrix.browser }}
 
       - name: Login to GHCR (needed if BE image is private)
-        uses: docker/login-action@v3
+        uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
@@ -51,6 +51,11 @@ jobs:
           ADMIN_PASSWORD: "changeme"
           STORAGE_BACKEND: "sqlite"
           INGESTION_MODE: "local"
+          # Single uvicorn worker so /api/test/reset can clear ACTIVE_TOKENS
+          # completely. With the default 2 workers each worker keeps its own
+          # in-memory session dict and the 3-session-per-user cap eventually
+          # 403s. See docker-compose.yml WEB_CONCURRENCY note.
+          WEB_CONCURRENCY: "1"
         run: |
           # Generate a minimal config.py so the BE can start without the real
           # main-repo config.py (which is not available in this repo's CI).
@@ -86,10 +91,25 @@ jobs:
 
       - name: Upload Playwright report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: playwright-report-${{ matrix.browser }}
           path: playwright-report/
+          retention-days: 7
+
+      - name: Capture BE logs
+        if: always()
+        run: |
+          mkdir -p be-logs
+          docker compose logs api > be-logs/api.log 2>&1 || true
+          docker compose ps -a > be-logs/ps.txt 2>&1 || true
+
+      - name: Upload BE logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: be-logs-${{ matrix.browser }}
+          path: be-logs/
           retention-days: 7
 
       - name: Tear down

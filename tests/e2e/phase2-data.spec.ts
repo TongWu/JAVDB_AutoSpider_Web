@@ -5,7 +5,7 @@ import { installDataMocks, installGhActionsMocks } from './fixtures/phase2-mocks
 test.describe('Phase 2: Data pages', () => {
   test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
     await installDataMocks(page)
   })
 
@@ -31,7 +31,7 @@ test.describe('Phase 2: Data pages', () => {
 test.describe('Phase 2: GitHub Actions page', () => {
   test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
     await installGhActionsMocks(page)
   })
 

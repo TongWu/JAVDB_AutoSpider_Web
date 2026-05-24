@@ -2,9 +2,9 @@ import { test, expect } from '@playwright/test'
 import { loginViaUi, markOnboarded, resetBackend } from './fixtures/auth'
 
 test.describe('Journey 8: Backend down → outage screen → recovers', () => {
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
   })
 
   test('shows outage screen when health fails, recovers on retry', async ({ page }) => {

@@ -15,9 +15,9 @@ async function fetchConfigValue(
 }
 
 test.describe('Journey 6: Settings → Config edit + save round-trip', () => {
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
   })
 
   test('toggles a non-sensitive bool, saves, and the new value persists across reload', async ({

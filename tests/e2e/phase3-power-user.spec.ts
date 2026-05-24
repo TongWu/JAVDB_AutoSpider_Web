@@ -3,9 +3,9 @@ import { loginViaUi, markOnboarded, resetBackend } from './fixtures/auth'
 import { installPhase3Mocks } from './fixtures/phase3-mocks'
 
 test.describe('Phase 3: Power-user pages', () => {
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
   })
 
   // ── Journey 18: GH Actions workflow YAML editor ──────────────────

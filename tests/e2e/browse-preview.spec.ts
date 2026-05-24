@@ -5,7 +5,7 @@ import { installBrowseMocks, SAMPLE_DETAIL_URL } from './fixtures/javdb-mocks'
 test.describe('Journey 4b: Browse → Preview → Parse this', () => {
   test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
     await installBrowseMocks(page)
   })
 

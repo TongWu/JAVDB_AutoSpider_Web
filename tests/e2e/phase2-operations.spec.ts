@@ -5,7 +5,7 @@ import { installOperationsMocks } from './fixtures/phase2-mocks'
 test.describe('Phase 2: Operations pages', () => {
   test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
-    await markOnboarded(request)
+    await markOnboarded(request, page)
     await installOperationsMocks(page)
   })
 

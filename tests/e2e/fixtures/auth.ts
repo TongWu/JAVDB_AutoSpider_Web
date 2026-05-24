@@ -40,11 +40,30 @@ export async function getAuthHeaders(request: APIRequestContext): Promise<Record
   return headers
 }
 
-export async function markOnboarded(request: APIRequestContext): Promise<void> {
+export async function markOnboarded(request: APIRequestContext, page?: Page): Promise<void> {
+  // BE-side: best-effort. The CI Docker BE sometimes can't persist this
+  // write (operations.db path/perm/schema), so we cannot rely on it alone.
   try {
     const headers = await getAuthHeaders(request)
     await request.post(`${API_URL}/api/onboarding/complete`, { headers })
   } catch {
     /* ignore */
+  }
+  // Browser-side: authoritative mock of /api/onboarding/status, so the
+  // CapabilitiesGate boot never redirects the user to /onboarding even if
+  // the BE write above silently failed. Tests that genuinely exercise the
+  // onboarding flow (onboarding.spec.ts) do not call this helper.
+  if (page) {
+    await page.route('**/api/onboarding/status', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          completed: true,
+          required_missing: [],
+          skippable_missing: [],
+        }),
+      }),
+    )
   }
 }
