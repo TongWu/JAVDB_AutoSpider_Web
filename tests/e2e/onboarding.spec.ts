@@ -2,8 +2,24 @@ import { test, expect } from '@playwright/test'
 import { loginViaUi, resetBackend } from './fixtures/auth'
 
 test.describe('Journey 1: First-run onboarding wizard', () => {
-  test.beforeEach(async ({ request }) => {
+  test.beforeEach(async ({ request, page }) => {
     await resetBackend(request)
+    // Force CapabilitiesGate to treat this run as un-onboarded. The BE reset
+    // above DELETEs the `onboarded` row, but the CI BE's connection pool can
+    // still return a cached value to the read served by /api/onboarding/status,
+    // leaving the gate convinced the user is already done. Authoritative
+    // browser-side mock avoids that race.
+    await page.route('**/api/onboarding/status', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          completed: false,
+          required_missing: ['javdb_session', 'qb'],
+          skippable_missing: ['smtp', 'pikpak', 'rclone', 'proxy'],
+        }),
+      }),
+    )
   })
 
   test('walks through all 5 steps and completes', async ({ page }) => {
