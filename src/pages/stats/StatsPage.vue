@@ -26,6 +26,8 @@ import {
   Tooltip,
   Legend,
   Filler,
+  type ChartOptions,
+  type TooltipItem,
 } from 'chart.js'
 import {
   getStatsSummary,
@@ -62,6 +64,8 @@ const trendsError = ref<string | null>(null)
 
 const successRateTrend = ref<TrendResponse | null>(null)
 const moviesTrend = ref<TrendResponse | null>(null)
+const durationTrend = ref<TrendResponse | null>(null)
+const torrentsTrend = ref<TrendResponse | null>(null)
 const historyGrowthTrend = ref<TrendResponse | null>(null)
 const pikpakTrend = ref<TrendResponse | null>(null)
 const proxyBansTrend = ref<TrendResponse | null>(null)
@@ -75,12 +79,13 @@ const periodOptions = computed(() => [
 ])
 
 // --- Helpers ---
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
+const MB = 1024 * 1024
+const GB = 1024 * 1024 * 1024
+
+function formatBytesScaled(bytes: number): string {
+  if (!bytes || bytes < 0) return '0 MB'
+  if (bytes >= GB) return `${(bytes / GB).toFixed(2)} GB`
+  return `${(bytes / MB).toFixed(2)} MB`
 }
 
 function formatSuccessRate(rate: number | null): string {
@@ -93,8 +98,8 @@ function formatDuration(secs: number | null): string {
   return t('stats.seconds', { n: Math.round(secs) })
 }
 
-// --- Chart data ---
-const chartOptions = {
+// --- Chart options ---
+const lineChartOptions: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -102,6 +107,87 @@ const chartOptions = {
   },
   scales: {
     x: { grid: { display: false } },
+  },
+}
+
+const barChartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+  },
+  scales: {
+    x: { grid: { display: false } },
+  },
+}
+
+const successRateChartOptions: ChartOptions<'line'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: { grid: { display: false } },
+    y: {
+      min: 0,
+      max: 100,
+      ticks: {
+        callback: (v) => `${v}%`,
+      },
+    },
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx: TooltipItem<'line'>) =>
+          ctx.parsed.y == null ? '' : `${ctx.parsed.y.toFixed(1)}%`,
+      },
+    },
+  },
+}
+
+const dedupChartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: { grid: { display: false } },
+    y: {
+      beginAtZero: true,
+      ticks: {
+        callback: (v) => formatBytesScaled(Number(v)),
+      },
+    },
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx: TooltipItem<'bar'>) =>
+          ctx.parsed.y == null ? '' : formatBytesScaled(ctx.parsed.y),
+      },
+    },
+  },
+}
+
+const durationChartOptions: ChartOptions<'line'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    x: { grid: { display: false } },
+    y: {
+      beginAtZero: true,
+      ticks: {
+        callback: (v) => `${v}s`,
+      },
+    },
+  },
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      callbacks: {
+        label: (ctx: TooltipItem<'line'>) =>
+          ctx.parsed.y == null ? '' : `${Math.round(ctx.parsed.y)}s`,
+      },
+    },
   },
 }
 
@@ -123,9 +209,34 @@ const moviesChartData = computed(() => ({
   labels: moviesTrend.value?.data_points.map((d) => d.date) ?? [],
   datasets: [
     {
-      label: t('stats.totalMovies'),
+      label: t('stats.dailyMovies'),
       data: moviesTrend.value?.data_points.map((d) => d.value) ?? [],
       backgroundColor: 'rgba(99,149,255,0.7)',
+    },
+  ],
+}))
+
+const durationChartData = computed(() => ({
+  labels: durationTrend.value?.data_points.map((d) => d.date) ?? [],
+  datasets: [
+    {
+      label: t('stats.avgDuration'),
+      data: durationTrend.value?.data_points.map((d) => d.value) ?? [],
+      borderColor: '#f0a020',
+      backgroundColor: 'rgba(240,160,32,0.1)',
+      fill: true,
+      tension: 0.3,
+    },
+  ],
+}))
+
+const torrentsChartData = computed(() => ({
+  labels: torrentsTrend.value?.data_points.map((d) => d.date) ?? [],
+  datasets: [
+    {
+      label: t('stats.dailyTorrents'),
+      data: torrentsTrend.value?.data_points.map((d) => d.value) ?? [],
+      backgroundColor: 'rgba(64,158,255,0.7)',
     },
   ],
 }))
@@ -201,12 +312,16 @@ async function fetchTrendsForTab(tab: string) {
   trendsError.value = null
   try {
     if (tab === 'runs') {
-      const [sr, mv] = await Promise.all([
+      const [sr, mv, du, tr] = await Promise.all([
         getStatsTrend('success_rate', period.value),
         getStatsTrend('movies', period.value),
+        getStatsTrend('duration', period.value),
+        getStatsTrend('torrents', period.value),
       ])
       successRateTrend.value = sr
       moviesTrend.value = mv
+      durationTrend.value = du
+      torrentsTrend.value = tr
     } else if (tab === 'growth') {
       const [hg, pp] = await Promise.all([
         getStatsTrend('history_growth', period.value),
@@ -327,7 +442,7 @@ onMounted(() => {
           <NCard size="small">
             <NStatistic
               :label="t('stats.dedupFreed')"
-              :value="summary != null ? formatBytes(summary.total_dedup_freed_bytes) : '—'"
+              :value="summary != null ? formatBytesScaled(summary.total_dedup_freed_bytes) : '—'"
             />
           </NCard>
         </NGi>
@@ -399,7 +514,7 @@ onMounted(() => {
                     <Line
                       v-if="(successRateTrend?.data_points.length ?? 0) > 0"
                       :data="successRateChartData"
-                      :options="chartOptions"
+                      :options="successRateChartOptions"
                     />
                     <p
                       v-else
@@ -412,14 +527,54 @@ onMounted(() => {
               </NGi>
               <NGi span="2 m:1">
                 <NCard
-                  :title="t('stats.totalMovies')"
+                  :title="t('stats.avgDuration')"
+                  size="small"
+                >
+                  <div class="chart-wrap">
+                    <Line
+                      v-if="(durationTrend?.data_points.length ?? 0) > 0"
+                      :data="durationChartData"
+                      :options="durationChartOptions"
+                    />
+                    <p
+                      v-else
+                      class="no-data"
+                    >
+                      {{ t('stats.noData') }}
+                    </p>
+                  </div>
+                </NCard>
+              </NGi>
+              <NGi span="2 m:1">
+                <NCard
+                  :title="t('stats.dailyMovies')"
                   size="small"
                 >
                   <div class="chart-wrap">
                     <Bar
                       v-if="(moviesTrend?.data_points.length ?? 0) > 0"
                       :data="moviesChartData"
-                      :options="chartOptions"
+                      :options="barChartOptions"
+                    />
+                    <p
+                      v-else
+                      class="no-data"
+                    >
+                      {{ t('stats.noData') }}
+                    </p>
+                  </div>
+                </NCard>
+              </NGi>
+              <NGi span="2 m:1">
+                <NCard
+                  :title="t('stats.dailyTorrents')"
+                  size="small"
+                >
+                  <div class="chart-wrap">
+                    <Bar
+                      v-if="(torrentsTrend?.data_points.length ?? 0) > 0"
+                      :data="torrentsChartData"
+                      :options="barChartOptions"
                     />
                     <p
                       v-else
@@ -455,7 +610,7 @@ onMounted(() => {
                     <Line
                       v-if="(historyGrowthTrend?.data_points.length ?? 0) > 0"
                       :data="historyGrowthChartData"
-                      :options="chartOptions"
+                      :options="lineChartOptions"
                     />
                     <p
                       v-else
@@ -475,7 +630,7 @@ onMounted(() => {
                     <Line
                       v-if="(pikpakTrend?.data_points.length ?? 0) > 0"
                       :data="pikpakChartData"
-                      :options="chartOptions"
+                      :options="lineChartOptions"
                     />
                     <p
                       v-else
@@ -511,7 +666,7 @@ onMounted(() => {
                     <Line
                       v-if="(proxyBansTrend?.data_points.length ?? 0) > 0"
                       :data="proxyBansChartData"
-                      :options="chartOptions"
+                      :options="lineChartOptions"
                     />
                     <p
                       v-else
@@ -531,7 +686,7 @@ onMounted(() => {
                     <Bar
                       v-if="(dedupTrend?.data_points.length ?? 0) > 0"
                       :data="dedupChartData"
-                      :options="chartOptions"
+                      :options="dedupChartOptions"
                     />
                     <p
                       v-else
