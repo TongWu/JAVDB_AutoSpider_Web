@@ -80,6 +80,120 @@ async function seedTables() {
     `INSERT INTO SpiderStats (SessionId, TotalDiscovered, TotalProcessed, TotalSkipped, TotalNoNew, TotalFailed, DateTimeCreated)
      VALUES ('sess-001', 100, 60, 20, 15, 5, datetime('now', '-1 day'))`,
   ).run();
+
+  // UploaderStats (REPORTS_DB)
+  await env.REPORTS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS UploaderStats (
+      Id INTEGER PRIMARY KEY AUTOINCREMENT,
+      SessionId TEXT NOT NULL,
+      TotalTorrents INTEGER, DuplicateCount INTEGER, Attempted INTEGER,
+      SuccessfullyAdded INTEGER, FailedCount INTEGER,
+      HackedSub INTEGER, HackedNosub INTEGER,
+      SubtitleCount INTEGER, NoSubtitleCount INTEGER,
+      SuccessRate REAL, DateTimeCreated TEXT
+    )`,
+  ).run();
+  await env.REPORTS_DB.prepare(
+    `INSERT INTO UploaderStats (SessionId, TotalTorrents, DuplicateCount, SubtitleCount, NoSubtitleCount, SuccessRate, DateTimeCreated)
+     VALUES ('sess-001', 50, 10, 30, 20, 0.85, datetime('now', '-1 day'))`,
+  ).run();
+
+  // PikpakStats (REPORTS_DB)
+  await env.REPORTS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS PikpakStats (
+      Id INTEGER PRIMARY KEY AUTOINCREMENT,
+      SessionId TEXT NOT NULL,
+      ThresholdDays INTEGER, TotalTorrents INTEGER, FilteredOld INTEGER,
+      SuccessfulCount INTEGER, FailedCount INTEGER,
+      UploadedCount INTEGER, DeleteFailedCount INTEGER,
+      DateTimeCreated TEXT
+    )`,
+  ).run();
+  await env.REPORTS_DB.prepare(
+    `INSERT INTO PikpakStats (SessionId, TotalTorrents, SuccessfulCount, FailedCount, DeleteFailedCount, DateTimeCreated)
+     VALUES ('sess-001', 40, 35, 3, 2, datetime('now', '-1 day'))`,
+  ).run();
+
+  // ReportMovies (REPORTS_DB) — for avg_rating metric
+  await env.REPORTS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS ReportMovies (
+      Id INTEGER PRIMARY KEY AUTOINCREMENT,
+      SessionId TEXT NOT NULL, Href TEXT, VideoCode TEXT,
+      Page INTEGER, Actor TEXT, Rate REAL, CommentNumber INTEGER
+    )`,
+  ).run();
+  await env.REPORTS_DB.prepare(
+    `INSERT INTO ReportMovies (SessionId, VideoCode, Rate, CommentNumber)
+     VALUES ('sess-001', 'TEST-001', 7.5, 42)`,
+  ).run();
+  await env.REPORTS_DB.prepare(
+    `INSERT INTO ReportMovies (SessionId, VideoCode, Rate, CommentNumber)
+     VALUES ('sess-001', 'TEST-002', 3.2, 10)`,
+  ).run();
+
+  // MovieHistory — add HiRes and PerfectMatch columns
+  await env.HISTORY_DB.prepare(
+    "ALTER TABLE MovieHistory ADD COLUMN PerfectMatchIndicator INTEGER DEFAULT 0",
+  ).run();
+  await env.HISTORY_DB.prepare(
+    "ALTER TABLE MovieHistory ADD COLUMN HiResIndicator INTEGER DEFAULT 0",
+  ).run();
+  await env.HISTORY_DB.prepare(
+    "UPDATE MovieHistory SET PerfectMatchIndicator = 1, HiResIndicator = 1 WHERE Id = 1",
+  ).run();
+
+  // TorrentHistory — add resolution column
+  await env.HISTORY_DB.prepare(
+    "ALTER TABLE TorrentHistory ADD COLUMN SubtitleIndicator INTEGER DEFAULT 0",
+  ).run();
+  await env.HISTORY_DB.prepare(
+    "ALTER TABLE TorrentHistory ADD COLUMN ResolutionType INTEGER DEFAULT 0",
+  ).run();
+  await env.HISTORY_DB.prepare(
+    "UPDATE TorrentHistory SET ResolutionType = 2 WHERE Id = 1",
+  ).run();
+  await env.HISTORY_DB.prepare(
+    "UPDATE TorrentHistory SET ResolutionType = 1 WHERE Id = 2",
+  ).run();
+
+  // EmailNotificationHistory (OPERATIONS_DB)
+  await env.OPERATIONS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS EmailNotificationHistory (
+      Id INTEGER PRIMARY KEY AUTOINCREMENT,
+      SessionId TEXT, Recipient TEXT NOT NULL, Subject TEXT NOT NULL,
+      Status TEXT NOT NULL DEFAULT 'sent', ErrorMessage TEXT,
+      AttachmentNames TEXT, SentAt TEXT NOT NULL, ResentAt TEXT, CreatedBy TEXT
+    )`,
+  ).run();
+  await env.OPERATIONS_DB.prepare(
+    `INSERT INTO EmailNotificationHistory (SessionId, Recipient, Subject, Status, SentAt)
+     VALUES ('sess-001', 'a@b.com', 'Report', 'sent', datetime('now', '-1 day'))`,
+  ).run();
+  await env.OPERATIONS_DB.prepare(
+    `INSERT INTO EmailNotificationHistory (SessionId, Recipient, Subject, Status, SentAt)
+     VALUES ('sess-001', 'a@b.com', 'Report', 'failed', datetime('now', '-1 day'))`,
+  ).run();
+
+  // OpsIncidents (REPORTS_DB)
+  await env.REPORTS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS OpsIncidents (
+      incident_id TEXT PRIMARY KEY, trigger_source TEXT NOT NULL,
+      run_id TEXT, run_attempt INTEGER, session_id TEXT,
+      incident_type TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'open',
+      persistence_status TEXT NOT NULL DEFAULT 'd1_written',
+      model_version TEXT NOT NULL, detector_version TEXT NOT NULL,
+      bundle_schema_version TEXT NOT NULL,
+      confidence TEXT NOT NULL DEFAULT 'low',
+      confirmed_findings_json TEXT, likely_causes_json TEXT,
+      unknowns_json TEXT, recommended_next_actions_json TEXT,
+      unsafe_actions_json TEXT, evidence_refs_json TEXT,
+      created_at TEXT NOT NULL, updated_at TEXT NOT NULL, resolved_at TEXT
+    )`,
+  ).run();
+  await env.REPORTS_DB.prepare(
+    `INSERT INTO OpsIncidents (incident_id, trigger_source, incident_type, status, model_version, detector_version, bundle_schema_version, created_at, updated_at)
+     VALUES ('inc-001', 'ci', 'spider_failure', 'open', 'v1', 'v1', 'v1', datetime('now', '-1 day'), datetime('now', '-1 day'))`,
+  ).run();
 }
 
 describe("Stats routes", () => {
@@ -227,5 +341,130 @@ describe("Stats routes", () => {
     expect(data.data_points.length).toBeGreaterThan(0);
     // 5 failed / 100 discovered = 0.05
     expect(data.data_points[0].value).toBeCloseTo(0.05, 2);
+  });
+
+  // --- Content metrics ---
+  it("GET /api/stats/trend?metric=avg_rating returns average rating per day", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=avg_rating&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // avg of 7.5 and 3.2 = 5.35
+    expect(data.data_points[0].value).toBeCloseTo(5.35, 1);
+  });
+
+  it("GET /api/stats/trend?metric=subtitle_coverage returns ratio", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=subtitle_coverage&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // 30 / (30 + 20) = 0.6
+    expect(data.data_points[0].value).toBeCloseTo(0.6, 1);
+  });
+
+  it("GET /api/stats/trend?metric=hires_ratio returns ratio", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=hires_ratio&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // 1 HiRes out of 1 movie = 1.0
+    expect(data.data_points[0].value).toBeCloseTo(1.0, 1);
+  });
+
+  // --- Upload metrics ---
+  it("GET /api/stats/trend?metric=upload_success_rate returns rate", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=upload_success_rate&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    expect(data.data_points[0].value).toBeCloseTo(0.85, 2);
+  });
+
+  it("GET /api/stats/trend?metric=duplicate_rate returns ratio", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=duplicate_rate&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // 10 / 50 = 0.2
+    expect(data.data_points[0].value).toBeCloseTo(0.2, 1);
+  });
+
+  it("GET /api/stats/trend?metric=pikpak_success_rate returns ratio", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=pikpak_success_rate&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // 35 / 40 = 0.875
+    expect(data.data_points[0].value).toBeCloseTo(0.875, 2);
+  });
+
+  it("GET /api/stats/trend?metric=pikpak_failed returns count", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=pikpak_failed&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    expect(data.data_points[0].value).toBe(3);
+  });
+
+  // --- System/Ops metrics ---
+  it("GET /api/stats/trend?metric=email_sent returns count", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=email_sent&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    expect(data.data_points[0].value).toBe(1);
+  });
+
+  it("GET /api/stats/trend?metric=ops_incidents returns count", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=ops_incidents&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    expect(data.data_points[0].value).toBe(1);
   });
 });

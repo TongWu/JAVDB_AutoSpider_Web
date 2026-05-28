@@ -132,6 +132,22 @@ const VALID_METRICS = new Set([
   "spider_efficiency",
   "spider_skip_rate",
   "spider_failure_rate",
+  // Content (B1, B3, B5)
+  "avg_rating",
+  "subtitle_coverage",
+  "hires_ratio",
+  "perfectmatch_ratio",
+  // Upload (C1-C4)
+  "upload_success_rate",
+  "duplicate_rate",
+  "pikpak_success_rate",
+  "pikpak_failed",
+  "pikpak_delete_failed",
+  // System/Ops (D1-D2)
+  "email_sent",
+  "email_failed",
+  "email_resent",
+  "ops_incidents",
 ]);
 const VALID_PERIODS = new Set(["7d", "30d", "90d"]);
 
@@ -307,6 +323,133 @@ statsRoutes.get("/trend", async (c) => {
                FROM SpiderStats ss
                WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
                GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Content: avg rating (B1) ---
+      case "avg_rating":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(rs.DateTimeCreated) AS date, AVG(rm.Rate) AS value
+               FROM ReportSessions rs
+               JOIN ReportMovies rm ON rm.SessionId = rs.Id
+               WHERE rm.Rate > 0
+                 AND rs.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(rs.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Content: subtitle coverage (B3) ---
+      case "subtitle_coverage":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(us.DateTimeCreated) AS date,
+                      CAST(SUM(us.SubtitleCount) AS REAL) / NULLIF(SUM(us.SubtitleCount + us.NoSubtitleCount), 0) AS value
+               FROM UploaderStats us
+               WHERE us.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(us.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Content: HiRes ratio (B5) ---
+      case "hires_ratio":
+        db = c.env.HISTORY_DB;
+        sql = `SELECT DATE(DateTimeCreated) AS date,
+                      AVG(CAST(HiResIndicator AS REAL)) AS value
+               FROM MovieHistory
+               WHERE DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Content: PerfectMatch ratio (B5) ---
+      case "perfectmatch_ratio":
+        db = c.env.HISTORY_DB;
+        sql = `SELECT DATE(DateTimeCreated) AS date,
+                      AVG(CAST(PerfectMatchIndicator AS REAL)) AS value
+               FROM MovieHistory
+               WHERE DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Upload: QB success rate (C1) ---
+      case "upload_success_rate":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(us.DateTimeCreated) AS date, AVG(us.SuccessRate) AS value
+               FROM UploaderStats us
+               WHERE us.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(us.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Upload: duplicate rate (C2) ---
+      case "duplicate_rate":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(us.DateTimeCreated) AS date,
+                      CAST(SUM(us.DuplicateCount) AS REAL) / NULLIF(SUM(us.TotalTorrents), 0) AS value
+               FROM UploaderStats us
+               WHERE us.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(us.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Upload: PikPak success rate (C3) ---
+      case "pikpak_success_rate":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ps.DateTimeCreated) AS date,
+                      CAST(SUM(ps.SuccessfulCount) AS REAL) / NULLIF(SUM(ps.TotalTorrents), 0) AS value
+               FROM PikpakStats ps
+               WHERE ps.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ps.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Upload: PikPak failed count (C4 series 1) ---
+      case "pikpak_failed":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ps.DateTimeCreated) AS date, SUM(ps.FailedCount) AS value
+               FROM PikpakStats ps
+               WHERE ps.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ps.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Upload: PikPak delete-failed count (C4 series 2) ---
+      case "pikpak_delete_failed":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ps.DateTimeCreated) AS date, SUM(ps.DeleteFailedCount) AS value
+               FROM PikpakStats ps
+               WHERE ps.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ps.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- System: email sent (D1 series 1) ---
+      case "email_sent":
+        db = c.env.OPERATIONS_DB;
+        sql = `SELECT DATE(SentAt) AS date, COUNT(*) AS value
+               FROM EmailNotificationHistory
+               WHERE Status = 'sent'
+                 AND SentAt >= datetime('now', '-${days} days')
+               GROUP BY DATE(SentAt)
+               ORDER BY date`;
+        break;
+      // --- System: email failed (D1 series 2) ---
+      case "email_failed":
+        db = c.env.OPERATIONS_DB;
+        sql = `SELECT DATE(SentAt) AS date, COUNT(*) AS value
+               FROM EmailNotificationHistory
+               WHERE Status = 'failed'
+                 AND SentAt >= datetime('now', '-${days} days')
+               GROUP BY DATE(SentAt)
+               ORDER BY date`;
+        break;
+      // --- System: email resent (D1 series 3) ---
+      case "email_resent":
+        db = c.env.OPERATIONS_DB;
+        sql = `SELECT DATE(COALESCE(ResentAt, SentAt)) AS date, COUNT(*) AS value
+               FROM EmailNotificationHistory
+               WHERE Status = 'resent'
+                 AND COALESCE(ResentAt, SentAt) >= datetime('now', '-${days} days')
+               GROUP BY DATE(COALESCE(ResentAt, SentAt))
+               ORDER BY date`;
+        break;
+      // --- System: ops incidents (D2) ---
+      case "ops_incidents":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(created_at) AS date, COUNT(*) AS value
+               FROM OpsIncidents
+               WHERE created_at >= datetime('now', '-${days} days')
+               GROUP BY DATE(created_at)
                ORDER BY date`;
         break;
       default:
