@@ -1181,6 +1181,8 @@
     "avgDuration": "Avg Duration",
     "totalMovies": "Total Movies",
     "totalTorrents": "Total Torrents",
+    "dailyMovies": "Daily Movies",
+    "dailyTorrents": "Daily Torrents",
     "pikpakVolume": "PikPak Transfers",
     "dedupFreed": "Dedup Freed",
     "proxyBans": "Proxy Bans (7d)",

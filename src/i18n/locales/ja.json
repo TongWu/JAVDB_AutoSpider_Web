@@ -1181,6 +1181,8 @@
     "avgDuration": "平均所要時間",
     "totalMovies": "合計動画数",
     "totalTorrents": "合計トレント数",
+    "dailyMovies": "日次動画数",
+    "dailyTorrents": "日次トレント数",
     "pikpakVolume": "PikPak 転送数",
     "dedupFreed": "重複排除解放量",
     "proxyBans": "プロキシ BAN（7日間）",

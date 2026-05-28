@@ -47,8 +47,8 @@ statsRoutes.get("/summary", async (c) => {
     const r = await reportsDb
       .prepare(
         `SELECT COUNT(*) AS total,
-                ROUND(CAST(SUM(CASE WHEN Status='committed' THEN 1 ELSE 0 END) AS REAL)
-                      / NULLIF(COUNT(*),0) * 100, 1) AS success_rate
+                CAST(SUM(CASE WHEN Status='committed' THEN 1 ELSE 0 END) AS REAL)
+                      / NULLIF(COUNT(*),0) AS success_rate
          FROM ReportSessions`,
       )
       .first<{ total: number; success_rate: number | null }>();

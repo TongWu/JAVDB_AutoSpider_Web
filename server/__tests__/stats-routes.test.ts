@@ -98,8 +98,8 @@ describe("Stats routes", () => {
     expect(typeof data.total_runs).toBe("number");
     expect(data.total_runs).toBe(2);
 
-    // success_rate: 1 committed out of 2 = 50%
-    expect(data.success_rate).toBe(50);
+    // success_rate: 1 committed out of 2 = 0.5 (0-1 fraction)
+    expect(data.success_rate).toBe(0.5);
 
     // avg_duration_seconds: should be a number (committed session has CommittedAt)
     expect(typeof data.avg_duration_seconds).toBe("number");

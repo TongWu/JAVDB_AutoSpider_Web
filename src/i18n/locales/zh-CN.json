@@ -1181,6 +1181,8 @@
     "avgDuration": "平均耗时",
     "totalMovies": "总影片数",
     "totalTorrents": "总种子数",
+    "dailyMovies": "每日影片数",
+    "dailyTorrents": "每日种子数",
     "pikpakVolume": "PikPak 传输量",
     "dedupFreed": "去重释放空间",
     "proxyBans": "代理封禁 (7天)",
