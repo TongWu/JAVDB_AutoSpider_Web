@@ -150,6 +150,10 @@ const VALID_METRICS = new Set([
   "email_resent",
   "ops_incidents",
 ]);
+const VALID_DISTRIBUTION_METRICS = new Set([
+  "rating_distribution",
+  "resolution_distribution",
+]);
 const VALID_PERIODS = new Set(["7d", "30d", "90d"]);
 
 function periodToDays(period: string): number {
@@ -478,5 +482,127 @@ statsRoutes.get("/trend", async (c) => {
     metric,
     period,
     data_points: dataPoints,
+  });
+});
+
+// --- GET /distribution ---
+
+statsRoutes.get("/distribution", async (c) => {
+  const metric = c.req.query("metric") ?? "rating_distribution";
+  const period = c.req.query("period") ?? "30d";
+
+  if (!VALID_DISTRIBUTION_METRICS.has(metric)) {
+    throw new HTTPException(400, {
+      message: JSON.stringify({
+        error: {
+          code: "stats.invalid_metric",
+          message: `Invalid metric '${metric}'. Supported: ${[...VALID_DISTRIBUTION_METRICS].join(", ")}`,
+        },
+      }),
+    });
+  }
+
+  if (!VALID_PERIODS.has(period)) {
+    throw new HTTPException(400, {
+      message: JSON.stringify({
+        error: {
+          code: "stats.invalid_period",
+          message: `Invalid period '${period}'. Supported: ${[...VALID_PERIODS].join(", ")}`,
+        },
+      }),
+    });
+  }
+
+  const days = periodToDays(period);
+
+  if (metric === "rating_distribution") {
+    const buckets = [
+      { label: "0-2", value: 0 },
+      { label: "2-4", value: 0 },
+      { label: "4-6", value: 0 },
+      { label: "6-8", value: 0 },
+      { label: "8-10", value: 0 },
+    ];
+
+    try {
+      const rows = await c.env.REPORTS_DB
+        .prepare(
+          `SELECT Rate AS value
+           FROM ReportMovies rm
+           JOIN ReportSessions rs ON rs.Id = rm.SessionId
+           WHERE rm.Rate IS NOT NULL
+             AND rs.DateTimeCreated >= datetime('now', '-${days} days')`,
+        )
+        .all<{ value: number }>();
+
+      for (const row of rows.results) {
+        const value = row.value;
+        if (value >= 0 && value < 2) {
+          buckets[0].value += 1;
+        } else if (value < 4) {
+          buckets[1].value += 1;
+        } else if (value < 6) {
+          buckets[2].value += 1;
+        } else if (value < 8) {
+          buckets[3].value += 1;
+        } else if (value <= 10) {
+          buckets[4].value += 1;
+        }
+      }
+    } catch {
+      // Table may not exist — return empty buckets
+    }
+
+    return c.json({
+      metric,
+      period,
+      buckets,
+    });
+  }
+
+  const buckets = [
+    { label: "SD", value: 0 },
+    { label: "720p", value: 0 },
+    { label: "1080p", value: 0 },
+    { label: "4K", value: 0 },
+    { label: "Other", value: 0 },
+  ];
+
+  try {
+    const rows = await c.env.HISTORY_DB
+      .prepare(
+        `SELECT ResolutionType AS value
+         FROM TorrentHistory
+         WHERE DateTimeCreated >= datetime('now', '-${days} days')`,
+      )
+      .all<{ value: number | null }>();
+
+    for (const row of rows.results) {
+      switch (row.value) {
+        case 0:
+          buckets[0].value += 1;
+          break;
+        case 1:
+          buckets[1].value += 1;
+          break;
+        case 2:
+          buckets[2].value += 1;
+          break;
+        case 3:
+          buckets[3].value += 1;
+          break;
+        default:
+          buckets[4].value += 1;
+          break;
+      }
+    }
+  } catch {
+    // Table may not exist — return empty buckets
+  }
+
+  return c.json({
+    metric,
+    period,
+    buckets,
   });
 });

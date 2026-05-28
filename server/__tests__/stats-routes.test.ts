@@ -249,23 +249,38 @@ describe("Stats routes", () => {
 
   it("GET /api/stats/trend?metric=runs&period=7d returns data_points array", async () => {
     const token = await getToken();
-    const res = await app.request(
-      "/api/stats/trend?metric=runs&period=7d",
-      { headers: { Authorization: `Bearer ${token}` } },
-      env,
-    );
-    expect(res.status).toBe(200);
-    const data = (await res.json()) as any;
+    const oldSessionId = "sess-old-outside-window";
 
-    expect(data.metric).toBe("runs");
-    expect(data.period).toBe("7d");
-    expect(Array.isArray(data.data_points)).toBe(true);
+    await env.REPORTS_DB.prepare(
+      `INSERT INTO ReportSessions (Id, Status, DateTimeCreated, ReportType, ReportDate)
+       VALUES (?, 'committed', datetime('now', '-10 days'), 'daily', '2026-05-13')`,
+    )
+      .bind(oldSessionId)
+      .run();
 
-    // We seeded 2 sessions within 7 days
-    expect(data.data_points.length).toBeGreaterThan(0);
-    for (const dp of data.data_points) {
-      expect(typeof dp.date).toBe("string");
-      expect(typeof dp.value).toBe("number");
+    try {
+      const res = await app.request(
+        "/api/stats/trend?metric=runs&period=7d",
+        { headers: { Authorization: `Bearer ${token}` } },
+        env,
+      );
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as any;
+
+      expect(data.metric).toBe("runs");
+      expect(data.period).toBe("7d");
+      expect(Array.isArray(data.data_points)).toBe(true);
+      expect(data.data_points).toHaveLength(2);
+      expect(data.data_points.map((dp: any) => dp.value)).toEqual([1, 1]);
+      expect(data.data_points.reduce((sum: number, dp: any) => sum + dp.value, 0)).toBe(2);
+      for (const dp of data.data_points) {
+        expect(typeof dp.date).toBe("string");
+        expect(typeof dp.value).toBe("number");
+      }
+    } finally {
+      await env.REPORTS_DB.prepare("DELETE FROM ReportSessions WHERE Id = ?")
+        .bind(oldSessionId)
+        .run();
     }
   });
 
@@ -279,12 +294,70 @@ describe("Stats routes", () => {
     expect(res.status).toBe(400);
   });
 
+  it("GET /api/stats/distribution?metric=rating_distribution&period=90d returns ordered buckets", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/distribution?metric=rating_distribution&period=90d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    const data = (await res.json()) as any;
+    expect(data.metric).toBe("rating_distribution");
+    expect(data.period).toBe("90d");
+    expect(Array.isArray(data.buckets)).toBe(true);
+    expect(data.buckets).toHaveLength(5);
+    expect(data.buckets.map((bucket: any) => bucket.label)).toEqual([
+      "0-2",
+      "2-4",
+      "4-6",
+      "6-8",
+      "8-10",
+    ]);
+    expect(data.buckets.map((bucket: any) => bucket.value)).toEqual([0, 1, 0, 1, 0]);
+  });
+
+  it("GET /api/stats/distribution?metric=resolution_distribution&period=90d returns resolution buckets", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/distribution?metric=resolution_distribution&period=90d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+
+    const data = (await res.json()) as any;
+    expect(data.metric).toBe("resolution_distribution");
+    expect(data.period).toBe("90d");
+    expect(data.buckets).toEqual([
+      { label: "SD", value: 0 },
+      { label: "720p", value: 1 },
+      { label: "1080p", value: 1 },
+      { label: "4K", value: 0 },
+      { label: "Other", value: 0 },
+    ]);
+  });
+
+  it("GET /api/stats/distribution with invalid metric returns 400", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/distribution?metric=invalid_metric",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
   it("rejects unauthenticated requests", async () => {
     const summaryRes = await app.request("/api/stats/summary", {}, env);
     expect(summaryRes.status).toBe(401);
 
     const trendRes = await app.request("/api/stats/trend?metric=runs", {}, env);
     expect(trendRes.status).toBe(401);
+
+    const distributionRes = await app.request("/api/stats/distribution?metric=rating_distribution", {}, env);
+    expect(distributionRes.status).toBe(401);
   });
 
   it("GET /api/stats/trend?metric=spider_processed returns daily totals", async () => {
