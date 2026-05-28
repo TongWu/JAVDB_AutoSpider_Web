@@ -115,6 +115,7 @@ statsRoutes.get("/summary", async (c) => {
 // --- GET /trend ---
 
 const VALID_METRICS = new Set([
+  // Existing
   "success_rate",
   "duration",
   "movies",
@@ -123,6 +124,14 @@ const VALID_METRICS = new Set([
   "pikpak",
   "dedup",
   "proxy_bans",
+  // Spider (A1-A4)
+  "spider_processed",
+  "spider_skipped",
+  "spider_nonew",
+  "spider_failed",
+  "spider_efficiency",
+  "spider_skip_rate",
+  "spider_failure_rate",
 ]);
 const VALID_PERIODS = new Set(["7d", "30d", "90d"]);
 
@@ -238,6 +247,67 @@ statsRoutes.get("/trend", async (c) => {
       case "proxy_bans":
         db = c.env.REPORTS_DB;
         sql = "";
+        break;
+      // --- Spider raw counts (A1 stacked bar series) ---
+      case "spider_processed":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ss.DateTimeCreated) AS date, SUM(ss.TotalProcessed) AS value
+               FROM SpiderStats ss
+               WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      case "spider_skipped":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ss.DateTimeCreated) AS date, SUM(ss.TotalSkipped) AS value
+               FROM SpiderStats ss
+               WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      case "spider_nonew":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ss.DateTimeCreated) AS date, SUM(ss.TotalNoNew) AS value
+               FROM SpiderStats ss
+               WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      case "spider_failed":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ss.DateTimeCreated) AS date, SUM(ss.TotalFailed) AS value
+               FROM SpiderStats ss
+               WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      // --- Spider ratios (A2-A4 line charts) ---
+      case "spider_efficiency":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ss.DateTimeCreated) AS date,
+                      CAST(SUM(ss.TotalProcessed) AS REAL) / NULLIF(SUM(ss.TotalDiscovered), 0) AS value
+               FROM SpiderStats ss
+               WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      case "spider_skip_rate":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ss.DateTimeCreated) AS date,
+                      CAST(SUM(ss.TotalSkipped) AS REAL) / NULLIF(SUM(ss.TotalDiscovered), 0) AS value
+               FROM SpiderStats ss
+               WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
+        break;
+      case "spider_failure_rate":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(ss.DateTimeCreated) AS date,
+                      CAST(SUM(ss.TotalFailed) AS REAL) / NULLIF(SUM(ss.TotalDiscovered), 0) AS value
+               FROM SpiderStats ss
+               WHERE ss.DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(ss.DateTimeCreated)
+               ORDER BY date`;
         break;
       default:
         db = c.env.REPORTS_DB;

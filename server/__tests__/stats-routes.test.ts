@@ -61,6 +61,25 @@ async function seedTables() {
     `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated)
      VALUES (2, 1, 'magnet:?xt=test2', datetime('now', '-1 day'))`,
   ).run();
+
+  // SpiderStats (REPORTS_DB)
+  await env.REPORTS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS SpiderStats (
+      Id INTEGER PRIMARY KEY AUTOINCREMENT,
+      SessionId TEXT NOT NULL,
+      Phase1Discovered INTEGER, Phase1Processed INTEGER, Phase1Skipped INTEGER,
+      Phase1NoNew INTEGER, Phase1Failed INTEGER,
+      Phase2Discovered INTEGER, Phase2Processed INTEGER, Phase2Skipped INTEGER,
+      Phase2NoNew INTEGER, Phase2Failed INTEGER,
+      TotalDiscovered INTEGER, TotalProcessed INTEGER, TotalSkipped INTEGER,
+      TotalNoNew INTEGER, TotalFailed INTEGER,
+      FailedMovies TEXT, DateTimeCreated TEXT
+    )`,
+  ).run();
+  await env.REPORTS_DB.prepare(
+    `INSERT INTO SpiderStats (SessionId, TotalDiscovered, TotalProcessed, TotalSkipped, TotalNoNew, TotalFailed, DateTimeCreated)
+     VALUES ('sess-001', 100, 60, 20, 15, 5, datetime('now', '-1 day'))`,
+  ).run();
 }
 
 describe("Stats routes", () => {
@@ -152,5 +171,61 @@ describe("Stats routes", () => {
 
     const trendRes = await app.request("/api/stats/trend?metric=runs", {}, env);
     expect(trendRes.status).toBe(401);
+  });
+
+  it("GET /api/stats/trend?metric=spider_processed returns daily totals", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=spider_processed&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.metric).toBe("spider_processed");
+    expect(data.data_points.length).toBeGreaterThan(0);
+    expect(data.data_points[0].value).toBe(60);
+  });
+
+  it("GET /api/stats/trend?metric=spider_efficiency returns ratio as 0-1", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=spider_efficiency&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // 60 processed / 100 discovered = 0.6
+    expect(data.data_points[0].value).toBeCloseTo(0.6, 1);
+  });
+
+  it("GET /api/stats/trend?metric=spider_skip_rate returns ratio", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=spider_skip_rate&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // 20 skipped / 100 discovered = 0.2
+    expect(data.data_points[0].value).toBeCloseTo(0.2, 1);
+  });
+
+  it("GET /api/stats/trend?metric=spider_failure_rate returns ratio", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=spider_failure_rate&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // 5 failed / 100 discovered = 0.05
+    expect(data.data_points[0].value).toBeCloseTo(0.05, 2);
   });
 });
