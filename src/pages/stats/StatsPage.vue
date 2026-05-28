@@ -13,7 +13,6 @@ import {
   NButton,
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
-import { Line, Bar } from 'vue-chartjs'
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -26,8 +25,6 @@ import {
   Tooltip,
   Legend,
   Filler,
-  type ChartOptions,
-  type TooltipItem,
 } from 'chart.js'
 import {
   getStatsSummary,
@@ -35,6 +32,8 @@ import {
   type StatsSummary,
   type TrendResponse,
 } from '@/api/stats'
+import RunsOverviewTab from './tabs/RunsOverviewTab.vue'
+import SystemInfraTab from './tabs/SystemInfraTab.vue'
 
 ChartJS.register(
   CategoryScale,
@@ -98,149 +97,6 @@ function formatDuration(secs: number | null): string {
   return t('stats.seconds', { n: Math.round(secs) })
 }
 
-// --- Chart options ---
-const lineChartOptions: ChartOptions<'line'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-  },
-  scales: {
-    x: { grid: { display: false } },
-  },
-}
-
-const barChartOptions: ChartOptions<'bar'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  plugins: {
-    legend: { display: false },
-  },
-  scales: {
-    x: { grid: { display: false } },
-  },
-}
-
-const successRateChartOptions: ChartOptions<'line'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: { grid: { display: false } },
-    y: {
-      min: 0,
-      max: 100,
-      ticks: {
-        callback: (v) => `${v}%`,
-      },
-    },
-  },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx: TooltipItem<'line'>) =>
-          ctx.parsed.y == null ? '' : `${ctx.parsed.y.toFixed(1)}%`,
-      },
-    },
-  },
-}
-
-const dedupChartOptions: ChartOptions<'bar'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: { grid: { display: false } },
-    y: {
-      beginAtZero: true,
-      ticks: {
-        callback: (v) => formatBytesScaled(Number(v)),
-      },
-    },
-  },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx: TooltipItem<'bar'>) =>
-          ctx.parsed.y == null ? '' : formatBytesScaled(ctx.parsed.y),
-      },
-    },
-  },
-}
-
-const durationChartOptions: ChartOptions<'line'> = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: { grid: { display: false } },
-    y: {
-      beginAtZero: true,
-      ticks: {
-        callback: (v) => `${v}s`,
-      },
-    },
-  },
-  plugins: {
-    legend: { display: false },
-    tooltip: {
-      callbacks: {
-        label: (ctx: TooltipItem<'line'>) =>
-          ctx.parsed.y == null ? '' : `${Math.round(ctx.parsed.y)}s`,
-      },
-    },
-  },
-}
-
-const successRateChartData = computed(() => ({
-  labels: successRateTrend.value?.data_points.map((d) => d.date) ?? [],
-  datasets: [
-    {
-      label: t('stats.successRate'),
-      data: successRateTrend.value?.data_points.map((d) => Math.round(d.value * 100)) ?? [],
-      borderColor: '#18a058',
-      backgroundColor: 'rgba(24,160,88,0.1)',
-      fill: true,
-      tension: 0.3,
-    },
-  ],
-}))
-
-const moviesChartData = computed(() => ({
-  labels: moviesTrend.value?.data_points.map((d) => d.date) ?? [],
-  datasets: [
-    {
-      label: t('stats.dailyMovies'),
-      data: moviesTrend.value?.data_points.map((d) => d.value) ?? [],
-      backgroundColor: 'rgba(99,149,255,0.7)',
-    },
-  ],
-}))
-
-const durationChartData = computed(() => ({
-  labels: durationTrend.value?.data_points.map((d) => d.date) ?? [],
-  datasets: [
-    {
-      label: t('stats.avgDuration'),
-      data: durationTrend.value?.data_points.map((d) => d.value) ?? [],
-      borderColor: '#f0a020',
-      backgroundColor: 'rgba(240,160,32,0.1)',
-      fill: true,
-      tension: 0.3,
-    },
-  ],
-}))
-
-const torrentsChartData = computed(() => ({
-  labels: torrentsTrend.value?.data_points.map((d) => d.date) ?? [],
-  datasets: [
-    {
-      label: t('stats.dailyTorrents'),
-      data: torrentsTrend.value?.data_points.map((d) => d.value) ?? [],
-      backgroundColor: 'rgba(64,158,255,0.7)',
-    },
-  ],
-}))
-
 const historyGrowthChartData = computed(() => ({
   labels: historyGrowthTrend.value?.data_points.map((d) => d.date) ?? [],
   datasets: [
@@ -265,31 +121,6 @@ const pikpakChartData = computed(() => ({
       backgroundColor: 'rgba(240,160,32,0.1)',
       fill: true,
       tension: 0.3,
-    },
-  ],
-}))
-
-const proxyBansChartData = computed(() => ({
-  labels: proxyBansTrend.value?.data_points.map((d) => d.date) ?? [],
-  datasets: [
-    {
-      label: t('stats.proxyBans'),
-      data: proxyBansTrend.value?.data_points.map((d) => d.value) ?? [],
-      borderColor: '#d03050',
-      backgroundColor: 'rgba(208,48,80,0.1)',
-      fill: true,
-      tension: 0.3,
-    },
-  ],
-}))
-
-const dedupChartData = computed(() => ({
-  labels: dedupTrend.value?.data_points.map((d) => d.date) ?? [],
-  datasets: [
-    {
-      label: t('stats.dedupFreed'),
-      data: dedupTrend.value?.data_points.map((d) => d.value) ?? [],
-      backgroundColor: 'rgba(114,46,209,0.7)',
     },
   ],
 }))
@@ -497,95 +328,12 @@ onMounted(() => {
             name="runs"
             :tab="t('stats.tabs.runs')"
           >
-            <NGrid
-              :cols="2"
-              :x-gap="16"
-              :y-gap="16"
-              responsive="screen"
-              :item-responsive="true"
-              class="charts-grid"
-            >
-              <NGi span="2 m:1">
-                <NCard
-                  :title="t('stats.successRate')"
-                  size="small"
-                >
-                  <div class="chart-wrap">
-                    <Line
-                      v-if="(successRateTrend?.data_points.length ?? 0) > 0"
-                      :data="successRateChartData"
-                      :options="successRateChartOptions"
-                    />
-                    <p
-                      v-else
-                      class="no-data"
-                    >
-                      {{ t('stats.noData') }}
-                    </p>
-                  </div>
-                </NCard>
-              </NGi>
-              <NGi span="2 m:1">
-                <NCard
-                  :title="t('stats.avgDuration')"
-                  size="small"
-                >
-                  <div class="chart-wrap">
-                    <Line
-                      v-if="(durationTrend?.data_points.length ?? 0) > 0"
-                      :data="durationChartData"
-                      :options="durationChartOptions"
-                    />
-                    <p
-                      v-else
-                      class="no-data"
-                    >
-                      {{ t('stats.noData') }}
-                    </p>
-                  </div>
-                </NCard>
-              </NGi>
-              <NGi span="2 m:1">
-                <NCard
-                  :title="t('stats.dailyMovies')"
-                  size="small"
-                >
-                  <div class="chart-wrap">
-                    <Bar
-                      v-if="(moviesTrend?.data_points.length ?? 0) > 0"
-                      :data="moviesChartData"
-                      :options="barChartOptions"
-                    />
-                    <p
-                      v-else
-                      class="no-data"
-                    >
-                      {{ t('stats.noData') }}
-                    </p>
-                  </div>
-                </NCard>
-              </NGi>
-              <NGi span="2 m:1">
-                <NCard
-                  :title="t('stats.dailyTorrents')"
-                  size="small"
-                >
-                  <div class="chart-wrap">
-                    <Bar
-                      v-if="(torrentsTrend?.data_points.length ?? 0) > 0"
-                      :data="torrentsChartData"
-                      :options="barChartOptions"
-                    />
-                    <p
-                      v-else
-                      class="no-data"
-                    >
-                      {{ t('stats.noData') }}
-                    </p>
-                  </div>
-                </NCard>
-              </NGi>
-            </NGrid>
+            <RunsOverviewTab
+              :success-rate-trend="successRateTrend"
+              :duration-trend="durationTrend"
+              :movies-trend="moviesTrend"
+              :torrents-trend="torrentsTrend"
+            />
           </NTabPane>
 
           <!-- Growth -->
@@ -649,55 +397,10 @@ onMounted(() => {
             name="system"
             :tab="t('stats.tabs.system')"
           >
-            <NGrid
-              :cols="2"
-              :x-gap="16"
-              :y-gap="16"
-              responsive="screen"
-              :item-responsive="true"
-              class="charts-grid"
-            >
-              <NGi span="2 m:1">
-                <NCard
-                  :title="t('stats.proxyBans')"
-                  size="small"
-                >
-                  <div class="chart-wrap">
-                    <Line
-                      v-if="(proxyBansTrend?.data_points.length ?? 0) > 0"
-                      :data="proxyBansChartData"
-                      :options="lineChartOptions"
-                    />
-                    <p
-                      v-else
-                      class="no-data"
-                    >
-                      {{ t('stats.noData') }}
-                    </p>
-                  </div>
-                </NCard>
-              </NGi>
-              <NGi span="2 m:1">
-                <NCard
-                  :title="t('stats.dedupFreed')"
-                  size="small"
-                >
-                  <div class="chart-wrap">
-                    <Bar
-                      v-if="(dedupTrend?.data_points.length ?? 0) > 0"
-                      :data="dedupChartData"
-                      :options="dedupChartOptions"
-                    />
-                    <p
-                      v-else
-                      class="no-data"
-                    >
-                      {{ t('stats.noData') }}
-                    </p>
-                  </div>
-                </NCard>
-              </NGi>
-            </NGrid>
+            <SystemInfraTab
+              :proxy-bans-trend="proxyBansTrend"
+              :dedup-trend="dedupTrend"
+            />
           </NTabPane>
         </NTabs>
       </NSpin>
