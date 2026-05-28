@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { NCard, NGrid, NGi, NSpin } from 'naive-ui'
+import { NAlert, NButton, NCard, NGrid, NGi, NSpin } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Line, Doughnut } from 'vue-chartjs'
 import { Chart as ChartJS, DoughnutController, ArcElement } from 'chart.js'
@@ -13,6 +13,7 @@ const props = defineProps<{ period: string }>()
 
 const { t } = useI18n()
 const loading = ref(false)
+const error = ref<string | null>(null)
 
 const subtitleTrend = ref<TrendResponse | null>(null)
 const resolutionDist = ref<DistributionResponse | null>(null)
@@ -21,6 +22,7 @@ const perfectMatchTrend = ref<TrendResponse | null>(null)
 
 async function fetchData() {
   loading.value = true
+  error.value = null
   try {
     const [subtitleCoverage, resolutionDistribution, hiresRatio, perfectMatchRatio] =
       await Promise.all([
@@ -33,6 +35,8 @@ async function fetchData() {
     resolutionDist.value = resolutionDistribution
     hiresTrend.value = hiresRatio
     perfectMatchTrend.value = perfectMatchRatio
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : String(err)
   } finally {
     loading.value = false
   }
@@ -83,7 +87,7 @@ const hiresMatchData = computed(() => {
     datasets: [
       {
         label: t('stats.hiresRatio'),
-        data: dates.map((date) => Math.round((hires.get(date) ?? 0) * 100)),
+        data: dates.map((date) => (hires.has(date) ? Math.round((hires.get(date) ?? 0) * 100) : null)),
         borderColor: '#722ed1',
         backgroundColor: 'rgba(114,46,209,0.1)',
         fill: false,
@@ -91,7 +95,9 @@ const hiresMatchData = computed(() => {
       },
       {
         label: t('stats.perfectMatchRatio'),
-        data: dates.map((date) => Math.round((perfectMatch.get(date) ?? 0) * 100)),
+        data: dates.map((date) =>
+          perfectMatch.has(date) ? Math.round((perfectMatch.get(date) ?? 0) * 100) : null,
+        ),
         borderColor: '#18a058',
         backgroundColor: 'rgba(24,160,88,0.1)',
         fill: false,
@@ -106,7 +112,23 @@ const hasHiresMatchData = computed(() => hiresMatchData.value.labels.length > 0)
 
 <template>
   <NSpin :show="loading">
+    <NAlert
+      v-if="error"
+      type="error"
+      class="chart-error"
+    >
+      {{ error }}
+      <NButton
+        size="small"
+        style="margin-left: 12px"
+        @click="fetchData"
+      >
+        {{ t('common.retry') }}
+      </NButton>
+    </NAlert>
+
     <NGrid
+      v-else
       :cols="2"
       :x-gap="16"
       :y-gap="16"
@@ -180,6 +202,10 @@ const hasHiresMatchData = computed(() => hiresMatchData.value.labels.length > 0)
 
 <style scoped>
 .charts-grid {
+  margin-top: 16px;
+}
+
+.chart-error {
   margin-top: 16px;
 }
 

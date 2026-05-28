@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { NCard, NGrid, NGi, NSpin } from 'naive-ui'
+import { NAlert, NButton, NCard, NGrid, NGi, NSpin } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import { Line } from 'vue-chartjs'
 import { getStatsTrend, type TrendResponse } from '@/api/stats'
@@ -10,12 +10,14 @@ const props = defineProps<{ period: string }>()
 
 const { t } = useI18n()
 const loading = ref(false)
+const error = ref<string | null>(null)
 
 const uploadSuccessTrend = ref<TrendResponse | null>(null)
 const duplicateRateTrend = ref<TrendResponse | null>(null)
 
 async function fetchData() {
   loading.value = true
+  error.value = null
   try {
     const [uploadSuccess, duplicateRate] = await Promise.all([
       getStatsTrend('upload_success_rate', props.period),
@@ -23,6 +25,8 @@ async function fetchData() {
     ])
     uploadSuccessTrend.value = uploadSuccess
     duplicateRateTrend.value = duplicateRate
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : String(err)
   } finally {
     loading.value = false
   }
@@ -62,7 +66,23 @@ const duplicateRateData = computed(() => ({
 
 <template>
   <NSpin :show="loading">
+    <NAlert
+      v-if="error"
+      type="error"
+      class="chart-error"
+    >
+      {{ error }}
+      <NButton
+        size="small"
+        style="margin-left: 12px"
+        @click="fetchData"
+      >
+        {{ t('common.retry') }}
+      </NButton>
+    </NAlert>
+
     <NGrid
+      v-else
       :cols="2"
       :x-gap="16"
       :y-gap="16"
@@ -116,6 +136,10 @@ const duplicateRateData = computed(() => ({
 
 <style scoped>
 .charts-grid {
+  margin-top: 16px;
+}
+
+.chart-error {
   margin-top: 16px;
 }
 
