@@ -90,3 +90,24 @@ const dedupChartData = computed(() => ({
     </NGi>
   </NGrid>
 </template>
+
+<style scoped>
+.charts-grid {
+  margin-top: 16px;
+}
+
+.chart-wrap {
+  height: 240px;
+  position: relative;
+}
+
+.no-data {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--n-text-color-3, #999);
+  font-size: 13px;
+  margin: 0;
+}
+</style>
