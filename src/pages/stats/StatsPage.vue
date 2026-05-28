@@ -26,6 +26,8 @@ import {
   Tooltip,
   Legend,
   Filler,
+  type ChartOptions,
+  type TooltipItem,
 } from 'chart.js'
 import {
   getStatsSummary,
@@ -97,7 +99,7 @@ function formatDuration(secs: number | null): string {
 }
 
 // --- Chart options ---
-const baseChartOptions = {
+const lineChartOptions: ChartOptions<'line'> = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -108,17 +110,27 @@ const baseChartOptions = {
   },
 }
 
-const chartOptions = baseChartOptions
+const barChartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+  },
+  scales: {
+    x: { grid: { display: false } },
+  },
+}
 
-const successRateChartOptions = {
-  ...baseChartOptions,
+const successRateChartOptions: ChartOptions<'line'> = {
+  responsive: true,
+  maintainAspectRatio: false,
   scales: {
     x: { grid: { display: false } },
     y: {
       min: 0,
       max: 100,
       ticks: {
-        callback: (v: number | string) => `${v}%`,
+        callback: (v) => `${v}%`,
       },
     },
   },
@@ -126,20 +138,22 @@ const successRateChartOptions = {
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx: { parsed: { y: number } }) => `${ctx.parsed.y.toFixed(1)}%`,
+        label: (ctx: TooltipItem<'line'>) =>
+          ctx.parsed.y == null ? '' : `${ctx.parsed.y.toFixed(1)}%`,
       },
     },
   },
 }
 
-const dedupChartOptions = {
-  ...baseChartOptions,
+const dedupChartOptions: ChartOptions<'bar'> = {
+  responsive: true,
+  maintainAspectRatio: false,
   scales: {
     x: { grid: { display: false } },
     y: {
       beginAtZero: true,
       ticks: {
-        callback: (v: number | string) => formatBytesScaled(Number(v)),
+        callback: (v) => formatBytesScaled(Number(v)),
       },
     },
   },
@@ -147,20 +161,22 @@ const dedupChartOptions = {
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx: { parsed: { y: number } }) => formatBytesScaled(ctx.parsed.y),
+        label: (ctx: TooltipItem<'bar'>) =>
+          ctx.parsed.y == null ? '' : formatBytesScaled(ctx.parsed.y),
       },
     },
   },
 }
 
-const durationChartOptions = {
-  ...baseChartOptions,
+const durationChartOptions: ChartOptions<'line'> = {
+  responsive: true,
+  maintainAspectRatio: false,
   scales: {
     x: { grid: { display: false } },
     y: {
       beginAtZero: true,
       ticks: {
-        callback: (v: number | string) => `${v}s`,
+        callback: (v) => `${v}s`,
       },
     },
   },
@@ -168,7 +184,8 @@ const durationChartOptions = {
     legend: { display: false },
     tooltip: {
       callbacks: {
-        label: (ctx: { parsed: { y: number } }) => `${Math.round(ctx.parsed.y)}s`,
+        label: (ctx: TooltipItem<'line'>) =>
+          ctx.parsed.y == null ? '' : `${Math.round(ctx.parsed.y)}s`,
       },
     },
   },
@@ -537,7 +554,7 @@ onMounted(() => {
                     <Bar
                       v-if="(moviesTrend?.data_points.length ?? 0) > 0"
                       :data="moviesChartData"
-                      :options="chartOptions"
+                      :options="barChartOptions"
                     />
                     <p
                       v-else
@@ -557,7 +574,7 @@ onMounted(() => {
                     <Bar
                       v-if="(torrentsTrend?.data_points.length ?? 0) > 0"
                       :data="torrentsChartData"
-                      :options="chartOptions"
+                      :options="barChartOptions"
                     />
                     <p
                       v-else
@@ -593,7 +610,7 @@ onMounted(() => {
                     <Line
                       v-if="(historyGrowthTrend?.data_points.length ?? 0) > 0"
                       :data="historyGrowthChartData"
-                      :options="chartOptions"
+                      :options="lineChartOptions"
                     />
                     <p
                       v-else
@@ -613,7 +630,7 @@ onMounted(() => {
                     <Line
                       v-if="(pikpakTrend?.data_points.length ?? 0) > 0"
                       :data="pikpakChartData"
-                      :options="chartOptions"
+                      :options="lineChartOptions"
                     />
                     <p
                       v-else
@@ -649,7 +666,7 @@ onMounted(() => {
                     <Line
                       v-if="(proxyBansTrend?.data_points.length ?? 0) > 0"
                       :data="proxyBansChartData"
-                      :options="chartOptions"
+                      :options="lineChartOptions"
                     />
                     <p
                       v-else
