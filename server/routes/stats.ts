@@ -539,18 +539,22 @@ statsRoutes.get("/distribution", async (c) => {
         const value = row.value;
         if (value >= 0 && value < 2) {
           buckets[0].value += 1;
-        } else if (value < 4) {
+        } else if (value >= 2 && value < 4) {
           buckets[1].value += 1;
-        } else if (value < 6) {
+        } else if (value >= 4 && value < 6) {
           buckets[2].value += 1;
-        } else if (value < 8) {
+        } else if (value >= 6 && value < 8) {
           buckets[3].value += 1;
-        } else if (value <= 10) {
+        } else if (value >= 8 && value <= 10) {
           buckets[4].value += 1;
         }
       }
     } catch {
-      // Table may not exist — return empty buckets
+      return c.json({
+        metric,
+        period,
+        buckets: [],
+      });
     }
 
     return c.json({
@@ -560,49 +564,41 @@ statsRoutes.get("/distribution", async (c) => {
     });
   }
 
-  const buckets = [
-    { label: "SD", value: 0 },
-    { label: "720p", value: 0 },
-    { label: "1080p", value: 0 },
-    { label: "4K", value: 0 },
-    { label: "Other", value: 0 },
-  ];
-
   try {
     const rows = await c.env.HISTORY_DB
       .prepare(
-        `SELECT ResolutionType AS value
+        `SELECT
+           CASE
+             WHEN ResolutionType = 0 THEN 0
+             WHEN ResolutionType = 1 THEN 1
+             WHEN ResolutionType = 2 THEN 2
+             WHEN ResolutionType = 3 THEN 3
+             ELSE 4
+           END AS bucket_index,
+           COUNT(*) AS value
          FROM TorrentHistory
-         WHERE DateTimeCreated >= datetime('now', '-${days} days')`,
+         WHERE DateTimeCreated >= datetime('now', '-${days} days')
+         GROUP BY 1
+         ORDER BY 1`,
       )
-      .all<{ value: number | null }>();
+      .all<{ bucket_index: number; value: number }>();
 
-    for (const row of rows.results) {
-      switch (row.value) {
-        case 0:
-          buckets[0].value += 1;
-          break;
-        case 1:
-          buckets[1].value += 1;
-          break;
-        case 2:
-          buckets[2].value += 1;
-          break;
-        case 3:
-          buckets[3].value += 1;
-          break;
-        default:
-          buckets[4].value += 1;
-          break;
-      }
-    }
+    const resolutionLabels = ["SD", "720p", "1080p", "4K", "Other"];
+    const buckets = rows.results.map((row) => ({
+      label: resolutionLabels[row.bucket_index] ?? "Other",
+      value: row.value,
+    }));
+
+    return c.json({
+      metric,
+      period,
+      buckets,
+    });
   } catch {
-    // Table may not exist — return empty buckets
+    return c.json({
+      metric,
+      period,
+      buckets: [],
+    });
   }
-
-  return c.json({
-    metric,
-    period,
-    buckets,
-  });
 });

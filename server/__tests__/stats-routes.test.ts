@@ -331,12 +331,79 @@ describe("Stats routes", () => {
     expect(data.metric).toBe("resolution_distribution");
     expect(data.period).toBe("90d");
     expect(data.buckets).toEqual([
-      { label: "SD", value: 0 },
       { label: "720p", value: 1 },
       { label: "1080p", value: 1 },
-      { label: "4K", value: 0 },
-      { label: "Other", value: 0 },
     ]);
+  });
+
+  it("GET /api/stats/distribution returns empty buckets when TorrentHistory is unavailable", async () => {
+    const token = await getToken();
+    await env.HISTORY_DB.prepare("DROP TABLE IF EXISTS TorrentHistory").run();
+
+    try {
+      const res = await app.request(
+        "/api/stats/distribution?metric=resolution_distribution&period=90d",
+        { headers: { Authorization: `Bearer ${token}` } },
+        env,
+      );
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as any;
+      expect(data.metric).toBe("resolution_distribution");
+      expect(data.buckets).toEqual([]);
+    } finally {
+      await env.HISTORY_DB.prepare(
+        `CREATE TABLE IF NOT EXISTS TorrentHistory (
+          Id INTEGER PRIMARY KEY, MovieHistoryId INTEGER, MagnetUri TEXT,
+          DateTimeCreated TEXT, SessionId TEXT
+        )`,
+      ).run();
+      await env.HISTORY_DB.prepare(
+        `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated)
+         VALUES (1, 1, 'magnet:?xt=test', datetime('now', '-1 day'))`,
+      ).run();
+      await env.HISTORY_DB.prepare(
+        `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated)
+         VALUES (2, 1, 'magnet:?xt=test2', datetime('now', '-1 day'))`,
+      ).run();
+      await env.HISTORY_DB.prepare(
+        "ALTER TABLE TorrentHistory ADD COLUMN SubtitleIndicator INTEGER DEFAULT 0",
+      ).run();
+      await env.HISTORY_DB.prepare(
+        "ALTER TABLE TorrentHistory ADD COLUMN ResolutionType INTEGER DEFAULT 0",
+      ).run();
+      await env.HISTORY_DB.prepare(
+        "UPDATE TorrentHistory SET ResolutionType = 2 WHERE Id = 1",
+      ).run();
+      await env.HISTORY_DB.prepare(
+        "UPDATE TorrentHistory SET ResolutionType = 1 WHERE Id = 2",
+      ).run();
+    }
+  });
+
+  it("GET /api/stats/distribution?metric=resolution_distribution combines unknown values into Other", async () => {
+    const token = await getToken();
+    await env.HISTORY_DB.prepare(
+      `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated, ResolutionType)
+       VALUES (3, 1, 'magnet:?xt=test3', datetime('now', '-1 day'), NULL)`,
+    ).run();
+    await env.HISTORY_DB.prepare(
+      `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated, ResolutionType)
+       VALUES (4, 1, 'magnet:?xt=test4', datetime('now', '-1 day'), 42)`,
+    ).run();
+
+    try {
+      const res = await app.request(
+        "/api/stats/distribution?metric=resolution_distribution&period=90d",
+        { headers: { Authorization: `Bearer ${token}` } },
+        env,
+      );
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as any;
+      const other = data.buckets.find((bucket: any) => bucket.label === "Other");
+      expect(other.value).toBe(2);
+    } finally {
+      await env.HISTORY_DB.prepare("DELETE FROM TorrentHistory WHERE Id IN (3, 4)").run();
+    }
   });
 
   it("GET /api/stats/distribution with invalid metric returns 400", async () => {
@@ -356,7 +423,11 @@ describe("Stats routes", () => {
     const trendRes = await app.request("/api/stats/trend?metric=runs", {}, env);
     expect(trendRes.status).toBe(401);
 
-    const distributionRes = await app.request("/api/stats/distribution?metric=rating_distribution", {}, env);
+    const distributionRes = await app.request(
+      "/api/stats/distribution?metric=rating_distribution",
+      {},
+      env,
+    );
     expect(distributionRes.status).toBe(401);
   });
 
