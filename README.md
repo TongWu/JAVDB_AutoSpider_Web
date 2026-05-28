@@ -170,7 +170,7 @@ npm run build                    # compiles Vue SPA → dist/
 wrangler deploy                  # deploys Worker + static assets
 ```
 
-The deployment URL is printed on success (e.g. `https://javdb-autospider-web.<account>.workers.dev`).
+The deployment URL is printed on success (e.g. `https://javdb-autospider-web.<account>.workers.dev`). If a custom domain is configured under `[[routes]]` in `wrangler.toml` (e.g. `autospider.wu.engineer`), the Worker is reachable on both that hostname and the `*.workers.dev` URL.
 
 ### Step 6 — Verify
 

@@ -3,6 +3,15 @@ main = "server/worker.ts"
 compatibility_date = "2026-05-01"
 compatibility_flags = ["nodejs_compat"]
 
+# Keep the *.workers.dev subdomain reachable alongside the custom domain.
+workers_dev = true
+
+# Custom domain. The `wu.engineer` zone must exist in the same Cloudflare
+# account; Wrangler creates the DNS record automatically on first deploy.
+[[routes]]
+pattern = "autospider.wu.engineer"
+custom_domain = true
+
 [assets]
 directory = "dist"
 binding = "ASSETS"
