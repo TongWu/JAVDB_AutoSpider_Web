@@ -118,6 +118,7 @@ const VALID_METRICS = new Set([
   // Existing
   "success_rate",
   "duration",
+  "runs",
   "movies",
   "torrents",
   "history_growth",
@@ -214,6 +215,14 @@ statsRoutes.get("/trend", async (c) => {
                FROM ReportSessions
                WHERE Status='committed' AND CommittedAt IS NOT NULL
                  AND DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(DateTimeCreated)
+               ORDER BY date`;
+        break;
+      case "runs":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(DateTimeCreated) AS date, COUNT(*) AS value
+               FROM ReportSessions
+               WHERE DateTimeCreated >= datetime('now', '-${days} days')
                GROUP BY DATE(DateTimeCreated)
                ORDER BY date`;
         break;
