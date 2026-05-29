@@ -5,6 +5,8 @@ import { signJwt, verifyJwt } from "../services/jwt";
 import { findUser } from "../services/users";
 import { checkRateLimit } from "../services/rate-limit";
 import { revokeToken, isTokenRevoked, trackSession, getSessionCount, cleanExpiredSessions, removeSession } from "../services/token-revocation";
+import { requireAuth } from "../middleware/auth";
+import { saveConfigKeys } from "../services/config-store";
 
 type AuthEnv = { Bindings: Env };
 
@@ -192,5 +194,34 @@ authRoutes.post("/logout", async (c) => {
 
   c.header("Set-Cookie", "access_token=; Max-Age=0; Path=/; HttpOnly", { append: true });
   c.header("Set-Cookie", "csrf_token=; Max-Age=0; Path=/", { append: true });
+  return c.json({ status: "ok" });
+});
+
+authRoutes.post("/change-password", requireAuth(), async (c) => {
+  const body = await c.req.json<{ old_password: string; new_password: string }>();
+  if (!body.old_password || !body.new_password) {
+    throw new HTTPException(400, { message: "old_password and new_password required" });
+  }
+  if (body.new_password.length < 8) {
+    throw new HTTPException(400, { message: "new_password must be at least 8 characters" });
+  }
+
+  const jwtUser = c.get("user");
+  const user = await findUser(c.env, c.env.OPERATIONS_DB, jwtUser.sub);
+  if (!user) {
+    throw new HTTPException(401, { message: "Unknown user" });
+  }
+
+  const valid = await verifyPassword(body.old_password, user.passwordHash, c.env.ENVIRONMENT);
+  if (!valid) {
+    throw new HTTPException(401, { message: "Current password is incorrect" });
+  }
+
+  const { hash } = await import("bcryptjs");
+  const newHash = await hash(body.new_password, 10);
+
+  const hashKey = user.role === "admin" ? "ADMIN_PASSWORD_HASH" : "READONLY_PASSWORD_HASH";
+  await saveConfigKeys(c.env.OPERATIONS_DB, { [hashKey]: newHash });
+
   return c.json({ status: "ok" });
 });
