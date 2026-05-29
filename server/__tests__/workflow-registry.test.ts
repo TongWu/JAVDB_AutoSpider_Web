@@ -75,6 +75,12 @@ describe("validateWorkflowInputs", () => {
     expect(result.errors[0]).toContain("session_id");
   });
 
+  it("treats an empty-string required parameter as missing", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", { session_id: "" });
+    expect(result.valid).toBe(false);
+    expect(result.errors.some((e) => e.includes("session_id"))).toBe(true);
+  });
+
   it("detects invalid choice value", () => {
     const result = validateWorkflowInputs("RollbackD1.yml", {
       session_id: "s1",

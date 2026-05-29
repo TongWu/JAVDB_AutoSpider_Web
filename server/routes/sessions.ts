@@ -179,8 +179,10 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
       for (const r of results) {
         pendingDropped += r.meta.changes ?? 0;
       }
-    } catch {
-      // Tables may not exist — that's fine
+    } catch (err) {
+      // Only ignore "table doesn't exist" (fresh/test DBs). Rethrow any other
+      // error so we don't commit the session with pending rows left undeleted.
+      if (!(err instanceof Error && /no such table/i.test(err.message))) throw err;
     }
   }
 

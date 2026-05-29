@@ -91,7 +91,14 @@ async function testComponent(
       const gh = createGhClient({ token: env.GH_ACTIONS_TOKEN!, repo: env.GH_ACTIONS_REPO! });
       const repo = createJobRunsRepo(env.OPERATIONS_DB);
       const job = await repo.create(`test-${component}`, mapping.workflow, mapping.inputs);
-      await gh.dispatchWorkflow(mapping.workflow, mapping.inputs);
+      try {
+        await gh.dispatchWorkflow(mapping.workflow, mapping.inputs);
+      } catch (e) {
+        // Degrade gracefully instead of bubbling a 5xx; mark the orphaned job failed.
+        console.error(`onboarding ${component} dispatch failed`, e);
+        await repo.updateStatus(job.job_id, "failed").catch(() => {});
+        return { status: "unavailable", message: `${component} connectivity test unavailable (dispatch failed)`, details: null };
+      }
       return {
         status: "dispatched",
         message: `Dispatched ${mapping.workflow} for ${component} connectivity test`,

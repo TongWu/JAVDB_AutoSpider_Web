@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { CONFIG_META_FIELDS, SENSITIVE_KEYS, ALIAS_MAP } from "../services/config-schema";
+import { CONFIG_META_FIELDS, SENSITIVE_KEYS, ALIAS_MAP, CONFIG_DEFAULTS } from "../services/config-schema";
 
 describe("config-schema", () => {
   const fieldKeys = CONFIG_META_FIELDS.map((f) => f.key);
@@ -19,6 +19,12 @@ describe("config-schema", () => {
     for (const key of requiredKeys) {
       expect(fieldKeys, `missing key: ${key}`).toContain(key);
     }
+  });
+
+  it("applies correct numeric int defaults (not 0)", () => {
+    expect(CONFIG_DEFAULTS.PROXY_POOL_MAX_FAILURES).toBe(3);
+    expect(CONFIG_DEFAULTS.LOGIN_ATTEMPTS_PER_PROXY_LIMIT).toBe(6);
+    expect(CONFIG_DEFAULTS.LOGIN_MAX_FAILURES_BEFORE_PROXY_SWITCH).toBe(3);
   });
 
   it("removed old key names that are now aliases", () => {

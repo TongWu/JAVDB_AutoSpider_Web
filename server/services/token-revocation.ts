@@ -3,6 +3,23 @@ interface SessionEntry {
   exp: number;
 }
 
+// Defensive parse for the KV-stored sessions array. KV is the only writer, so
+// the only realistic failure is corruption — fail soft to [] rather than
+// throwing on an auth/session path.
+function parseSessions(raw: string | null): SessionEntry[] {
+  if (!raw) return [];
+  try {
+    const v = JSON.parse(raw) as unknown;
+    if (!Array.isArray(v)) return [];
+    return v.filter(
+      (e): e is SessionEntry =>
+        !!e && typeof (e as SessionEntry).jti === "string" && typeof (e as SessionEntry).exp === "number",
+    );
+  } catch {
+    return [];
+  }
+}
+
 export async function revokeToken(kv: KVNamespace, jti: string, ttlSeconds: number): Promise<void> {
   await kv.put(`revoked:${jti}`, "1", { expirationTtl: Math.max(60, ttlSeconds) });
 }
@@ -15,7 +32,7 @@ export async function isTokenRevoked(kv: KVNamespace, jti: string): Promise<bool
 export async function trackSession(kv: KVNamespace, username: string, jti: string, exp: number): Promise<void> {
   const key = `sessions:${username}`;
   const raw = await kv.get(key);
-  const sessions: SessionEntry[] = raw ? JSON.parse(raw) : [];
+  const sessions = parseSessions(raw);
   const now = Math.floor(Date.now() / 1000);
   const active = sessions.filter((s) => s.exp > now);
   active.push({ jti, exp });
@@ -28,7 +45,7 @@ export async function getSessionCount(kv: KVNamespace, username: string): Promis
   const key = `sessions:${username}`;
   const raw = await kv.get(key);
   if (!raw) return 0;
-  const sessions: SessionEntry[] = JSON.parse(raw);
+  const sessions = parseSessions(raw);
   const now = Math.floor(Date.now() / 1000);
   return sessions.filter((s) => s.exp > now).length;
 }
@@ -37,7 +54,7 @@ export async function cleanExpiredSessions(kv: KVNamespace, username: string): P
   const key = `sessions:${username}`;
   const raw = await kv.get(key);
   if (!raw) return;
-  const sessions: SessionEntry[] = JSON.parse(raw);
+  const sessions = parseSessions(raw);
   const now = Math.floor(Date.now() / 1000);
   const active = sessions.filter((s) => s.exp > now);
   if (active.length === 0) {

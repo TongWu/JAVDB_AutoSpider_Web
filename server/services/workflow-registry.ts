@@ -143,7 +143,7 @@ export function validateWorkflowInputs(
   const errors: string[] = [];
 
   for (const param of schema.params) {
-    if (param.required && !(param.name in inputs)) {
+    if (param.required && (!(param.name in inputs) || String(inputs[param.name]).trim() === "")) {
       errors.push(`Missing required parameter: ${param.name}`);
     }
     if (param.type === "choice" && param.name in inputs && param.choices) {

@@ -101,7 +101,8 @@ describe("Onboarding routes", () => {
       expect(res.status).toBe(200);
       const data = (await res.json()) as any;
       expect(data.component).toBe("qb");
-      expect(["dispatched", "unavailable"]).toContain(data.status);
+      // Test env never configures GH Actions, so this is deterministically unavailable.
+      expect(data.status).toBe("unavailable");
     });
 
     it("returns unavailable for smtp (no dedicated workflow)", async () => {

@@ -670,7 +670,7 @@ describe("Stats routes", () => {
     // Average of 300s and 600s = 450s
     const point = data.data_points[0];
     expect(typeof point.value).toBe("number");
-    expect(point.value).toBeGreaterThan(0);
+    expect(point.value).toBeCloseTo(450, 0);
   });
 
   it("GET /api/stats/trend?metric=proxy_bans returns available:false", async () => {

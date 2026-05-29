@@ -185,3 +185,37 @@ describe("CORS", () => {
     expect(localRes.headers.get("Access-Control-Allow-Origin")).toBe("http://localhost:5173");
   });
 });
+
+describe("Logout frees a session slot", () => {
+  it("logout removes the tracked session (by sid) so a new login succeeds", async () => {
+    // Fill the session limit (MAX_SESSIONS_PER_USER = 3).
+    const first = await login();
+    await login();
+    await login();
+
+    // 4th login is blocked by the session limit.
+    const blocked = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(blocked.status).toBe(429);
+    expect(((await blocked.json()) as any).error.code).toBe("session_limit");
+
+    // Log out the first session. Logout decodes the access token's `sid`
+    // (= the refresh jti the session was tracked under) and removes it.
+    const logoutRes = await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${first.accessToken}` },
+    }, env);
+    expect(logoutRes.status).toBe(200);
+
+    // A fresh login now succeeds because logout freed a slot.
+    const after = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(after.status).toBe(200);
+  });
+});

@@ -17,7 +17,8 @@ async function loadPasswordHashFromD1(
       .first<{ value: string }>();
     if (!row) return null;
     try {
-      return JSON.parse(row.value) as string;
+      const parsed = JSON.parse(row.value);
+      return typeof parsed === "string" ? parsed : row.value;
     } catch {
       return row.value;
     }

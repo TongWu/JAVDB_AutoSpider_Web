@@ -114,17 +114,21 @@ export const CONFIG_META_FIELDS: ConfigFieldMeta[] = [
 export const CONFIG_DEFAULTS: Record<string, unknown> = {};
 for (const field of CONFIG_META_FIELDS) {
   if (field.type === "bool") CONFIG_DEFAULTS[field.key] = false;
-  else if (field.type === "int") CONFIG_DEFAULTS[field.key] = 0;
-  else if (field.type === "float") CONFIG_DEFAULTS[field.key] = 0.0;
+  else if (field.type === "int") {
+    // Key-specific int defaults must live in THIS branch — the generic int
+    // assignment runs first, so overrides placed in the string branch below
+    // were previously unreachable (these keys silently defaulted to 0).
+    if (field.key === "PROXY_POOL_MAX_FAILURES") CONFIG_DEFAULTS[field.key] = 3;
+    else if (field.key === "LOGIN_ATTEMPTS_PER_PROXY_LIMIT") CONFIG_DEFAULTS[field.key] = 6;
+    else if (field.key === "LOGIN_MAX_FAILURES_BEFORE_PROXY_SWITCH") CONFIG_DEFAULTS[field.key] = 3;
+    else CONFIG_DEFAULTS[field.key] = 0;
+  } else if (field.type === "float") CONFIG_DEFAULTS[field.key] = 0.0;
   else if (field.type === "json") {
     if (field.key === "PROXY_POOL") CONFIG_DEFAULTS[field.key] = [];
     else if (field.key === "LOGIN_VERIFICATION_URLS") CONFIG_DEFAULTS[field.key] = [];
     else CONFIG_DEFAULTS[field.key] = {};
   } else {
     if (field.key === "BASE_URL") CONFIG_DEFAULTS[field.key] = "https://javdb.com";
-    else if (field.key === "PROXY_POOL_MAX_FAILURES") CONFIG_DEFAULTS[field.key] = 3;
-    else if (field.key === "LOGIN_ATTEMPTS_PER_PROXY_LIMIT") CONFIG_DEFAULTS[field.key] = 6;
-    else if (field.key === "LOGIN_MAX_FAILURES_BEFORE_PROXY_SWITCH") CONFIG_DEFAULTS[field.key] = 3;
     else CONFIG_DEFAULTS[field.key] = "";
   }
 }

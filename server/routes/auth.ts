@@ -83,12 +83,14 @@ authRoutes.post("/login", async (c) => {
   const refreshExpiry = getExpiry(c.env, "refresh");
   const claims = { sub: user.username, role: user.role };
 
-  const accessToken = await signJwt({ ...claims, typ: "access" }, c.env.API_SECRET_KEY, accessExpiry);
+  // Sign the refresh token first so its JTI (the session id) can be embedded as
+  // `sid` in the access token; logout uses that to remove the right tracked session.
   const refreshToken = await signJwt({ ...claims, typ: "refresh" }, c.env.API_SECRET_KEY, refreshExpiry);
+  const refreshPayload = JSON.parse(atob(refreshToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+  const accessToken = await signJwt({ ...claims, typ: "access", sid: refreshPayload.jti }, c.env.API_SECRET_KEY, accessExpiry);
   const csrfToken = generateCsrfToken();
 
-  // Track session (use access token JTI for revocation; refresh token JTI for session tracking)
-  const refreshPayload = JSON.parse(atob(refreshToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+  // Track session by the refresh-token JTI (the session id).
   await trackSession(c.env.AUTH_KV, user.username, refreshPayload.jti, refreshPayload.exp);
 
   const isSecure = new URL(c.req.url).protocol === "https:";
@@ -152,7 +154,8 @@ authRoutes.post("/refresh", async (c) => {
 
   const accessExpiry = getExpiry(c.env, "access");
   const accessToken = await signJwt(
-    { sub: user.username, role: user.role, typ: "access" },
+    // Preserve the session id (refresh-token jti) across refreshes so logout still works.
+    { sub: user.username, role: user.role, typ: "access", sid: payload.jti },
     c.env.API_SECRET_KEY,
     accessExpiry,
   );
@@ -186,7 +189,8 @@ authRoutes.post("/logout", async (c) => {
       if (ttl > 0) {
         await revokeToken(c.env.AUTH_KV, payload.jti, ttl);
       }
-      await removeSession(c.env.AUTH_KV, payload.sub, payload.jti);
+      // Sessions are tracked by the refresh jti; the access token carries it as `sid`.
+      await removeSession(c.env.AUTH_KV, payload.sub, payload.sid ?? payload.jti);
     } catch {
       // Token may be invalid or expired — still clear cookies
     }

@@ -16,6 +16,16 @@ function getAllowedOrigins(env: Env): string[] {
     return raw
       .split(",")
       .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s) => {
+        // Normalize to a canonical origin (drop any path/trailing slash) so it
+        // matches the request Origin header exactly.
+        try {
+          return new URL(s).origin;
+        } catch {
+          return "";
+        }
+      })
       .filter(Boolean);
   }
 
