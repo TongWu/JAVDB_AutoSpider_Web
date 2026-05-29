@@ -21,6 +21,15 @@ describe("initializeTables", () => {
     expect(result?.name).toBe("system_state");
   });
 
+  it("creates api_config table in OPERATIONS_DB", async () => {
+    await initializeTables(env);
+
+    const result = await env.OPERATIONS_DB.prepare(
+      "SELECT name FROM sqlite_master WHERE type='table' AND name='api_config'",
+    ).first<{ name: string }>();
+    expect(result?.name).toBe("api_config");
+  });
+
   it("is idempotent — running twice does not error", async () => {
     await initializeTables(env);
     await initializeTables(env);
