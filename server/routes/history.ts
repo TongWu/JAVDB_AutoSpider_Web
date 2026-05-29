@@ -2,26 +2,13 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
+import { cursorEncode, cursorDecode } from "../services/cursor";
 
 type HistEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const historyRoutes = new Hono<HistEnv>();
 
 // --- Helpers ---
-
-function cursorEncode(id: number): string {
-  return btoa(String(id));
-}
-
-function cursorDecode(cursor: string): number {
-  try {
-    return parseInt(atob(cursor), 10);
-  } catch {
-    throw new HTTPException(400, {
-      message: JSON.stringify({ error: { code: "history.invalid_cursor", message: "cursor is malformed" } }),
-    });
-  }
-}
 
 function normalizeDate(raw: string, isEnd: boolean): string | null {
   const cleaned = raw.replace("T", " ").replace("Z", "").trim();
@@ -62,7 +49,7 @@ function buildMovieQuery(params: Record<string, string | undefined>, forExport: 
 
   if (params.cursor && !forExport) {
     conditions.push("m.Id > ?");
-    bindings.push(cursorDecode(params.cursor));
+    bindings.push(cursorDecode<{ id: number }>(params.cursor).id);
   }
   if (params.q) {
     const like = `%${params.q}%`;
@@ -145,7 +132,7 @@ historyRoutes.get("/movies", async (c) => {
   }));
 
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.id) : undefined;
+  const nextCursor = items.length === limit && lastItem ? cursorEncode({ id: lastItem.id }) : undefined;
 
   return c.json({
     items,
@@ -217,7 +204,7 @@ function buildTorrentQuery(params: Record<string, string | undefined>, forExport
 
   if (params.cursor && !forExport) {
     conditions.push("t.Id > ?");
-    bindings.push(cursorDecode(params.cursor));
+    bindings.push(cursorDecode<{ id: number }>(params.cursor).id);
   }
   if (params.q) {
     conditions.push("m.VideoCode LIKE ?");
@@ -303,7 +290,7 @@ historyRoutes.get("/torrents", async (c) => {
   }));
 
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.id) : undefined;
+  const nextCursor = items.length === limit && lastItem ? cursorEncode({ id: lastItem.id }) : undefined;
 
   return c.json({
     items,

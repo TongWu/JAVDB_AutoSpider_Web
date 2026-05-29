@@ -4,6 +4,7 @@ import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { createGhClient } from "../services/gh-client";
+import { cursorEncode, cursorDecode } from "../services/cursor";
 
 type SessEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -35,19 +36,6 @@ function mapSession(row: SessionRow) {
   };
 }
 
-function cursorEncode(sessionId: string): string {
-  return btoa(JSON.stringify({ sid: sessionId }));
-}
-
-function cursorDecode(cursor: string): string {
-  try {
-    const parsed = JSON.parse(atob(cursor));
-    return parsed.sid;
-  } catch {
-    throw new HTTPException(400, { message: "Invalid cursor" });
-  }
-}
-
 sessionsRoutes.get("/", async (c) => {
   const state = c.req.query("state");
   const cursor = c.req.query("cursor");
@@ -62,7 +50,7 @@ sessionsRoutes.get("/", async (c) => {
   }
   if (cursor) {
     conditions.push("Id < ?");
-    bindings.push(cursorDecode(cursor));
+    bindings.push(cursorDecode<{ sid: string }>(cursor).sid);
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -82,7 +70,7 @@ sessionsRoutes.get("/", async (c) => {
 
   const items = rows.results.map(mapSession);
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.session_id) : null;
+  const nextCursor = items.length === limit && lastItem ? cursorEncode({ sid: lastItem.session_id }) : null;
 
   return c.json({ items, next_cursor: nextCursor });
 });
