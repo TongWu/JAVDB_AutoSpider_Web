@@ -320,20 +320,40 @@ describe("Stats routes", () => {
 
   it("GET /api/stats/distribution?metric=resolution_distribution&period=90d returns resolution buckets", async () => {
     const token = await getToken();
-    const res = await app.request(
-      "/api/stats/distribution?metric=resolution_distribution&period=90d",
-      { headers: { Authorization: `Bearer ${token}` } },
-      env,
-    );
-    expect(res.status).toBe(200);
+    await env.HISTORY_DB.prepare(
+      `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated, ResolutionType)
+       VALUES (3, 1, 'magnet:?xt=test3', datetime('now', '-1 day'), 0)`,
+    ).run();
+    await env.HISTORY_DB.prepare(
+      `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated, ResolutionType)
+       VALUES (4, 1, 'magnet:?xt=test4', datetime('now', '-1 day'), 3)`,
+    ).run();
+    await env.HISTORY_DB.prepare(
+      `INSERT INTO TorrentHistory (Id, MovieHistoryId, MagnetUri, DateTimeCreated, ResolutionType)
+       VALUES (5, 1, 'magnet:?xt=test5', datetime('now', '-1 day'), 4)`,
+    ).run();
 
-    const data = (await res.json()) as any;
-    expect(data.metric).toBe("resolution_distribution");
-    expect(data.period).toBe("90d");
-    expect(data.buckets).toEqual([
-      { label: "720p", value: 1 },
-      { label: "1080p", value: 1 },
-    ]);
+    try {
+      const res = await app.request(
+        "/api/stats/distribution?metric=resolution_distribution&period=90d",
+        { headers: { Authorization: `Bearer ${token}` } },
+        env,
+      );
+      expect(res.status).toBe(200);
+
+      const data = (await res.json()) as any;
+      expect(data.metric).toBe("resolution_distribution");
+      expect(data.period).toBe("90d");
+      expect(data.buckets).toEqual([
+        { label: "Unknown", value: 1 },
+        { label: "SD", value: 1 },
+        { label: "HD", value: 1 },
+        { label: "FHD", value: 1 },
+        { label: "4K", value: 1 },
+      ]);
+    } finally {
+      await env.HISTORY_DB.prepare("DELETE FROM TorrentHistory WHERE Id IN (3, 4, 5)").run();
+    }
   });
 
   it("GET /api/stats/distribution returns empty buckets when TorrentHistory is unavailable", async () => {

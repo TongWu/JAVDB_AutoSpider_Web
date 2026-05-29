@@ -573,7 +573,8 @@ statsRoutes.get("/distribution", async (c) => {
              WHEN ResolutionType = 1 THEN 1
              WHEN ResolutionType = 2 THEN 2
              WHEN ResolutionType = 3 THEN 3
-             ELSE 4
+             WHEN ResolutionType = 4 THEN 4
+             ELSE 5
            END AS bucket_index,
            COUNT(*) AS value
          FROM TorrentHistory
@@ -583,7 +584,7 @@ statsRoutes.get("/distribution", async (c) => {
       )
       .all<{ bucket_index: number; value: number }>();
 
-    const resolutionLabels = ["SD", "720p", "1080p", "4K", "Other"];
+    const resolutionLabels = ["Unknown", "SD", "HD", "FHD", "4K", "Other"];
     const buckets = rows.results.map((row) => ({
       label: resolutionLabels[row.bucket_index] ?? "Other",
       value: row.value,
