@@ -7,6 +7,9 @@ export interface Env {
   REPORTS_DB: D1Database;
   OPERATIONS_DB: D1Database;
 
+  // Auth state (rate limiting, token revocation, session tracking)
+  AUTH_KV: KVNamespace;
+
   // Auth
   API_SECRET_KEY: string;
   ADMIN_USERNAME: string;
