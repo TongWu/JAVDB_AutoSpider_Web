@@ -2,26 +2,13 @@ import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
+import { cursorEncode, cursorDecode } from "../services/cursor";
 
 type HistEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const historyRoutes = new Hono<HistEnv>();
 
 // --- Helpers ---
-
-function cursorEncode(id: number): string {
-  return btoa(String(id));
-}
-
-function cursorDecode(cursor: string): number {
-  try {
-    return parseInt(atob(cursor), 10);
-  } catch {
-    throw new HTTPException(400, {
-      message: JSON.stringify({ error: { code: "history.invalid_cursor", message: "cursor is malformed" } }),
-    });
-  }
-}
 
 function normalizeDate(raw: string, isEnd: boolean): string | null {
   const cleaned = raw.replace("T", " ").replace("Z", "").trim();
@@ -62,7 +49,7 @@ function buildMovieQuery(params: Record<string, string | undefined>, forExport: 
 
   if (params.cursor && !forExport) {
     conditions.push("m.Id > ?");
-    bindings.push(cursorDecode(params.cursor));
+    bindings.push(cursorDecode<{ id: number }>(params.cursor).id);
   }
   if (params.q) {
     const like = `%${params.q}%`;
@@ -145,7 +132,7 @@ historyRoutes.get("/movies", async (c) => {
   }));
 
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.id) : undefined;
+  const nextCursor = items.length === limit && lastItem ? cursorEncode({ id: lastItem.id }) : undefined;
 
   return c.json({
     items,
@@ -154,11 +141,17 @@ historyRoutes.get("/movies", async (c) => {
   });
 });
 
+const EXPORT_LIMIT = 100_000;
+
 historyRoutes.get("/movies/export", async (c) => {
   const params = c.req.query();
-  const { selectSql, bindings } = buildMovieQuery(params, true);
+  const { selectSql, countSql, bindings } = buildMovieQuery(params, true);
   const db = c.env.HISTORY_DB;
-  const rows = await db.prepare(selectSql).bind(...bindings).all<MovieRow>();
+
+  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const totalCount = countResult?.cnt ?? 0;
+  const rows = await db.prepare(`${selectSql} LIMIT ${EXPORT_LIMIT}`).bind(...bindings).all<MovieRow>();
+  const truncated = rows.results.length >= EXPORT_LIMIT && totalCount > EXPORT_LIMIT;
 
   const header = "id,video_code,href,actor_name,actor_gender,supporting_actors,perfect_match,hi_res,datetime_created,datetime_updated,session_id,torrent_count";
   const csvRows = rows.results.map((r) =>
@@ -169,13 +162,24 @@ historyRoutes.get("/movies/export", async (c) => {
       .join(",")
   );
 
-  const csv = [header, ...csvRows].join("\n");
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": "attachment; filename=movies.csv",
-    },
-  });
+  const parts = ["﻿", header, "\n", csvRows.join("\n")];
+  if (truncated) {
+    parts.push(`\n# Export truncated at ${EXPORT_LIMIT} rows. Total: ${totalCount}`);
+  }
+
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": "attachment; filename=movies.csv",
+  };
+  if (truncated) {
+    responseHeaders["X-Export-Truncated"] = "true";
+    responseHeaders["X-Export-Total-Count"] = String(totalCount);
+  }
+
+  const csv = parts.join("");
+  // Encode to ensure BOM is preserved through Response transmission
+  const encoded = new TextEncoder().encode(csv);
+  return new Response(encoded, { headers: responseHeaders });
 });
 
 // --- Torrent search ---
@@ -200,7 +204,7 @@ function buildTorrentQuery(params: Record<string, string | undefined>, forExport
 
   if (params.cursor && !forExport) {
     conditions.push("t.Id > ?");
-    bindings.push(cursorDecode(params.cursor));
+    bindings.push(cursorDecode<{ id: number }>(params.cursor).id);
   }
   if (params.q) {
     conditions.push("m.VideoCode LIKE ?");
@@ -286,7 +290,7 @@ historyRoutes.get("/torrents", async (c) => {
   }));
 
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.id) : undefined;
+  const nextCursor = items.length === limit && lastItem ? cursorEncode({ id: lastItem.id }) : undefined;
 
   return c.json({
     items,
@@ -297,9 +301,13 @@ historyRoutes.get("/torrents", async (c) => {
 
 historyRoutes.get("/torrents/export", async (c) => {
   const params = c.req.query();
-  const { selectSql, bindings } = buildTorrentQuery(params, true);
+  const { selectSql, countSql, bindings } = buildTorrentQuery(params, true);
   const db = c.env.HISTORY_DB;
-  const rows = await db.prepare(selectSql).bind(...bindings).all<TorrentRow>();
+
+  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const totalCount = countResult?.cnt ?? 0;
+  const rows = await db.prepare(`${selectSql} LIMIT ${EXPORT_LIMIT}`).bind(...bindings).all<TorrentRow>();
+  const truncated = rows.results.length >= EXPORT_LIMIT && totalCount > EXPORT_LIMIT;
 
   const header = "id,movie_video_code,movie_href,magnet_uri,size,subtitle_indicator,censor_indicator,resolution_type,file_count,datetime_created,session_id";
   const csvRows = rows.results.map((r) =>
@@ -310,11 +318,22 @@ historyRoutes.get("/torrents/export", async (c) => {
       .join(",")
   );
 
-  const csv = [header, ...csvRows].join("\n");
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": "attachment; filename=torrents.csv",
-    },
-  });
+  const parts = ["﻿", header, "\n", csvRows.join("\n")];
+  if (truncated) {
+    parts.push(`\n# Export truncated at ${EXPORT_LIMIT} rows. Total: ${totalCount}`);
+  }
+
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": "attachment; filename=torrents.csv",
+  };
+  if (truncated) {
+    responseHeaders["X-Export-Truncated"] = "true";
+    responseHeaders["X-Export-Total-Count"] = String(totalCount);
+  }
+
+  const csv = parts.join("");
+  // Encode to ensure BOM is preserved through Response transmission
+  const encoded = new TextEncoder().encode(csv);
+  return new Response(encoded, { headers: responseHeaders });
 });

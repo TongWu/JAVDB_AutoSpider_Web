@@ -6,6 +6,27 @@ export interface User {
   passwordHash: string;
 }
 
+async function loadPasswordHashFromD1(
+  db: D1Database,
+  key: string,
+): Promise<string | null> {
+  try {
+    const row = await db
+      .prepare("SELECT value FROM api_config WHERE key = ?")
+      .bind(key)
+      .first<{ value: string }>();
+    if (!row) return null;
+    try {
+      const parsed = JSON.parse(row.value);
+      return typeof parsed === "string" ? parsed : row.value;
+    } catch {
+      return row.value;
+    }
+  } catch {
+    return null;
+  }
+}
+
 export function getUsers(env: Env): User[] {
   const users: User[] = [
     {
@@ -24,6 +45,20 @@ export function getUsers(env: Env): User[] {
   return users;
 }
 
-export function findUser(env: Env, username: string): User | undefined {
-  return getUsers(env).find((u) => u.username === username);
+export async function findUser(
+  env: Env,
+  db: D1Database,
+  username: string,
+): Promise<User | undefined> {
+  const users = getUsers(env);
+  const user = users.find((u) => u.username === username);
+  if (!user) return undefined;
+
+  const hashKey =
+    user.role === "admin" ? "ADMIN_PASSWORD_HASH" : "READONLY_PASSWORD_HASH";
+  const d1Hash = await loadPasswordHashFromD1(db, hashKey);
+  if (d1Hash) {
+    return { ...user, passwordHash: d1Hash };
+  }
+  return user;
 }

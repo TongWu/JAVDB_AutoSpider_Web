@@ -3,13 +3,21 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { signJwt, verifyJwt } from "../services/jwt";
 import { findUser } from "../services/users";
+import { checkRateLimit } from "../services/rate-limit";
+import { revokeToken, isTokenRevoked, trackSession, getSessionCount, cleanExpiredSessions, removeSession } from "../services/token-revocation";
+import { requireAuth } from "../middleware/auth";
+import { saveConfigKeys } from "../services/config-store";
 
 type AuthEnv = { Bindings: Env };
 
 export const authRoutes = new Hono<AuthEnv>();
 
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
+export async function verifyPassword(password: string, hash: string, environment: string): Promise<boolean> {
   if (hash.startsWith("plain:")) {
+    if (environment === "production") {
+      console.warn("plain-text passwords are rejected in production — use bcrypt hash");
+      return false;
+    }
     return password === hash.slice(6);
   }
   const { compare } = await import("bcryptjs");
@@ -29,29 +37,61 @@ function generateCsrfToken(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
 }
 
+function getClientIp(c: { req: { header: (name: string) => string | undefined } }): string {
+  return c.req.header("CF-Connecting-IP") ?? c.req.header("X-Forwarded-For")?.split(",")[0].trim() ?? "unknown";
+}
+
+const MAX_SESSIONS_PER_USER = 3;
+
 authRoutes.post("/login", async (c) => {
+  // Rate limit: 5 requests / 60s per IP
+  const ip = getClientIp(c);
+  const rl = await checkRateLimit(c.env.AUTH_KV, ip, "/api/auth/login", 5, 60);
+  if (!rl.allowed) {
+    return c.json(
+      { error: { code: "rate_limited", message: "Too many login attempts" } },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const body = await c.req.json<{ username: string; password: string }>();
   if (!body.username || !body.password) {
     throw new HTTPException(400, { message: "username and password required" });
   }
 
-  const user = findUser(c.env, body.username);
+  const user = await findUser(c.env, c.env.OPERATIONS_DB, body.username);
   if (!user) {
     throw new HTTPException(401, { message: "Invalid username/password" });
   }
 
-  const valid = await verifyPassword(body.password, user.passwordHash);
+  const valid = await verifyPassword(body.password, user.passwordHash, c.env.ENVIRONMENT);
   if (!valid) {
     throw new HTTPException(401, { message: "Invalid username/password" });
+  }
+
+  // Session limit check (best-effort; KV has no transactions, so concurrent logins may briefly exceed the limit)
+  await cleanExpiredSessions(c.env.AUTH_KV, user.username);
+  const sessionCount = await getSessionCount(c.env.AUTH_KV, user.username);
+  if (sessionCount >= MAX_SESSIONS_PER_USER) {
+    return c.json(
+      { error: { code: "session_limit", message: "Maximum concurrent sessions reached" } },
+      { status: 429 },
+    );
   }
 
   const accessExpiry = getExpiry(c.env, "access");
   const refreshExpiry = getExpiry(c.env, "refresh");
   const claims = { sub: user.username, role: user.role };
 
-  const accessToken = await signJwt({ ...claims, typ: "access" }, c.env.API_SECRET_KEY, accessExpiry);
+  // Sign the refresh token first so its JTI (the session id) can be embedded as
+  // `sid` in the access token; logout uses that to remove the right tracked session.
   const refreshToken = await signJwt({ ...claims, typ: "refresh" }, c.env.API_SECRET_KEY, refreshExpiry);
+  const refreshPayload = JSON.parse(atob(refreshToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+  const accessToken = await signJwt({ ...claims, typ: "access", sid: refreshPayload.jti }, c.env.API_SECRET_KEY, accessExpiry);
   const csrfToken = generateCsrfToken();
+
+  // Track session by the refresh-token JTI (the session id).
+  await trackSession(c.env.AUTH_KV, user.username, refreshPayload.jti, refreshPayload.exp);
 
   const isSecure = new URL(c.req.url).protocol === "https:";
   const sameSite = "Lax";
@@ -73,6 +113,16 @@ authRoutes.post("/login", async (c) => {
 });
 
 authRoutes.post("/refresh", async (c) => {
+  // Rate limit: 10 requests / 60s per IP
+  const ip = getClientIp(c);
+  const rl = await checkRateLimit(c.env.AUTH_KV, ip, "/api/auth/refresh", 10, 60);
+  if (!rl.allowed) {
+    return c.json(
+      { error: { code: "rate_limited", message: "Too many refresh attempts" } },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const authHeader = c.req.header("Authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
@@ -91,32 +141,96 @@ authRoutes.post("/refresh", async (c) => {
     throw new HTTPException(401, { message: "Refresh token required" });
   }
 
-  const user = findUser(c.env, payload.sub);
+  // Check if refresh token was revoked
+  const revoked = await isTokenRevoked(c.env.AUTH_KV, payload.jti);
+  if (revoked) {
+    throw new HTTPException(401, { message: "Token has been revoked" });
+  }
+
+  const user = await findUser(c.env, c.env.OPERATIONS_DB, payload.sub);
   if (!user) {
     throw new HTTPException(401, { message: "Unknown user" });
   }
 
   const accessExpiry = getExpiry(c.env, "access");
   const accessToken = await signJwt(
-    { sub: user.username, role: user.role, typ: "access" },
+    // Preserve the session id (refresh-token jti) across refreshes so logout still works.
+    { sub: user.username, role: user.role, typ: "access", sid: payload.jti },
     c.env.API_SECRET_KEY,
-    accessExpiry
+    accessExpiry,
   );
 
+  // Generate fresh CSRF token and re-set cookie
+  const csrfToken = generateCsrfToken();
   const isSecure = new URL(c.req.url).protocol === "https:";
   const sameSite = "Lax";
   const cookieFlags = `Path=/; HttpOnly; SameSite=${sameSite}${isSecure ? "; Secure" : ""}`;
-  c.header("Set-Cookie", `access_token=${accessToken}; Max-Age=${accessExpiry}; ${cookieFlags}`);
+  const csrfFlags = `Path=/; SameSite=${sameSite}${isSecure ? "; Secure" : ""}`;
+
+  c.header("Set-Cookie", `access_token=${accessToken}; Max-Age=${accessExpiry}; ${cookieFlags}`, { append: true });
+  c.header("Set-Cookie", `csrf_token=${csrfToken}; Max-Age=${accessExpiry}; ${csrfFlags}`, { append: true });
 
   return c.json({
     access_token: accessToken,
     token_type: "bearer",
     expires_in: accessExpiry,
+    csrf_token: csrfToken,
   });
 });
 
 authRoutes.post("/logout", async (c) => {
+  // Extract access token to revoke its JTI
+  const authHeader = c.req.header("Authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (token) {
+    try {
+      const payload = await verifyJwt(token, c.env.API_SECRET_KEY);
+      const ttl = payload.exp - Math.floor(Date.now() / 1000);
+      if (ttl > 0) {
+        await revokeToken(c.env.AUTH_KV, payload.jti, ttl);
+      }
+      // Sessions are tracked by the refresh jti; the access token carries it as `sid`.
+      await removeSession(c.env.AUTH_KV, payload.sub, payload.sid ?? payload.jti);
+      // Also revoke the refresh token (jti = sid) so /refresh can't mint new
+      // access tokens after logout. Use the refresh expiry as an upper-bound TTL.
+      if (payload.sid) {
+        await revokeToken(c.env.AUTH_KV, payload.sid, getExpiry(c.env, "refresh"));
+      }
+    } catch {
+      // Token may be invalid or expired — still clear cookies
+    }
+  }
+
   c.header("Set-Cookie", "access_token=; Max-Age=0; Path=/; HttpOnly", { append: true });
   c.header("Set-Cookie", "csrf_token=; Max-Age=0; Path=/", { append: true });
+  return c.json({ status: "ok" });
+});
+
+authRoutes.post("/change-password", requireAuth(), async (c) => {
+  const body = await c.req.json<{ current_password: string; new_password: string }>();
+  if (!body.current_password || !body.new_password) {
+    throw new HTTPException(400, { message: "current_password and new_password required" });
+  }
+  if (body.new_password.length < 8) {
+    throw new HTTPException(400, { message: "new_password must be at least 8 characters" });
+  }
+
+  const jwtUser = c.get("user");
+  const user = await findUser(c.env, c.env.OPERATIONS_DB, jwtUser.sub);
+  if (!user) {
+    throw new HTTPException(401, { message: "Unknown user" });
+  }
+
+  const valid = await verifyPassword(body.current_password, user.passwordHash, c.env.ENVIRONMENT);
+  if (!valid) {
+    throw new HTTPException(401, { message: "Current password is incorrect" });
+  }
+
+  const { hash } = await import("bcryptjs");
+  const newHash = await hash(body.new_password, 10);
+
+  const hashKey = user.role === "admin" ? "ADMIN_PASSWORD_HASH" : "READONLY_PASSWORD_HASH";
+  await saveConfigKeys(c.env.OPERATIONS_DB, { [hashKey]: newHash });
+
   return c.json({ status: "ok" });
 });

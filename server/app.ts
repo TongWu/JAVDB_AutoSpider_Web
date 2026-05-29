@@ -18,6 +18,7 @@ import { ghActionsRoutes } from "./routes/gh-actions";
 import { operationsRoutes } from "./routes/operations";
 import { statsRoutes } from "./routes/stats";
 import { stubRoutes } from "./routes/stubs";
+import { initializeTables } from "./services/table-init";
 
 type AppEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -42,6 +43,20 @@ app.onError((err, c) => {
 });
 
 app.use("*", corsMiddleware());
+
+let tablesInitialized = false;
+
+app.use("/api/*", async (c, next) => {
+  if (!tablesInitialized) {
+    try {
+      await initializeTables(c.env);
+      tablesInitialized = true;
+    } catch (e) {
+      console.error("Table initialization failed, will retry on next request:", e);
+    }
+  }
+  await next();
+});
 
 // Public routes
 app.get("/api/health", (c) => c.json({ status: "ok" }));

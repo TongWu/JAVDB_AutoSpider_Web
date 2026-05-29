@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
+import { verifyPassword } from "../routes/auth";
 
 const LOGIN_BODY = JSON.stringify({
   username: "admin",
@@ -78,5 +79,165 @@ describe("GET /api/capabilities (auth guard)", () => {
       headers: { Authorization: `Bearer ${accessToken}` },
     }, env);
     expect(res.status).toBe(200);
+  });
+});
+
+describe("Rate limiting", () => {
+  it("returns 429 after exceeding login rate limit", async () => {
+    for (let i = 0; i < 5; i++) {
+      await app.request("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "admin", password: "wrong" }),
+      }, env);
+    }
+    const res = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBeDefined();
+  });
+});
+
+describe("verifyPassword plain-text handling", () => {
+  it("rejects plain: passwords when ENVIRONMENT=production", async () => {
+    expect(await verifyPassword("testpassword123", "plain:testpassword123", "production")).toBe(false);
+  });
+  it("accepts correct plain: password in non-production", async () => {
+    expect(await verifyPassword("testpassword123", "plain:testpassword123", "test")).toBe(true);
+  });
+  it("rejects incorrect plain: password in non-production", async () => {
+    expect(await verifyPassword("wrong", "plain:testpassword123", "test")).toBe(false);
+  });
+});
+
+describe("Session limit", () => {
+  it("returns 429 session_limit after MAX_SESSIONS_PER_USER logins", async () => {
+    for (let i = 0; i < 3; i++) {
+      const ok = await app.request("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: LOGIN_BODY,
+      }, env);
+      expect(ok.status).toBe(200);
+    }
+    const res = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(res.status).toBe(429);
+    const data = await res.json() as any;
+    expect(data.error.code).toBe("session_limit");
+  });
+});
+
+describe("Token revocation", () => {
+  it("rejects revoked token on mutation requests", async () => {
+    const { accessToken, csrfToken } = await login();
+    // Logout to revoke the token
+    await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }, env);
+    // Try a POST with the revoked token
+    const res = await app.request("/api/crawl/index", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: `csrf_token=${csrfToken}`,
+      },
+      body: JSON.stringify({}),
+    }, env);
+    expect(res.status).toBe(401);
+  });
+
+  it("allows revoked token on GET requests", async () => {
+    const { accessToken } = await login();
+    await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }, env);
+    const res = await app.request("/api/capabilities", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }, env);
+    expect(res.status).toBe(200);
+  });
+});
+
+describe("CORS", () => {
+  it("rejects unknown origin in test mode (acts as non-production)", async () => {
+    const res = await app.request("/api/health", {
+      headers: { Origin: "https://evil.example.com" },
+    }, env);
+    // In test/dev mode, only localhost origins are allowed
+    const allowOrigin = res.headers.get("Access-Control-Allow-Origin");
+    expect(allowOrigin).not.toBe("https://evil.example.com");
+
+    // Allowed localhost origin in test/dev mode should be echoed back
+    const localRes = await app.request("/api/health", {
+      headers: { Origin: "http://localhost:5173" },
+    }, env);
+    expect(localRes.headers.get("Access-Control-Allow-Origin")).toBe("http://localhost:5173");
+  });
+});
+
+describe("Logout frees a session slot", () => {
+  it("logout removes the tracked session (by sid) so a new login succeeds", async () => {
+    // Fill the session limit (MAX_SESSIONS_PER_USER = 3).
+    const first = await login();
+    await login();
+    await login();
+
+    // 4th login is blocked by the session limit.
+    const blocked = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(blocked.status).toBe(429);
+    expect(((await blocked.json()) as any).error.code).toBe("session_limit");
+
+    // Log out the first session. Logout decodes the access token's `sid`
+    // (= the refresh jti the session was tracked under) and removes it.
+    const logoutRes = await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${first.accessToken}` },
+    }, env);
+    expect(logoutRes.status).toBe(200);
+
+    // A fresh login now succeeds because logout freed a slot.
+    const after = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(after.status).toBe(200);
+  });
+
+  it("revokes the refresh token on logout so /refresh fails afterwards", async () => {
+    const loginRes = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    const { access_token, refresh_token } = (await loginRes.json()) as any;
+
+    const logoutRes = await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${access_token}` },
+    }, env);
+    expect(logoutRes.status).toBe(200);
+
+    // The refresh token (its jti = the access token's sid) is now revoked.
+    const refreshRes = await app.request("/api/auth/refresh", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${refresh_token}` },
+    }, env);
+    expect(refreshRes.status).toBe(401);
   });
 });

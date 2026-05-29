@@ -194,6 +194,26 @@ async function seedTables() {
     `INSERT INTO OpsIncidents (incident_id, trigger_source, incident_type, status, model_version, detector_version, bundle_schema_version, created_at, updated_at)
      VALUES ('inc-001', 'ci', 'spider_failure', 'open', 'v1', 'v1', 'v1', datetime('now', '-1 day'), datetime('now', '-1 day'))`,
   ).run();
+
+  // job_runs (OPERATIONS_DB) — for duration trend
+  await env.OPERATIONS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS job_runs (
+      job_id TEXT PRIMARY KEY, workflow TEXT NOT NULL, gh_run_id INTEGER,
+      status TEXT NOT NULL DEFAULT 'dispatched', inputs TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`,
+  ).run();
+  await env.OPERATIONS_DB.prepare(
+    `INSERT INTO job_runs (job_id, workflow, status, created_at, updated_at)
+     VALUES ('job-001', 'DailyIngestion', 'completed',
+             datetime('now', '-1 day'), datetime('now', '-1 day', '+300 seconds'))`,
+  ).run();
+  await env.OPERATIONS_DB.prepare(
+    `INSERT INTO job_runs (job_id, workflow, status, created_at, updated_at)
+     VALUES ('job-002', 'DailyIngestion', 'completed',
+             datetime('now', '-1 day', '+600 seconds'), datetime('now', '-1 day', '+1200 seconds'))`,
+  ).run();
 }
 
 describe("Stats routes", () => {
@@ -630,5 +650,56 @@ describe("Stats routes", () => {
     const data = (await res.json()) as any;
     expect(data.data_points.length).toBeGreaterThan(0);
     expect(data.data_points[0].value).toBe(1);
+  });
+
+  it("GET /api/stats/trend?metric=duration returns data from job_runs", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=duration&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+
+    expect(data.metric).toBe("duration");
+    expect(data.period).toBe("7d");
+    expect(data.available).toBe(true);
+    expect(Array.isArray(data.data_points)).toBe(true);
+    expect(data.data_points.length).toBeGreaterThan(0);
+    // Average of 300s and 600s = 450s
+    const point = data.data_points[0];
+    expect(typeof point.value).toBe("number");
+    expect(point.value).toBeCloseTo(450, 0);
+  });
+
+  it("GET /api/stats/trend?metric=proxy_bans returns available:false", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=proxy_bans&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+
+    expect(data.metric).toBe("proxy_bans");
+    expect(data.available).toBe(false);
+    expect(data.reason).toBeDefined();
+    expect(data.data_points).toEqual([]);
+  });
+
+  it("GET /api/stats/trend non-proxy_bans metrics return available:true", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=success_rate&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+
+    expect(data.available).toBe(true);
+    expect(data.reason).toBeUndefined();
   });
 });

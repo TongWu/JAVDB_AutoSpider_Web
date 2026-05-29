@@ -1,4 +1,4 @@
-import { SENSITIVE_KEYS, CONFIG_DEFAULTS } from "./config-schema";
+import { SENSITIVE_KEYS, CONFIG_DEFAULTS, ALIAS_MAP } from "./config-schema";
 
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
@@ -48,24 +48,32 @@ export async function loadConfigStore(
   encryptionKey?: string,
 ): Promise<Record<string, unknown>> {
   const rows = await db.prepare("SELECT key, value FROM api_config").all<{ key: string; value: string }>();
-  const result: Record<string, unknown> = {};
+  const raw: Record<string, unknown> = {};
   for (const row of rows.results) {
     if (encryptionKey && isEncrypted(row.value)) {
       try {
         const decrypted = await decrypt(row.value, encryptionKey);
-        result[row.key] = JSON.parse(decrypted);
+        raw[row.key] = JSON.parse(decrypted);
       } catch {
         // Cannot decrypt — skip this key
       }
     } else {
       try {
-        result[row.key] = JSON.parse(row.value);
+        raw[row.key] = JSON.parse(row.value);
       } catch {
-        result[row.key] = row.value;
+        raw[row.key] = row.value;
       }
     }
   }
-  return result;
+
+  // Alias fallback: if canonical name is absent but alias is present, copy alias value
+  for (const [canonical, alias] of Object.entries(ALIAS_MAP)) {
+    if (!(canonical in raw) && alias in raw) {
+      raw[canonical] = raw[alias];
+    }
+  }
+
+  return raw;
 }
 
 export async function saveConfigKeys(

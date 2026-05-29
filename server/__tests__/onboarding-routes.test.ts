@@ -81,6 +81,75 @@ describe("Onboarding routes", () => {
     expect(typeof data.message).toBe("string");
   });
 
+  describe("POST /api/onboarding/test — GH Actions dispatch", () => {
+    it("returns unavailable for qb when GH Actions not configured", async () => {
+      const { token, csrfToken, csrfCookie } = await getCsrf();
+      const res = await app.request(
+        "/api/onboarding/test",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+            Cookie: csrfCookie,
+          },
+          body: JSON.stringify({ component: "qb" }),
+        },
+        env,
+      );
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as any;
+      expect(data.component).toBe("qb");
+      // Test env never configures GH Actions, so this is deterministically unavailable.
+      expect(data.status).toBe("unavailable");
+    });
+
+    it("returns unavailable for smtp (no dedicated workflow)", async () => {
+      const { token, csrfToken, csrfCookie } = await getCsrf();
+      const res = await app.request(
+        "/api/onboarding/test",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+            Cookie: csrfCookie,
+          },
+          body: JSON.stringify({ component: "smtp" }),
+        },
+        env,
+      );
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as any;
+      expect(data.component).toBe("smtp");
+      expect(data.status).toBe("unavailable");
+    });
+
+    it("javdb test still works synchronously", async () => {
+      const { token, csrfToken, csrfCookie } = await getCsrf();
+      const res = await app.request(
+        "/api/onboarding/test",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+            "X-CSRF-Token": csrfToken,
+            Cookie: csrfCookie,
+          },
+          body: JSON.stringify({ component: "javdb" }),
+        },
+        env,
+      );
+      expect(res.status).toBe(200);
+      const data = (await res.json()) as any;
+      expect(data.component).toBe("javdb");
+      expect(typeof data.ok).toBe("boolean");
+    });
+  });
+
   it("POST /api/onboarding/complete marks onboarding done", async () => {
     const { token, csrfToken, csrfCookie } = await getCsrf();
     const res = await app.request(

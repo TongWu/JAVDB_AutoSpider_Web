@@ -37,3 +37,8 @@ database_id = "90f5ba3a-f539-4895-9f3d-853494003f2b"
 binding = "OPERATIONS_DB"
 database_name = "javdb-operations"
 database_id = "6ded7c0e-3013-48ee-a550-c5e207177204"
+
+[[kv_namespaces]]
+binding = "AUTH_KV"
+id = "placeholder-create-before-deploy"
+preview_id = "placeholder-create-before-deploy"

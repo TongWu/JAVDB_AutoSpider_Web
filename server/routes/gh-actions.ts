@@ -4,6 +4,7 @@ import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { createGhClient } from "../services/gh-client";
+import { getWorkflowSchema, validateWorkflowInputs } from "../services/workflow-registry";
 
 type GhActionsEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -88,6 +89,19 @@ ghActionsRoutes.post("/runs", requireRole("admin"), async (c) => {
     throw new HTTPException(400, { message: "workflow is required" });
   }
 
+  const validation = validateWorkflowInputs(body.workflow, body.inputs ?? {});
+  if (!validation.valid) {
+    throw new HTTPException(422, {
+      message: JSON.stringify({
+        error: {
+          code: "workflow.invalid_inputs",
+          message: "Workflow input validation failed",
+          details: validation.errors,
+        },
+      }),
+    });
+  }
+
   const gh = createGhClient({
     token: c.env.GH_ACTIONS_TOKEN!,
     repo: c.env.GH_ACTIONS_REPO!,
@@ -113,6 +127,20 @@ ghActionsRoutes.get("/runs/:run_id/logs", async (c) => {
   });
   const logsUrl = await gh.getRunLogsUrl(runId);
   return c.json({ logs_url: logsUrl });
+});
+
+// GET /workflows/:name/schema — get workflow parameter schema
+ghActionsRoutes.get("/workflows/:name/schema", async (c) => {
+  const name = c.req.param("name");
+  const schema = getWorkflowSchema(name);
+  if (!schema) {
+    throw new HTTPException(404, {
+      message: JSON.stringify({
+        error: { code: "workflow.no_schema", message: `No schema registered for '${name}'` },
+      }),
+    });
+  }
+  return c.json(schema);
 });
 
 // GET /workflows/:name — get workflow YAML content

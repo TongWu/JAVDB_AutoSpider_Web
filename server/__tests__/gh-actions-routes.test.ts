@@ -117,4 +117,29 @@ describe("GH Actions routes", () => {
     );
     expect(res.status).toBe(401);
   });
+
+  it("GET /api/gh-actions/workflows/:name/schema returns schema for registered workflow", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/gh-actions/workflows/WeeklyDedup.yml/schema",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+    expect(data.filename).toBe("WeeklyDedup.yml");
+    expect(data.displayName).toBe("Weekly Dedup");
+    expect(Array.isArray(data.params)).toBe(true);
+    expect(data.params.length).toBe(8);
+  });
+
+  it("GET /api/gh-actions/workflows/:name/schema returns 404 for unregistered workflow", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/gh-actions/workflows/NotReal.yml/schema",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(404);
+  });
 });

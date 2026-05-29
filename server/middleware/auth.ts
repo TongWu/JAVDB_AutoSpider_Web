@@ -2,6 +2,7 @@ import type { Context, MiddlewareHandler } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { verifyJwt, type JwtPayload } from "../services/jwt";
+import { isTokenRevoked } from "../services/token-revocation";
 
 type HonoEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -60,9 +61,19 @@ export function requireAuth(): MiddlewareHandler<HonoEnv> {
       throw new HTTPException(401, { message: "Access token required" });
     }
 
-    // CSRF check for mutating methods
     const method = c.req.method;
-    if (method === "POST" || method === "PUT" || method === "DELETE") {
+    const isMutation = method === "POST" || method === "PUT" || method === "DELETE";
+
+    // Check token revocation on mutation requests only
+    if (isMutation) {
+      const revoked = await isTokenRevoked(c.env.AUTH_KV, payload.jti);
+      if (revoked) {
+        throw new HTTPException(401, { message: "Token has been revoked" });
+      }
+    }
+
+    // CSRF check for mutating methods
+    if (isMutation) {
       const path = new URL(c.req.url).pathname;
       if (path !== "/api/auth/login") {
         const csrf = extractCsrf(c);

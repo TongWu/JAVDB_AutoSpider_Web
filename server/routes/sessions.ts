@@ -4,6 +4,9 @@ import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { createGhClient } from "../services/gh-client";
+import { cursorEncode, cursorDecode } from "../services/cursor";
+import { validateWorkflowInputs } from "../services/workflow-registry";
+import { createJobRunsRepo } from "../services/job-runs";
 
 type SessEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -35,19 +38,6 @@ function mapSession(row: SessionRow) {
   };
 }
 
-function cursorEncode(sessionId: string): string {
-  return btoa(JSON.stringify({ sid: sessionId }));
-}
-
-function cursorDecode(cursor: string): string {
-  try {
-    const parsed = JSON.parse(atob(cursor));
-    return parsed.sid;
-  } catch {
-    throw new HTTPException(400, { message: "Invalid cursor" });
-  }
-}
-
 sessionsRoutes.get("/", async (c) => {
   const state = c.req.query("state");
   const cursor = c.req.query("cursor");
@@ -62,7 +52,7 @@ sessionsRoutes.get("/", async (c) => {
   }
   if (cursor) {
     conditions.push("Id < ?");
-    bindings.push(cursorDecode(cursor));
+    bindings.push(cursorDecode<{ sid: string }>(cursor).sid);
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
@@ -82,7 +72,7 @@ sessionsRoutes.get("/", async (c) => {
 
   const items = rows.results.map(mapSession);
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode(lastItem.session_id) : null;
+  const nextCursor = items.length === limit && lastItem ? cursorEncode({ sid: lastItem.session_id }) : null;
 
   return c.json({ items, next_cursor: nextCursor });
 });
@@ -163,7 +153,6 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
 
   const currentState = session.Status ?? "in_progress";
 
-  // Already committed and force not set → 409
   if (!COMMITTABLE_STATES.has(currentState)) {
     if (!(currentState === "committed" && body.force)) {
       throw new HTTPException(409, {
@@ -177,38 +166,43 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
     }
   }
 
-  // Update session status
-  await c.env.REPORTS_DB
-    .prepare(
-      "UPDATE ReportSessions SET Status = 'committed', DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')) WHERE Id = ?"
-    )
-    .bind(sessionId)
-    .run();
-
   let pendingDropped = 0;
 
+  // Step 1: Delete pending writes FIRST (recoverable if step 2 fails)
   if (body.drop_pending) {
-    // Delete from PendingMovieHistoryWrites — catch if table doesn't exist
     try {
-      const movieResult = await c.env.HISTORY_DB
-        .prepare("DELETE FROM PendingMovieHistoryWrites WHERE SessionId = ?")
-        .bind(sessionId)
-        .run();
-      pendingDropped += movieResult.meta.changes ?? 0;
-    } catch {
-      // Table may not exist — that's fine
+      const stmts = [
+        c.env.HISTORY_DB.prepare("DELETE FROM PendingMovieHistoryWrites WHERE SessionId = ?").bind(sessionId),
+        c.env.HISTORY_DB.prepare("DELETE FROM PendingTorrentHistoryWrites WHERE SessionId = ?").bind(sessionId),
+      ];
+      const results = await c.env.HISTORY_DB.batch(stmts);
+      for (const r of results) {
+        pendingDropped += r.meta.changes ?? 0;
+      }
+    } catch (err) {
+      // Only ignore "table doesn't exist" (fresh/test DBs). Rethrow any other
+      // error so we don't commit the session with pending rows left undeleted.
+      if (!(err instanceof Error && /no such table/i.test(err.message))) throw err;
     }
+  }
 
-    // Delete from PendingTorrentHistoryWrites — catch if table doesn't exist
-    try {
-      const torrentResult = await c.env.HISTORY_DB
-        .prepare("DELETE FROM PendingTorrentHistoryWrites WHERE SessionId = ?")
-        .bind(sessionId)
-        .run();
-      pendingDropped += torrentResult.meta.changes ?? 0;
-    } catch {
-      // Table may not exist — that's fine
-    }
+  // Step 2: Update session status
+  try {
+    await c.env.REPORTS_DB
+      .prepare(
+        "UPDATE ReportSessions SET Status = 'committed', DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')) WHERE Id = ?"
+      )
+      .bind(sessionId)
+      .run();
+  } catch {
+    // Partial failure: pending deleted but status not updated
+    return c.json({
+      session_id: sessionId,
+      new_state: currentState,
+      pending_dropped: pendingDropped,
+      partial_failure: true,
+      error: "Status update failed after pending deletion. Retry commit to complete.",
+    }, 207);
   }
 
   return c.json({
@@ -223,11 +217,14 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
   const sessionId = c.req.param("session_id");
 
   const body = await c.req.json<{
+    scope?: string;
+    force?: boolean;
     dry_run?: boolean;
-    include_pending?: boolean;
+    confirm_production?: string;
+    log_level?: string;
+    runner?: string;
   }>().catch(() => ({} as Record<string, never>));
 
-  // Validate session exists
   const session = await c.env.REPORTS_DB
     .prepare("SELECT Id FROM ReportSessions WHERE Id = ?")
     .bind(sessionId)
@@ -239,16 +236,29 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
     });
   }
 
-  if (body.dry_run) {
-    return c.json({
-      session_id: sessionId,
-      dry_run: true,
-      actions: [{ type: "preview", message: "Would dispatch RollbackD1.yml" }],
-      summary: { dispatched: false },
+  const inputs: Record<string, string> = {
+    session_id: sessionId,
+    scope: body.scope ?? "all",
+    dry_run: String(body.dry_run ?? true),
+    force: String(body.force ?? false),
+    confirm_production: body.confirm_production ?? "",
+    log_level: body.log_level ?? "INFO",
+    runner: body.runner ?? "self-hosted",
+  };
+
+  const validation = validateWorkflowInputs("RollbackD1.yml", inputs);
+  if (!validation.valid) {
+    throw new HTTPException(422, {
+      message: JSON.stringify({
+        error: {
+          code: "rollback.invalid_inputs",
+          message: "Rollback validation failed",
+          details: validation.errors,
+        },
+      }),
     });
   }
 
-  // Real rollback — require GH Actions
   if (!isGhActionsConfigured(c.env)) {
     throw new HTTPException(503, {
       message: "GitHub Actions not configured",
@@ -259,12 +269,16 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
     token: c.env.GH_ACTIONS_TOKEN!,
     repo: c.env.GH_ACTIONS_REPO!,
   });
-  await gh.dispatchWorkflow("RollbackD1.yml", { session_id: sessionId });
+  await gh.dispatchWorkflow("RollbackD1.yml", inputs);
+
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const job = await repo.create("rollback", "RollbackD1.yml", inputs);
 
   return c.json({
     session_id: sessionId,
-    dry_run: false,
-    actions: [{ type: "dispatched", workflow: "RollbackD1.yml" }],
+    dry_run: inputs.dry_run === "true",
+    job_id: job.job_id,
+    actions: [{ type: "dispatched", workflow: "RollbackD1.yml", inputs }],
     summary: { dispatched: true },
   });
 });

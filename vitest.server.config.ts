@@ -18,11 +18,16 @@ export default defineConfig({
           ENVIRONMENT: "test",
           GH_ACTIONS_TIER: "admin",
           GH_ACTIONS_REPO: "test-owner/test-repo",
+          AUTH_KV: "auth-kv-test",
+        },
+        kvNamespaces: {
+          AUTH_KV: "auth-kv-test",
         },
       },
     }),
   ],
   test: {
     include: ["server/__tests__/**/*.test.ts"],
+    setupFiles: ["server/__tests__/setup.ts"],
   },
 });

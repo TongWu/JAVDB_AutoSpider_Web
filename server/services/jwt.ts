@@ -5,6 +5,9 @@ interface JwtPayload {
   iat: number;
   exp: number;
   jti: string;
+  // Session id = the refresh-token jti, embedded into the access token so logout
+  // (which only has the access token) can remove the correct tracked session.
+  sid?: string;
 }
 
 const encoder = new TextEncoder();
@@ -39,7 +42,7 @@ export function generateJti(): string {
 }
 
 export async function signJwt(
-  claims: { sub: string; role: string; typ: "access" | "refresh" },
+  claims: { sub: string; role: string; typ: "access" | "refresh"; sid?: string },
   secret: string,
   expiresInSeconds: number
 ): Promise<string> {
