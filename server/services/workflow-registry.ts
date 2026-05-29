@@ -136,6 +136,8 @@ export function validateWorkflowInputs(
   inputs: Record<string, string>,
 ): { valid: boolean; errors: string[] } {
   const schema = WORKFLOW_REGISTRY.get(filename);
+  // Unregistered workflows are not validated here (advisory only); the dispatch
+  // handler is responsible for restricting WHICH workflows may be dispatched.
   if (!schema) return { valid: true, errors: [] };
 
   const errors: string[] = [];

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getWorkflowSchema, WORKFLOW_REGISTRY, type WorkflowEntry } from "../services/workflow-registry";
+import { getWorkflowSchema, WORKFLOW_REGISTRY, type WorkflowEntry, validateWorkflowInputs } from "../services/workflow-registry";
 
 describe("workflow-registry", () => {
   it("contains 5 registered workflows", () => {
@@ -59,5 +59,127 @@ describe("workflow-registry", () => {
         }
       }
     }
+  });
+});
+
+describe("validateWorkflowInputs", () => {
+  it("returns valid for unknown workflow (unregistered workflows skip validation)", () => {
+    const result = validateWorkflowInputs("NotReal.yml", {});
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("detects missing required parameter", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {});
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toContain("session_id");
+  });
+
+  it("detects invalid choice value", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      scope: "bogus",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toMatch(/scope/);
+    expect(result.errors[0]).toMatch(/bogus/);
+  });
+
+  it("accepts valid inputs with choice and required parameters", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      scope: "all",
+      dry_run: "true",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("does not trigger safety gate when dry_run is true (default)", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      dry_run: "true",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("triggers safety gate when dry_run=false without confirm_production", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      dry_run: "false",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toMatch(/confirm_production.*I-UNDERSTAND/);
+  });
+
+  it("satisfies safety gate with correct confirm_production value", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      dry_run: "false",
+      confirm_production: "I-UNDERSTAND",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("triggers safety gate when force=true without confirm_production", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      force: "true",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toMatch(/confirm_production.*I-UNDERSTAND/);
+  });
+
+  it("satisfies safety gate with force=true and confirm_production", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      force: "true",
+      confirm_production: "I-UNDERSTAND",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("triggers WeeklyDedup safety gate when dry_run=false", () => {
+    const result = validateWorkflowInputs("WeeklyDedup.yml", {
+      dry_run: "false",
+    });
+    expect(result.valid).toBe(false);
+    expect(result.errors[0]).toMatch(/confirm_production.*I-UNDERSTAND/);
+  });
+
+  it("satisfies WeeklyDedup safety gate with confirm_production", () => {
+    const result = validateWorkflowInputs("WeeklyDedup.yml", {
+      dry_run: "false",
+      confirm_production: "I-UNDERSTAND",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("does not validate TestIngestion (no safety gate)", () => {
+    const result = validateWorkflowInputs("TestIngestion.yml", {});
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("accepts partial inputs for optional parameters", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      scope: "reports",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("validates choice correctly with multiple choices", () => {
+    const result = validateWorkflowInputs("RollbackD1.yml", {
+      session_id: "s1",
+      scope: "history",
+    });
+    expect(result.valid).toBe(true);
+    expect(result.errors).toEqual([]);
   });
 });
