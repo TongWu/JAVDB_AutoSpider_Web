@@ -218,4 +218,26 @@ describe("Logout frees a session slot", () => {
     }, env);
     expect(after.status).toBe(200);
   });
+
+  it("revokes the refresh token on logout so /refresh fails afterwards", async () => {
+    const loginRes = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    const { access_token, refresh_token } = (await loginRes.json()) as any;
+
+    const logoutRes = await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${access_token}` },
+    }, env);
+    expect(logoutRes.status).toBe(200);
+
+    // The refresh token (its jti = the access token's sid) is now revoked.
+    const refreshRes = await app.request("/api/auth/refresh", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${refresh_token}` },
+    }, env);
+    expect(refreshRes.status).toBe(401);
+  });
 });

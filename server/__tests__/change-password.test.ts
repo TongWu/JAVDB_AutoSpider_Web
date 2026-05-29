@@ -39,7 +39,7 @@ describe("POST /api/auth/change-password", () => {
     const res = await app.request("/api/auth/change-password", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ old_password: "x", new_password: "y" }),
+      body: JSON.stringify({ current_password: "x", new_password: "y" }),
     }, env);
     expect(res.status).toBe(401);
   });
@@ -55,7 +55,7 @@ describe("POST /api/auth/change-password", () => {
         Cookie: `csrf_token=${csrfToken}`,
       },
       body: JSON.stringify({
-        old_password: "wrongpassword",
+        current_password: "wrongpassword",
         new_password: "newpassword123",
       }),
     }, env);
@@ -73,7 +73,7 @@ describe("POST /api/auth/change-password", () => {
         Cookie: `csrf_token=${csrfToken}`,
       },
       body: JSON.stringify({
-        old_password: "testpassword123",
+        current_password: "testpassword123",
         new_password: "short",
       }),
     }, env);
@@ -91,7 +91,7 @@ describe("POST /api/auth/change-password", () => {
         Cookie: `csrf_token=${csrfToken}`,
       },
       body: JSON.stringify({
-        old_password: "testpassword123",
+        current_password: "testpassword123",
         new_password: "newpassword123",
       }),
     }, env);

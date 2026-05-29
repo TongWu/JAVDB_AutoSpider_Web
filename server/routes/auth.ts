@@ -191,6 +191,11 @@ authRoutes.post("/logout", async (c) => {
       }
       // Sessions are tracked by the refresh jti; the access token carries it as `sid`.
       await removeSession(c.env.AUTH_KV, payload.sub, payload.sid ?? payload.jti);
+      // Also revoke the refresh token (jti = sid) so /refresh can't mint new
+      // access tokens after logout. Use the refresh expiry as an upper-bound TTL.
+      if (payload.sid) {
+        await revokeToken(c.env.AUTH_KV, payload.sid, getExpiry(c.env, "refresh"));
+      }
     } catch {
       // Token may be invalid or expired — still clear cookies
     }
@@ -202,9 +207,9 @@ authRoutes.post("/logout", async (c) => {
 });
 
 authRoutes.post("/change-password", requireAuth(), async (c) => {
-  const body = await c.req.json<{ old_password: string; new_password: string }>();
-  if (!body.old_password || !body.new_password) {
-    throw new HTTPException(400, { message: "old_password and new_password required" });
+  const body = await c.req.json<{ current_password: string; new_password: string }>();
+  if (!body.current_password || !body.new_password) {
+    throw new HTTPException(400, { message: "current_password and new_password required" });
   }
   if (body.new_password.length < 8) {
     throw new HTTPException(400, { message: "new_password must be at least 8 characters" });
@@ -216,7 +221,7 @@ authRoutes.post("/change-password", requireAuth(), async (c) => {
     throw new HTTPException(401, { message: "Unknown user" });
   }
 
-  const valid = await verifyPassword(body.old_password, user.passwordHash, c.env.ENVIRONMENT);
+  const valid = await verifyPassword(body.current_password, user.passwordHash, c.env.ENVIRONMENT);
   if (!valid) {
     throw new HTTPException(401, { message: "Current password is incorrect" });
   }
