@@ -2,6 +2,12 @@ import { cors } from "hono/cors";
 import type { Env } from "../env";
 import type { MiddlewareHandler } from "hono";
 
+/**
+ * Get CORS-allowed origins. In production, parses CORS_ORIGINS environment variable.
+ * If unset or empty in production, the allowed list is empty (fail-closed, intentional —
+ * all cross-origin requests are rejected by default).
+ * In dev/test modes, allow localhost variants for local development.
+ */
 function getAllowedOrigins(env: Env): string[] {
   const isProduction = env.ENVIRONMENT === "production";
 

@@ -177,5 +177,11 @@ describe("CORS", () => {
     // In test/dev mode, only localhost origins are allowed
     const allowOrigin = res.headers.get("Access-Control-Allow-Origin");
     expect(allowOrigin).not.toBe("https://evil.example.com");
+
+    // Allowed localhost origin in test/dev mode should be echoed back
+    const localRes = await app.request("/api/health", {
+      headers: { Origin: "http://localhost:5173" },
+    }, env);
+    expect(localRes.headers.get("Access-Control-Allow-Origin")).toBe("http://localhost:5173");
   });
 });
