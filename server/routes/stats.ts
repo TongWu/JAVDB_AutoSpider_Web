@@ -213,13 +213,13 @@ statsRoutes.get("/trend", async (c) => {
                ORDER BY date`;
         break;
       case "duration":
-        db = c.env.REPORTS_DB;
-        sql = `SELECT DATE(DateTimeCreated) AS date,
-                      AVG(CAST((julianday(CommittedAt) - julianday(DateTimeCreated)) * 86400 AS INTEGER)) AS value
-               FROM ReportSessions
-               WHERE Status='committed' AND CommittedAt IS NOT NULL
-                 AND DateTimeCreated >= datetime('now', '-${days} days')
-               GROUP BY DATE(DateTimeCreated)
+        db = c.env.OPERATIONS_DB;
+        sql = `SELECT DATE(created_at) AS date,
+                      AVG((julianday(updated_at) - julianday(created_at)) * 86400) AS value
+               FROM job_runs
+               WHERE status = 'completed'
+                 AND created_at >= datetime('now', '-${days} days')
+               GROUP BY DATE(created_at)
                ORDER BY date`;
         break;
       case "runs":
@@ -274,9 +274,13 @@ statsRoutes.get("/trend", async (c) => {
                ORDER BY date`;
         break;
       case "proxy_bans":
-        db = c.env.REPORTS_DB;
-        sql = "";
-        break;
+        return c.json({
+          metric: "proxy_bans",
+          period,
+          available: false,
+          reason: "proxy_bans requires local log access (unavailable in Cloudflare mode)",
+          data_points: [],
+        });
       // --- Spider raw counts (A1 stacked bar series) ---
       case "spider_processed":
         db = c.env.REPORTS_DB;
@@ -481,6 +485,7 @@ statsRoutes.get("/trend", async (c) => {
   return c.json({
     metric,
     period,
+    available: true,
     data_points: dataPoints,
   });
 });
