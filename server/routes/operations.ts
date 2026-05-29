@@ -90,7 +90,6 @@ operationsRoutes.post("/qb/filter-small", requireRole("admin"), async (c) => {
   }
 
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
   const job = await repo.create("qb-filter", "QBFileFilter.yml", inputs);
 
   const gh = createGhClient({
@@ -127,7 +126,6 @@ operationsRoutes.post("/rclone/run", requireRole("admin"), async (c) => {
   if (body.incremental) inputs.incremental = "true";
 
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
   const job = await repo.create("rclone", "RcloneManager.yml", inputs);
 
   const gh = createGhClient({
@@ -163,7 +161,6 @@ operationsRoutes.post(
     if (body.scope) inputs.scope = body.scope;
 
     const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-    await repo.ensureTable();
     const job = await repo.create(
       "cleanup",
       "StaleSessionCleanup.yml",

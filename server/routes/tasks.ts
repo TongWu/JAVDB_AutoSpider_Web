@@ -88,7 +88,6 @@ tasksRoutes.post("/daily", requireRole("admin"), async (c) => {
   };
 
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
   const job = await repo.create("daily", "DailyIngestion.yml", inputs);
 
   const gh = createGhClient({
@@ -132,7 +131,6 @@ tasksRoutes.post("/adhoc", requireRole("admin"), async (c) => {
   }
 
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
   const job = await repo.create("adhoc", "AdHocIngestion.yml", inputs);
 
   const gh = createGhClient({
@@ -159,7 +157,6 @@ tasksRoutes.get("/", async (c) => {
   }
 
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
   const items = await repo.list(limit);
   return c.json({
     tasks: items.map(mapJobToSummary),
@@ -173,9 +170,6 @@ tasksRoutes.get("/", async (c) => {
 
 // GET /stats — job statistics for last 7 days
 tasksRoutes.get("/stats", async (c) => {
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
-
   const row = await c.env.OPERATIONS_DB
     .prepare(
       `SELECT
@@ -199,7 +193,6 @@ tasksRoutes.get("/stats", async (c) => {
 tasksRoutes.get("/:job_id", async (c) => {
   const jobId = c.req.param("job_id");
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
   const job = await repo.get(jobId);
   if (!job) {
     return c.json({ error: { code: "job.not_found" } }, 404);
@@ -211,7 +204,6 @@ tasksRoutes.get("/:job_id", async (c) => {
 tasksRoutes.get("/:job_id/logs", async (c) => {
   const jobId = c.req.param("job_id");
   const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  await repo.ensureTable();
   const job = await repo.get(jobId);
   if (!job) {
     return c.json({ error: { code: "job.not_found" } }, 404);
