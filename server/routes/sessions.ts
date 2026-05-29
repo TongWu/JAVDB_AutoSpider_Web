@@ -5,6 +5,8 @@ import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { createGhClient } from "../services/gh-client";
 import { cursorEncode, cursorDecode } from "../services/cursor";
+import { validateWorkflowInputs } from "../services/workflow-registry";
+import { createJobRunsRepo } from "../services/job-runs";
 
 type SessEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -213,11 +215,14 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
   const sessionId = c.req.param("session_id");
 
   const body = await c.req.json<{
+    scope?: string;
+    force?: boolean;
     dry_run?: boolean;
-    include_pending?: boolean;
+    confirm_production?: string;
+    log_level?: string;
+    runner?: string;
   }>().catch(() => ({} as Record<string, never>));
 
-  // Validate session exists
   const session = await c.env.REPORTS_DB
     .prepare("SELECT Id FROM ReportSessions WHERE Id = ?")
     .bind(sessionId)
@@ -229,16 +234,29 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
     });
   }
 
-  if (body.dry_run) {
-    return c.json({
-      session_id: sessionId,
-      dry_run: true,
-      actions: [{ type: "preview", message: "Would dispatch RollbackD1.yml" }],
-      summary: { dispatched: false },
+  const inputs: Record<string, string> = {
+    session_id: sessionId,
+    scope: body.scope ?? "all",
+    dry_run: String(body.dry_run ?? true),
+    force: String(body.force ?? false),
+    confirm_production: body.confirm_production ?? "",
+    log_level: body.log_level ?? "INFO",
+    runner: body.runner ?? "self-hosted",
+  };
+
+  const validation = validateWorkflowInputs("RollbackD1.yml", inputs);
+  if (!validation.valid) {
+    throw new HTTPException(422, {
+      message: JSON.stringify({
+        error: {
+          code: "rollback.invalid_inputs",
+          message: "Rollback validation failed",
+          details: validation.errors,
+        },
+      }),
     });
   }
 
-  // Real rollback — require GH Actions
   if (!isGhActionsConfigured(c.env)) {
     throw new HTTPException(503, {
       message: "GitHub Actions not configured",
@@ -249,12 +267,16 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
     token: c.env.GH_ACTIONS_TOKEN!,
     repo: c.env.GH_ACTIONS_REPO!,
   });
-  await gh.dispatchWorkflow("RollbackD1.yml", { session_id: sessionId });
+  await gh.dispatchWorkflow("RollbackD1.yml", inputs);
+
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const job = await repo.create("rollback", "RollbackD1.yml", inputs);
 
   return c.json({
     session_id: sessionId,
-    dry_run: false,
-    actions: [{ type: "dispatched", workflow: "RollbackD1.yml" }],
+    dry_run: inputs.dry_run === "true",
+    job_id: job.job_id,
+    actions: [{ type: "dispatched", workflow: "RollbackD1.yml", inputs }],
     summary: { dispatched: true },
   });
 });
