@@ -4,6 +4,8 @@ import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { loadConfigStore } from "../services/config-store";
+import { createGhClient } from "../services/gh-client";
+import { createJobRunsRepo } from "../services/job-runs";
 
 type OnbEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -49,12 +51,28 @@ async function buildStatus(env: Env) {
   };
 }
 
+function isGhActionsConfigured(env: Env): boolean {
+  return (
+    !!env.GH_ACTIONS_TIER &&
+    env.GH_ACTIONS_TIER !== "none" &&
+    !!env.GH_ACTIONS_TOKEN &&
+    !!env.GH_ACTIONS_REPO
+  );
+}
+
 type TestableComponent = "javdb" | "qb" | "proxy" | "smtp";
+
+const COMPONENT_WORKFLOW_MAP: Record<string, { workflow: string; inputs: Record<string, string> } | null> = {
+  qb: { workflow: "TestIngestion.yml", inputs: { runner: "self-hosted" } },
+  proxy: { workflow: "TestIngestion.yml", inputs: { runner: "self-hosted", proxy_spider: "true" } },
+  smtp: null,
+};
 
 async function testComponent(
   component: TestableComponent,
   config: Record<string, unknown>,
-): Promise<{ ok: boolean; message: string; details: Record<string, unknown> | null }> {
+  env: Env,
+): Promise<{ ok?: boolean; status?: string; message: string; details: Record<string, unknown> | null }> {
   switch (component) {
     case "javdb": {
       const cookie = config.JAVDB_SESSION_COOKIE;
@@ -62,11 +80,26 @@ async function testComponent(
       return { ok: true, message: "cookie present", details: { length: String(cookie).length } };
     }
     case "qb":
-      return { ok: false, message: "qB connectivity test unavailable in Cloudflare mode", details: null };
-    case "proxy":
-      return { ok: false, message: "Proxy test unavailable in Cloudflare mode", details: null };
+    case "proxy": {
+      const mapping = COMPONENT_WORKFLOW_MAP[component];
+      if (!mapping) {
+        return { status: "unavailable", message: `${component} connectivity test workflow not yet available`, details: null };
+      }
+      if (!isGhActionsConfigured(env)) {
+        return { status: "unavailable", message: "GitHub Actions not configured", details: null };
+      }
+      const gh = createGhClient({ token: env.GH_ACTIONS_TOKEN!, repo: env.GH_ACTIONS_REPO! });
+      const repo = createJobRunsRepo(env.OPERATIONS_DB);
+      const job = await repo.create(`test-${component}`, mapping.workflow, mapping.inputs);
+      await gh.dispatchWorkflow(mapping.workflow, mapping.inputs);
+      return {
+        status: "dispatched",
+        message: `Dispatched ${mapping.workflow} for ${component} connectivity test`,
+        details: { job_id: job.job_id, poll_url: `/api/tasks/${job.job_id}` },
+      };
+    }
     case "smtp":
-      return { ok: false, message: "SMTP test unavailable in Cloudflare mode", details: null };
+      return { status: "unavailable", message: "SMTP connectivity test workflow not yet available", details: null };
     default:
       return { ok: false, message: `Unknown component: ${component}`, details: null };
   }
@@ -83,7 +116,7 @@ onboardingRoutes.post("/test", async (c) => {
     throw new HTTPException(422, { message: `Invalid component: ${body.component}` });
   }
   const config = await loadConfigStore(c.env.OPERATIONS_DB, c.env.SECRETS_ENCRYPTION_KEY);
-  const result = await testComponent(body.component as TestableComponent, config);
+  const result = await testComponent(body.component as TestableComponent, config, c.env);
   return c.json({ component: body.component, ...result });
 });
 
