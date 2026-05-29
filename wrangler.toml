@@ -40,5 +40,5 @@ database_id = "6ded7c0e-3013-48ee-a550-c5e207177204"
 
 [[kv_namespaces]]
 binding = "AUTH_KV"
-id = "placeholder-create-before-deploy"
-preview_id = "placeholder-create-before-deploy"
+id = "abfb9d7b9ecc4433b2bf7197791946b7"
+preview_id = "214377c5efd041a9b194601806347e3c"
