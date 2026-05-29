@@ -133,3 +133,38 @@ describe("Session limit", () => {
     expect(data.error.code).toBe("session_limit");
   });
 });
+
+describe("Token revocation", () => {
+  it("rejects revoked token on mutation requests", async () => {
+    const { accessToken, csrfToken } = await login();
+    // Logout to revoke the token
+    await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }, env);
+    // Try a POST with the revoked token
+    const res = await app.request("/api/crawl/index", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: `csrf_token=${csrfToken}`,
+      },
+      body: JSON.stringify({}),
+    }, env);
+    expect(res.status).toBe(401);
+  });
+
+  it("allows revoked token on GET requests", async () => {
+    const { accessToken } = await login();
+    await app.request("/api/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }, env);
+    const res = await app.request("/api/capabilities", {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    }, env);
+    expect(res.status).toBe(200);
+  });
+});
