@@ -15,23 +15,30 @@ const error = ref<string | null>(null)
 const pikpakSuccessTrend = ref<TrendResponse | null>(null)
 const pikpakFailedTrend = ref<TrendResponse | null>(null)
 const pikpakDeleteFailedTrend = ref<TrendResponse | null>(null)
+let latestRequestId = 0
 
 async function fetchData() {
+  const requestId = ++latestRequestId
+  const period = props.period
   loading.value = true
   error.value = null
   try {
     const [pikpakSuccess, pikpakFailed, pikpakDeleteFailed] = await Promise.all([
-      getStatsTrend('pikpak_success_rate', props.period),
-      getStatsTrend('pikpak_failed', props.period),
-      getStatsTrend('pikpak_delete_failed', props.period),
+      getStatsTrend('pikpak_success_rate', period),
+      getStatsTrend('pikpak_failed', period),
+      getStatsTrend('pikpak_delete_failed', period),
     ])
+    if (requestId !== latestRequestId) return
     pikpakSuccessTrend.value = pikpakSuccess
     pikpakFailedTrend.value = pikpakFailed
     pikpakDeleteFailedTrend.value = pikpakDeleteFailed
   } catch (err) {
+    if (requestId !== latestRequestId) return
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 

@@ -19,21 +19,25 @@ const failedTrend = ref<TrendResponse | null>(null)
 const efficiencyTrend = ref<TrendResponse | null>(null)
 const skipRateTrend = ref<TrendResponse | null>(null)
 const failureRateTrend = ref<TrendResponse | null>(null)
+let latestRequestId = 0
 
 async function fetchData() {
+  const requestId = ++latestRequestId
+  const period = props.period
   loading.value = true
   error.value = null
   try {
     const [processed, skipped, noNew, failed, efficiency, skipRate, failureRate] =
       await Promise.all([
-        getStatsTrend('spider_processed', props.period),
-        getStatsTrend('spider_skipped', props.period),
-        getStatsTrend('spider_nonew', props.period),
-        getStatsTrend('spider_failed', props.period),
-        getStatsTrend('spider_efficiency', props.period),
-        getStatsTrend('spider_skip_rate', props.period),
-        getStatsTrend('spider_failure_rate', props.period),
+        getStatsTrend('spider_processed', period),
+        getStatsTrend('spider_skipped', period),
+        getStatsTrend('spider_nonew', period),
+        getStatsTrend('spider_failed', period),
+        getStatsTrend('spider_efficiency', period),
+        getStatsTrend('spider_skip_rate', period),
+        getStatsTrend('spider_failure_rate', period),
       ])
+    if (requestId !== latestRequestId) return
     processedTrend.value = processed
     skippedTrend.value = skipped
     noNewTrend.value = noNew
@@ -42,9 +46,12 @@ async function fetchData() {
     skipRateTrend.value = skipRate
     failureRateTrend.value = failureRate
   } catch (err) {
+    if (requestId !== latestRequestId) return
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 

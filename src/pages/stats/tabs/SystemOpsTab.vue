@@ -16,25 +16,32 @@ const emailSentTrend = ref<TrendResponse | null>(null)
 const emailFailedTrend = ref<TrendResponse | null>(null)
 const emailResentTrend = ref<TrendResponse | null>(null)
 const incidentsTrend = ref<TrendResponse | null>(null)
+let latestRequestId = 0
 
 async function fetchData() {
+  const requestId = ++latestRequestId
+  const period = props.period
   loading.value = true
   error.value = null
   try {
     const [emailSent, emailFailed, emailResent, incidents] = await Promise.all([
-      getStatsTrend('email_sent', props.period),
-      getStatsTrend('email_failed', props.period),
-      getStatsTrend('email_resent', props.period),
-      getStatsTrend('ops_incidents', props.period),
+      getStatsTrend('email_sent', period),
+      getStatsTrend('email_failed', period),
+      getStatsTrend('email_resent', period),
+      getStatsTrend('ops_incidents', period),
     ])
+    if (requestId !== latestRequestId) return
     emailSentTrend.value = emailSent
     emailFailedTrend.value = emailFailed
     emailResentTrend.value = emailResent
     incidentsTrend.value = incidents
   } catch (err) {
+    if (requestId !== latestRequestId) return
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 

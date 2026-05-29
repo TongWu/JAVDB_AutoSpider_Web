@@ -19,26 +19,33 @@ const subtitleTrend = ref<TrendResponse | null>(null)
 const resolutionDist = ref<DistributionResponse | null>(null)
 const hiresTrend = ref<TrendResponse | null>(null)
 const perfectMatchTrend = ref<TrendResponse | null>(null)
+let latestRequestId = 0
 
 async function fetchData() {
+  const requestId = ++latestRequestId
+  const period = props.period
   loading.value = true
   error.value = null
   try {
     const [subtitleCoverage, resolutionDistribution, hiresRatio, perfectMatchRatio] =
       await Promise.all([
-        getStatsTrend('subtitle_coverage', props.period),
-        getStatsDistribution('resolution_distribution', props.period),
-        getStatsTrend('hires_ratio', props.period),
-        getStatsTrend('perfectmatch_ratio', props.period),
+        getStatsTrend('subtitle_coverage', period),
+        getStatsDistribution('resolution_distribution', period),
+        getStatsTrend('hires_ratio', period),
+        getStatsTrend('perfectmatch_ratio', period),
       ])
+    if (requestId !== latestRequestId) return
     subtitleTrend.value = subtitleCoverage
     resolutionDist.value = resolutionDistribution
     hiresTrend.value = hiresRatio
     perfectMatchTrend.value = perfectMatchRatio
   } catch (err) {
+    if (requestId !== latestRequestId) return
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 

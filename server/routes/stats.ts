@@ -527,26 +527,32 @@ statsRoutes.get("/distribution", async (c) => {
     try {
       const rows = await c.env.REPORTS_DB
         .prepare(
-          `SELECT Rate AS value
+          `SELECT
+             CASE
+               WHEN rm.Rate >= 0 AND rm.Rate < 2 THEN 0
+               WHEN rm.Rate >= 2 AND rm.Rate < 4 THEN 1
+               WHEN rm.Rate >= 4 AND rm.Rate < 6 THEN 2
+               WHEN rm.Rate >= 6 AND rm.Rate < 8 THEN 3
+               WHEN rm.Rate >= 8 AND rm.Rate <= 10 THEN 4
+               ELSE NULL
+             END AS bucket_index,
+             COUNT(*) AS value
            FROM ReportMovies rm
            JOIN ReportSessions rs ON rs.Id = rm.SessionId
            WHERE rm.Rate IS NOT NULL
-             AND rs.DateTimeCreated >= datetime('now', '-${days} days')`,
+             AND rs.DateTimeCreated >= datetime('now', '-${days} days')
+           GROUP BY bucket_index
+           ORDER BY bucket_index`,
         )
-        .all<{ value: number }>();
+        .all<{ bucket_index: number | null; value: number }>();
 
       for (const row of rows.results) {
-        const value = row.value;
-        if (value >= 0 && value < 2) {
-          buckets[0].value += 1;
-        } else if (value >= 2 && value < 4) {
-          buckets[1].value += 1;
-        } else if (value >= 4 && value < 6) {
-          buckets[2].value += 1;
-        } else if (value >= 6 && value < 8) {
-          buckets[3].value += 1;
-        } else if (value >= 8 && value <= 10) {
-          buckets[4].value += 1;
+        if (
+          row.bucket_index !== null &&
+          row.bucket_index >= 0 &&
+          row.bucket_index < buckets.length
+        ) {
+          buckets[row.bucket_index].value = row.value;
         }
       }
     } catch {

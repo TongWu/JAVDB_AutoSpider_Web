@@ -14,21 +14,28 @@ const error = ref<string | null>(null)
 
 const uploadSuccessTrend = ref<TrendResponse | null>(null)
 const duplicateRateTrend = ref<TrendResponse | null>(null)
+let latestRequestId = 0
 
 async function fetchData() {
+  const requestId = ++latestRequestId
+  const period = props.period
   loading.value = true
   error.value = null
   try {
     const [uploadSuccess, duplicateRate] = await Promise.all([
-      getStatsTrend('upload_success_rate', props.period),
-      getStatsTrend('duplicate_rate', props.period),
+      getStatsTrend('upload_success_rate', period),
+      getStatsTrend('duplicate_rate', period),
     ])
+    if (requestId !== latestRequestId) return
     uploadSuccessTrend.value = uploadSuccess
     duplicateRateTrend.value = duplicateRate
   } catch (err) {
+    if (requestId !== latestRequestId) return
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 

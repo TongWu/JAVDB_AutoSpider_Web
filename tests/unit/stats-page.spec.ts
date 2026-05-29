@@ -33,6 +33,11 @@ const passthrough = {
   template: '<div><slot /></div>',
 }
 
+const tabPaneStub = {
+  props: ['tab'],
+  template: '<section :data-tab="tab"><h2>{{ tab }}</h2><slot /></section>',
+}
+
 describe('StatsPage', () => {
   it('renders ADR-027 tab groups and tab components', () => {
     const wrapper = mount(StatsPage, {
@@ -50,11 +55,10 @@ describe('StatsPage', () => {
             props: ['label', 'value'],
             template: '<div>{{ label }} {{ value }}</div>',
           },
+          NTabs: passthrough,
+          NTabPane: tabPaneStub,
           Tabs: passthrough,
-          TabPane: {
-            props: ['tab'],
-            template: '<section :data-tab="tab"><h2>{{ tab }}</h2><slot /></section>',
-          },
+          TabPane: tabPaneStub,
           Line: true,
           Bar: true,
           Doughnut: true,

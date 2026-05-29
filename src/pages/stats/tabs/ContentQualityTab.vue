@@ -14,21 +14,28 @@ const error = ref<string | null>(null)
 
 const avgRatingTrend = ref<TrendResponse | null>(null)
 const ratingDist = ref<DistributionResponse | null>(null)
+let latestRequestId = 0
 
 async function fetchData() {
+  const requestId = ++latestRequestId
+  const period = props.period
   loading.value = true
   error.value = null
   try {
     const [avgRating, ratingDistribution] = await Promise.all([
-      getStatsTrend('avg_rating', props.period),
-      getStatsDistribution('rating_distribution', props.period),
+      getStatsTrend('avg_rating', period),
+      getStatsDistribution('rating_distribution', period),
     ])
+    if (requestId !== latestRequestId) return
     avgRatingTrend.value = avgRating
     ratingDist.value = ratingDistribution
   } catch (err) {
+    if (requestId !== latestRequestId) return
     error.value = err instanceof Error ? err.message : String(err)
   } finally {
-    loading.value = false
+    if (requestId === latestRequestId) {
+      loading.value = false
+    }
   }
 }
 
