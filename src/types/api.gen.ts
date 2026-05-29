@@ -198,6 +198,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/ops-incidents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Ops Incidents
+         * @description Return persisted read-only operations diagnosis incidents.
+         */
+        get: operations["list_ops_incidents_api_diag_ops_incidents_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/ops-incidents/{incident_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ops Incident
+         * @description Return one persisted read-only operations diagnosis incident.
+         */
+        get: operations["get_ops_incident_api_diag_ops_incidents__incident_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/explore/download-magnet": {
         parameters: {
             query?: never;
@@ -1630,6 +1670,18 @@ export interface components {
             /** Recipient */
             recipient?: string | null;
         };
+        /**
+         * EvidenceRefSchema
+         * @description Evidence reference attached to an operations diagnosis.
+         */
+        EvidenceRefSchema: {
+            /** Kind */
+            kind: string;
+            /** Label */
+            label?: string | null;
+            /** Ref */
+            ref: string;
+        };
         /** ExploreCookiePayload */
         ExploreCookiePayload: {
             /** Cookie */
@@ -1882,8 +1934,9 @@ export interface components {
             /**
              * Method
              * @default headless
+             * @enum {string}
              */
-            method: string;
+            method: "headless" | "cookie_paste";
         };
         /**
          * JavdbSessionRefreshResponse
@@ -1936,6 +1989,12 @@ export interface components {
             log_size?: number | null;
             /** Mode */
             mode?: string | null;
+            /** Result Path */
+            result_path?: string | null;
+            /** Result Summary */
+            result_summary?: {
+                [key: string]: unknown;
+            } | null;
             /** Source */
             source?: string | null;
             /** Status */
@@ -1970,6 +2029,8 @@ export interface components {
         LogSearchResponse: {
             /** Results */
             results: components["schemas"]["LogSearchItem"][];
+            /** Scanned Files */
+            scanned_files: number;
             /** Total Matched */
             total_matched: number;
             /** Truncated */
@@ -2100,6 +2161,60 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /**
+         * OpsIncidentListResponse
+         * @description List response for operations incidents.
+         */
+        OpsIncidentListResponse: {
+            /** Items */
+            items: components["schemas"]["OpsIncidentSchema"][];
+        };
+        /**
+         * OpsIncidentSchema
+         * @description Persisted ADR-026 operations incident summary.
+         */
+        OpsIncidentSchema: {
+            /** Confidence */
+            confidence: string;
+            /** Confirmed Findings */
+            confirmed_findings: string[];
+            /** Created At */
+            created_at: string;
+            /** Detector Version */
+            detector_version: string;
+            /** Evidence Refs */
+            evidence_refs: components["schemas"]["EvidenceRefSchema"][];
+            /** Incident Id */
+            incident_id: string;
+            /** Incident Type */
+            incident_type: string;
+            /** Likely Causes */
+            likely_causes: string[];
+            /** Model Version */
+            model_version: string;
+            /** Persistence Status */
+            persistence_status: string;
+            /** Recommended Next Actions */
+            recommended_next_actions: string[];
+            /** Resolved At */
+            resolved_at?: string | null;
+            /** Run Attempt */
+            run_attempt?: number | null;
+            /** Run Id */
+            run_id?: string | null;
+            /** Session Id */
+            session_id?: string | null;
+            /** Status */
+            status: string;
+            /** Trigger Source */
+            trigger_source: string;
+            /** Unknowns */
+            unknowns: string[];
+            /** Unsafe Actions */
+            unsafe_actions: string[];
+            /** Updated At */
+            updated_at: string;
+        };
         /** PikPakQueueItem */
         PikPakQueueItem: {
             /** Category */
@@ -2121,6 +2236,8 @@ export interface components {
         PikPakQueueResponse: {
             /** Items */
             items: components["schemas"]["PikPakQueueItem"][];
+            /** Next Cursor */
+            next_cursor?: string | null;
             /** Total */
             total: number;
         };
@@ -3135,6 +3252,71 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["JavdbSessionRefreshResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_ops_incidents_api_diag_ops_incidents_get: {
+        parameters: {
+            query?: {
+                status?: string | null;
+                run_id?: string | null;
+                session_id?: string | null;
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsIncidentListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ops_incident_api_diag_ops_incidents__incident_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsIncidentSchema"];
                 };
             };
             /** @description Validation Error */
