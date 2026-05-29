@@ -132,6 +132,57 @@ describe("Sessions routes", () => {
     expect(res.status).toBe(409);
   });
 
+  it("POST /api/sessions/:id/commit with drop_pending deletes pending before updating status", async () => {
+    // Seed a finalizing session with pending writes
+    await env.REPORTS_DB.prepare(
+      "INSERT OR REPLACE INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode) VALUES (?, ?, ?, ?, ?, ?, ?)"
+    ).bind("sess-pending", "daily", "2026-03-01", "rp.csv", "2026-03-01 10:00:00", "finalizing", "pending").run();
+
+    // Create both pending tables to avoid batch transaction failure
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE IF NOT EXISTS PendingMovieHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)"
+    ).run();
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE IF NOT EXISTS PendingTorrentHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)"
+    ).run();
+
+    // Insert pending movie and torrent writes
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingMovieHistoryWrites (SessionId, VideoCode) VALUES (?, ?)"
+    ).bind("sess-pending", "TEST-001").run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingTorrentHistoryWrites (SessionId, VideoCode) VALUES (?, ?)"
+    ).bind("sess-pending", "TEST-001").run();
+
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const res = await app.request("/api/sessions/sess-pending/commit", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({ drop_pending: true }),
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.new_state).toBe("committed");
+    expect(data.pending_dropped).toBeGreaterThanOrEqual(1);
+
+    // Verify pending rows are gone
+    const remainingMovies = await env.HISTORY_DB.prepare(
+      "SELECT COUNT(*) AS cnt FROM PendingMovieHistoryWrites WHERE SessionId = ?"
+    ).bind("sess-pending").first<{ cnt: number }>();
+    expect(remainingMovies?.cnt).toBe(0);
+
+    const remainingTorrents = await env.HISTORY_DB.prepare(
+      "SELECT COUNT(*) AS cnt FROM PendingTorrentHistoryWrites WHERE SessionId = ?"
+    ).bind("sess-pending").first<{ cnt: number }>();
+    expect(remainingTorrents?.cnt).toBe(0);
+  });
+
   // ---------- POST /:session_id/rollback ----------
 
   it("POST /api/sessions/:id/rollback returns 503 without GH_ACTIONS_TOKEN", async () => {

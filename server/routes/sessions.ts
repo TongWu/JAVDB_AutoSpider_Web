@@ -163,7 +163,6 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
 
   const currentState = session.Status ?? "in_progress";
 
-  // Already committed and force not set → 409
   if (!COMMITTABLE_STATES.has(currentState)) {
     if (!(currentState === "committed" && body.force)) {
       throw new HTTPException(409, {
@@ -177,38 +176,41 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
     }
   }
 
-  // Update session status
-  await c.env.REPORTS_DB
-    .prepare(
-      "UPDATE ReportSessions SET Status = 'committed', DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')) WHERE Id = ?"
-    )
-    .bind(sessionId)
-    .run();
-
   let pendingDropped = 0;
 
+  // Step 1: Delete pending writes FIRST (recoverable if step 2 fails)
   if (body.drop_pending) {
-    // Delete from PendingMovieHistoryWrites — catch if table doesn't exist
     try {
-      const movieResult = await c.env.HISTORY_DB
-        .prepare("DELETE FROM PendingMovieHistoryWrites WHERE SessionId = ?")
-        .bind(sessionId)
-        .run();
-      pendingDropped += movieResult.meta.changes ?? 0;
+      const stmts = [
+        c.env.HISTORY_DB.prepare("DELETE FROM PendingMovieHistoryWrites WHERE SessionId = ?").bind(sessionId),
+        c.env.HISTORY_DB.prepare("DELETE FROM PendingTorrentHistoryWrites WHERE SessionId = ?").bind(sessionId),
+      ];
+      const results = await c.env.HISTORY_DB.batch(stmts);
+      for (const r of results) {
+        pendingDropped += r.meta.changes ?? 0;
+      }
     } catch {
-      // Table may not exist — that's fine
+      // Tables may not exist — that's fine
     }
+  }
 
-    // Delete from PendingTorrentHistoryWrites — catch if table doesn't exist
-    try {
-      const torrentResult = await c.env.HISTORY_DB
-        .prepare("DELETE FROM PendingTorrentHistoryWrites WHERE SessionId = ?")
-        .bind(sessionId)
-        .run();
-      pendingDropped += torrentResult.meta.changes ?? 0;
-    } catch {
-      // Table may not exist — that's fine
-    }
+  // Step 2: Update session status
+  try {
+    await c.env.REPORTS_DB
+      .prepare(
+        "UPDATE ReportSessions SET Status = 'committed', DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')) WHERE Id = ?"
+      )
+      .bind(sessionId)
+      .run();
+  } catch (err) {
+    // Partial failure: pending deleted but status not updated
+    return c.json({
+      session_id: sessionId,
+      new_state: currentState,
+      pending_dropped: pendingDropped,
+      partial_failure: true,
+      error: "Status update failed after pending deletion. Retry commit to complete.",
+    }, 207);
   }
 
   return c.json({
