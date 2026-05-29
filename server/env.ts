@@ -23,6 +23,7 @@ export interface Env {
 
   // Capabilities
   ENVIRONMENT: string;
+  CORS_ORIGINS?: string;
   INGESTION_MODE?: string;
   STORAGE_BACKEND?: string;
   DEPLOYMENT?: string;

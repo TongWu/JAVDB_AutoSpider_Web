@@ -168,3 +168,14 @@ describe("Token revocation", () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe("CORS", () => {
+  it("rejects unknown origin in test mode (acts as non-production)", async () => {
+    const res = await app.request("/api/health", {
+      headers: { Origin: "https://evil.example.com" },
+    }, env);
+    // In test/dev mode, only localhost origins are allowed
+    const allowOrigin = res.headers.get("Access-Control-Allow-Origin");
+    expect(allowOrigin).not.toBe("https://evil.example.com");
+  });
+});
