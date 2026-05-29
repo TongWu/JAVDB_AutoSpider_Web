@@ -3,13 +3,19 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import { signJwt, verifyJwt } from "../services/jwt";
 import { findUser } from "../services/users";
+import { checkRateLimit } from "../services/rate-limit";
+import { revokeToken, isTokenRevoked, trackSession, getSessionCount, cleanExpiredSessions, removeSession } from "../services/token-revocation";
 
 type AuthEnv = { Bindings: Env };
 
 export const authRoutes = new Hono<AuthEnv>();
 
-async function verifyPassword(password: string, hash: string): Promise<boolean> {
+async function verifyPassword(password: string, hash: string, environment: string): Promise<boolean> {
   if (hash.startsWith("plain:")) {
+    if (environment === "production") {
+      console.warn("plain-text passwords are rejected in production — use bcrypt hash");
+      return false;
+    }
     return password === hash.slice(6);
   }
   const { compare } = await import("bcryptjs");
@@ -29,7 +35,23 @@ function generateCsrfToken(): string {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("").slice(0, 24);
 }
 
+function getClientIp(c: { req: { header: (name: string) => string | undefined } }): string {
+  return c.req.header("CF-Connecting-IP") ?? c.req.header("X-Forwarded-For")?.split(",")[0].trim() ?? "unknown";
+}
+
+const MAX_SESSIONS_PER_USER = 3;
+
 authRoutes.post("/login", async (c) => {
+  // Rate limit: 5 requests / 60s per IP
+  const ip = getClientIp(c);
+  const rl = await checkRateLimit(c.env.AUTH_KV, ip, "/api/auth/login", 5, 60);
+  if (!rl.allowed) {
+    return c.json(
+      { error: { code: "rate_limited", message: "Too many login attempts" } },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const body = await c.req.json<{ username: string; password: string }>();
   if (!body.username || !body.password) {
     throw new HTTPException(400, { message: "username and password required" });
@@ -40,9 +62,19 @@ authRoutes.post("/login", async (c) => {
     throw new HTTPException(401, { message: "Invalid username/password" });
   }
 
-  const valid = await verifyPassword(body.password, user.passwordHash);
+  const valid = await verifyPassword(body.password, user.passwordHash, c.env.ENVIRONMENT);
   if (!valid) {
     throw new HTTPException(401, { message: "Invalid username/password" });
+  }
+
+  // Session limit check
+  await cleanExpiredSessions(c.env.AUTH_KV, user.username);
+  const sessionCount = await getSessionCount(c.env.AUTH_KV, user.username);
+  if (sessionCount >= MAX_SESSIONS_PER_USER) {
+    return c.json(
+      { error: { code: "session_limit", message: "Maximum concurrent sessions reached" } },
+      { status: 429 },
+    );
   }
 
   const accessExpiry = getExpiry(c.env, "access");
@@ -52,6 +84,10 @@ authRoutes.post("/login", async (c) => {
   const accessToken = await signJwt({ ...claims, typ: "access" }, c.env.API_SECRET_KEY, accessExpiry);
   const refreshToken = await signJwt({ ...claims, typ: "refresh" }, c.env.API_SECRET_KEY, refreshExpiry);
   const csrfToken = generateCsrfToken();
+
+  // Track session (use access token JTI for revocation; refresh token JTI for session tracking)
+  const refreshPayload = JSON.parse(atob(refreshToken.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+  await trackSession(c.env.AUTH_KV, user.username, refreshPayload.jti, refreshPayload.exp);
 
   const isSecure = new URL(c.req.url).protocol === "https:";
   const sameSite = "Lax";
@@ -73,6 +109,16 @@ authRoutes.post("/login", async (c) => {
 });
 
 authRoutes.post("/refresh", async (c) => {
+  // Rate limit: 10 requests / 60s per IP
+  const ip = getClientIp(c);
+  const rl = await checkRateLimit(c.env.AUTH_KV, ip, "/api/auth/refresh", 10, 60);
+  if (!rl.allowed) {
+    return c.json(
+      { error: { code: "rate_limited", message: "Too many refresh attempts" } },
+      { status: 429, headers: { "Retry-After": String(rl.retryAfter) } },
+    );
+  }
+
   const authHeader = c.req.header("Authorization");
   const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
 
@@ -91,6 +137,12 @@ authRoutes.post("/refresh", async (c) => {
     throw new HTTPException(401, { message: "Refresh token required" });
   }
 
+  // Check if refresh token was revoked
+  const revoked = await isTokenRevoked(c.env.AUTH_KV, payload.jti);
+  if (revoked) {
+    throw new HTTPException(401, { message: "Token has been revoked" });
+  }
+
   const user = findUser(c.env, payload.sub);
   if (!user) {
     throw new HTTPException(401, { message: "Unknown user" });
@@ -100,22 +152,44 @@ authRoutes.post("/refresh", async (c) => {
   const accessToken = await signJwt(
     { sub: user.username, role: user.role, typ: "access" },
     c.env.API_SECRET_KEY,
-    accessExpiry
+    accessExpiry,
   );
 
+  // Generate fresh CSRF token and re-set cookie
+  const csrfToken = generateCsrfToken();
   const isSecure = new URL(c.req.url).protocol === "https:";
   const sameSite = "Lax";
   const cookieFlags = `Path=/; HttpOnly; SameSite=${sameSite}${isSecure ? "; Secure" : ""}`;
-  c.header("Set-Cookie", `access_token=${accessToken}; Max-Age=${accessExpiry}; ${cookieFlags}`);
+  const csrfFlags = `Path=/; SameSite=${sameSite}${isSecure ? "; Secure" : ""}`;
+
+  c.header("Set-Cookie", `access_token=${accessToken}; Max-Age=${accessExpiry}; ${cookieFlags}`, { append: true });
+  c.header("Set-Cookie", `csrf_token=${csrfToken}; Max-Age=${accessExpiry}; ${csrfFlags}`, { append: true });
 
   return c.json({
     access_token: accessToken,
     token_type: "bearer",
     expires_in: accessExpiry,
+    csrf_token: csrfToken,
   });
 });
 
 authRoutes.post("/logout", async (c) => {
+  // Extract access token to revoke its JTI
+  const authHeader = c.req.header("Authorization");
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  if (token) {
+    try {
+      const payload = await verifyJwt(token, c.env.API_SECRET_KEY);
+      const ttl = payload.exp - Math.floor(Date.now() / 1000);
+      if (ttl > 0) {
+        await revokeToken(c.env.AUTH_KV, payload.jti, ttl);
+      }
+      await removeSession(c.env.AUTH_KV, payload.sub, payload.jti);
+    } catch {
+      // Token may be invalid or expired — still clear cookies
+    }
+  }
+
   c.header("Set-Cookie", "access_token=; Max-Age=0; Path=/; HttpOnly", { append: true });
   c.header("Set-Cookie", "csrf_token=; Max-Age=0; Path=/", { append: true });
   return c.json({ status: "ok" });

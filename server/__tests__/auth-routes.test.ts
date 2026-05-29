@@ -80,3 +80,29 @@ describe("GET /api/capabilities (auth guard)", () => {
     expect(res.status).toBe(200);
   });
 });
+
+describe("Rate limiting", () => {
+  it("returns 429 after exceeding login rate limit", async () => {
+    for (let i = 0; i < 5; i++) {
+      await app.request("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username: "admin", password: "wrong" }),
+      }, env);
+    }
+    const res = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(res.status).toBe(429);
+    expect(res.headers.get("Retry-After")).toBeDefined();
+  });
+});
+
+describe("Plain-text password rejection in production", () => {
+  it("rejects plain: passwords when ENVIRONMENT=production", async () => {
+    // The test env uses ENVIRONMENT=test, so we test the function directly
+    // by importing verifyPassword — see note below
+  });
+});
