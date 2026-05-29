@@ -57,7 +57,7 @@ authRoutes.post("/login", async (c) => {
     throw new HTTPException(400, { message: "username and password required" });
   }
 
-  const user = findUser(c.env, body.username);
+  const user = await findUser(c.env, c.env.OPERATIONS_DB, body.username);
   if (!user) {
     throw new HTTPException(401, { message: "Invalid username/password" });
   }
@@ -143,7 +143,7 @@ authRoutes.post("/refresh", async (c) => {
     throw new HTTPException(401, { message: "Token has been revoked" });
   }
 
-  const user = findUser(c.env, payload.sub);
+  const user = await findUser(c.env, c.env.OPERATIONS_DB, payload.sub);
   if (!user) {
     throw new HTTPException(401, { message: "Unknown user" });
   }
