@@ -118,6 +118,7 @@ const VALID_METRICS = new Set([
   // Existing
   "success_rate",
   "duration",
+  "runs",
   "movies",
   "torrents",
   "history_growth",
@@ -148,6 +149,10 @@ const VALID_METRICS = new Set([
   "email_failed",
   "email_resent",
   "ops_incidents",
+]);
+const VALID_DISTRIBUTION_METRICS = new Set([
+  "rating_distribution",
+  "resolution_distribution",
 ]);
 const VALID_PERIODS = new Set(["7d", "30d", "90d"]);
 
@@ -214,6 +219,14 @@ statsRoutes.get("/trend", async (c) => {
                FROM ReportSessions
                WHERE Status='committed' AND CommittedAt IS NOT NULL
                  AND DateTimeCreated >= datetime('now', '-${days} days')
+               GROUP BY DATE(DateTimeCreated)
+               ORDER BY date`;
+        break;
+      case "runs":
+        db = c.env.REPORTS_DB;
+        sql = `SELECT DATE(DateTimeCreated) AS date, COUNT(*) AS value
+               FROM ReportSessions
+               WHERE DateTimeCreated >= datetime('now', '-${days} days')
                GROUP BY DATE(DateTimeCreated)
                ORDER BY date`;
         break;
@@ -470,4 +483,129 @@ statsRoutes.get("/trend", async (c) => {
     period,
     data_points: dataPoints,
   });
+});
+
+// --- GET /distribution ---
+
+statsRoutes.get("/distribution", async (c) => {
+  const metric = c.req.query("metric") ?? "rating_distribution";
+  const period = c.req.query("period") ?? "30d";
+
+  if (!VALID_DISTRIBUTION_METRICS.has(metric)) {
+    throw new HTTPException(400, {
+      message: JSON.stringify({
+        error: {
+          code: "stats.invalid_metric",
+          message: `Invalid metric '${metric}'. Supported: ${[...VALID_DISTRIBUTION_METRICS].join(", ")}`,
+        },
+      }),
+    });
+  }
+
+  if (!VALID_PERIODS.has(period)) {
+    throw new HTTPException(400, {
+      message: JSON.stringify({
+        error: {
+          code: "stats.invalid_period",
+          message: `Invalid period '${period}'. Supported: ${[...VALID_PERIODS].join(", ")}`,
+        },
+      }),
+    });
+  }
+
+  const days = periodToDays(period);
+
+  if (metric === "rating_distribution") {
+    const buckets = [
+      { label: "0-2", value: 0 },
+      { label: "2-4", value: 0 },
+      { label: "4-6", value: 0 },
+      { label: "6-8", value: 0 },
+      { label: "8-10", value: 0 },
+    ];
+
+    try {
+      const rows = await c.env.REPORTS_DB
+        .prepare(
+          `SELECT
+             CASE
+               WHEN rm.Rate >= 0 AND rm.Rate < 2 THEN 0
+               WHEN rm.Rate >= 2 AND rm.Rate < 4 THEN 1
+               WHEN rm.Rate >= 4 AND rm.Rate < 6 THEN 2
+               WHEN rm.Rate >= 6 AND rm.Rate < 8 THEN 3
+               WHEN rm.Rate >= 8 AND rm.Rate <= 10 THEN 4
+               ELSE NULL
+             END AS bucket_index,
+             COUNT(*) AS value
+           FROM ReportMovies rm
+           JOIN ReportSessions rs ON rs.Id = rm.SessionId
+           WHERE rm.Rate IS NOT NULL
+             AND rs.DateTimeCreated >= datetime('now', '-${days} days')
+           GROUP BY bucket_index
+           ORDER BY bucket_index`,
+        )
+        .all<{ bucket_index: number | null; value: number }>();
+
+      for (const row of rows.results) {
+        if (
+          row.bucket_index !== null &&
+          row.bucket_index >= 0 &&
+          row.bucket_index < buckets.length
+        ) {
+          buckets[row.bucket_index].value = row.value;
+        }
+      }
+    } catch {
+      return c.json({
+        metric,
+        period,
+        buckets: [],
+      });
+    }
+
+    return c.json({
+      metric,
+      period,
+      buckets,
+    });
+  }
+
+  try {
+    const rows = await c.env.HISTORY_DB
+      .prepare(
+        `SELECT
+           CASE
+             WHEN ResolutionType = 0 THEN 0
+             WHEN ResolutionType = 1 THEN 1
+             WHEN ResolutionType = 2 THEN 2
+             WHEN ResolutionType = 3 THEN 3
+             WHEN ResolutionType = 4 THEN 4
+             ELSE 5
+           END AS bucket_index,
+           COUNT(*) AS value
+         FROM TorrentHistory
+         WHERE DateTimeCreated >= datetime('now', '-${days} days')
+         GROUP BY 1
+         ORDER BY 1`,
+      )
+      .all<{ bucket_index: number; value: number }>();
+
+    const resolutionLabels = ["Unknown", "SD", "HD", "FHD", "4K", "Other"];
+    const buckets = rows.results.map((row) => ({
+      label: resolutionLabels[row.bucket_index] ?? "Other",
+      value: row.value,
+    }));
+
+    return c.json({
+      metric,
+      period,
+      buckets,
+    });
+  } catch {
+    return c.json({
+      metric,
+      period,
+      buckets: [],
+    });
+  }
 });
