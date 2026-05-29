@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { getWorkflowSchema, WORKFLOW_REGISTRY, type WorkflowEntry, validateWorkflowInputs } from "../services/workflow-registry";
+import { getWorkflowSchema, WORKFLOW_REGISTRY, validateWorkflowInputs } from "../services/workflow-registry";
 
 describe("workflow-registry", () => {
   it("contains 5 registered workflows", () => {

@@ -192,7 +192,7 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
       )
       .bind(sessionId)
       .run();
-  } catch (err) {
+  } catch {
     // Partial failure: pending deleted but status not updated
     return c.json({
       session_id: sessionId,

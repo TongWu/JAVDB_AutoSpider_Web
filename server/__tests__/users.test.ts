@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
-import { findUser, getUsers } from "../services/users";
+import { findUser } from "../services/users";
 
 async function ensureConfigTable(db: D1Database) {
   await db.prepare(
