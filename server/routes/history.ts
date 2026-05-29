@@ -154,11 +154,17 @@ historyRoutes.get("/movies", async (c) => {
   });
 });
 
+const EXPORT_LIMIT = 100_000;
+
 historyRoutes.get("/movies/export", async (c) => {
   const params = c.req.query();
-  const { selectSql, bindings } = buildMovieQuery(params, true);
+  const { selectSql, countSql, bindings } = buildMovieQuery(params, true);
   const db = c.env.HISTORY_DB;
-  const rows = await db.prepare(selectSql).bind(...bindings).all<MovieRow>();
+
+  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const totalCount = countResult?.cnt ?? 0;
+  const rows = await db.prepare(`${selectSql} LIMIT ${EXPORT_LIMIT}`).bind(...bindings).all<MovieRow>();
+  const truncated = rows.results.length >= EXPORT_LIMIT && totalCount > EXPORT_LIMIT;
 
   const header = "id,video_code,href,actor_name,actor_gender,supporting_actors,perfect_match,hi_res,datetime_created,datetime_updated,session_id,torrent_count";
   const csvRows = rows.results.map((r) =>
@@ -169,13 +175,24 @@ historyRoutes.get("/movies/export", async (c) => {
       .join(",")
   );
 
-  const csv = [header, ...csvRows].join("\n");
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": "attachment; filename=movies.csv",
-    },
-  });
+  const parts = ["﻿", header, "\n", csvRows.join("\n")];
+  if (truncated) {
+    parts.push(`\n# Export truncated at ${EXPORT_LIMIT} rows. Total: ${totalCount}`);
+  }
+
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": "attachment; filename=movies.csv",
+  };
+  if (truncated) {
+    responseHeaders["X-Export-Truncated"] = "true";
+    responseHeaders["X-Export-Total-Count"] = String(totalCount);
+  }
+
+  const csv = parts.join("");
+  // Encode to ensure BOM is preserved through Response transmission
+  const encoded = new TextEncoder().encode(csv);
+  return new Response(encoded, { headers: responseHeaders });
 });
 
 // --- Torrent search ---
@@ -297,9 +314,13 @@ historyRoutes.get("/torrents", async (c) => {
 
 historyRoutes.get("/torrents/export", async (c) => {
   const params = c.req.query();
-  const { selectSql, bindings } = buildTorrentQuery(params, true);
+  const { selectSql, countSql, bindings } = buildTorrentQuery(params, true);
   const db = c.env.HISTORY_DB;
-  const rows = await db.prepare(selectSql).bind(...bindings).all<TorrentRow>();
+
+  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const totalCount = countResult?.cnt ?? 0;
+  const rows = await db.prepare(`${selectSql} LIMIT ${EXPORT_LIMIT}`).bind(...bindings).all<TorrentRow>();
+  const truncated = rows.results.length >= EXPORT_LIMIT && totalCount > EXPORT_LIMIT;
 
   const header = "id,movie_video_code,movie_href,magnet_uri,size,subtitle_indicator,censor_indicator,resolution_type,file_count,datetime_created,session_id";
   const csvRows = rows.results.map((r) =>
@@ -310,11 +331,22 @@ historyRoutes.get("/torrents/export", async (c) => {
       .join(",")
   );
 
-  const csv = [header, ...csvRows].join("\n");
-  return new Response(csv, {
-    headers: {
-      "Content-Type": "text/csv; charset=utf-8",
-      "Content-Disposition": "attachment; filename=torrents.csv",
-    },
-  });
+  const parts = ["﻿", header, "\n", csvRows.join("\n")];
+  if (truncated) {
+    parts.push(`\n# Export truncated at ${EXPORT_LIMIT} rows. Total: ${totalCount}`);
+  }
+
+  const responseHeaders: Record<string, string> = {
+    "Content-Type": "text/csv; charset=utf-8",
+    "Content-Disposition": "attachment; filename=torrents.csv",
+  };
+  if (truncated) {
+    responseHeaders["X-Export-Truncated"] = "true";
+    responseHeaders["X-Export-Total-Count"] = String(totalCount);
+  }
+
+  const csv = parts.join("");
+  // Encode to ensure BOM is preserved through Response transmission
+  const encoded = new TextEncoder().encode(csv);
+  return new Response(encoded, { headers: responseHeaders });
 });

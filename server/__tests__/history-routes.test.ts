@@ -102,4 +102,33 @@ describe("History routes", () => {
     expect(text).toContain("video_code");
     expect(text).toContain("ABC-001");
   });
+
+  it("GET /api/history/movies/export includes BOM and Content-Type", async () => {
+    const token = await getToken();
+    const res = await app.request("/api/history/movies/export", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+    expect(res.status).toBe(200);
+    const buffer = await res.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    // BOM is ﻿ — in UTF-8 it's the bytes EF BB BF
+    expect(bytes[0]).toBe(0xEF);
+    expect(bytes[1]).toBe(0xBB);
+    expect(bytes[2]).toBe(0xBF);
+    expect(res.headers.get("Content-Type")).toContain("text/csv");
+  });
+
+  it("GET /api/history/torrents/export includes BOM", async () => {
+    const token = await getToken();
+    const res = await app.request("/api/history/torrents/export", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+    expect(res.status).toBe(200);
+    const buffer = await res.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    // BOM is ﻿ — in UTF-8 it's the bytes EF BB BF
+    expect(bytes[0]).toBe(0xEF);
+    expect(bytes[1]).toBe(0xBB);
+    expect(bytes[2]).toBe(0xBF);
+  });
 });
