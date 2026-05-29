@@ -10,7 +10,7 @@ type AuthEnv = { Bindings: Env };
 
 export const authRoutes = new Hono<AuthEnv>();
 
-async function verifyPassword(password: string, hash: string, environment: string): Promise<boolean> {
+export async function verifyPassword(password: string, hash: string, environment: string): Promise<boolean> {
   if (hash.startsWith("plain:")) {
     if (environment === "production") {
       console.warn("plain-text passwords are rejected in production — use bcrypt hash");
@@ -67,7 +67,7 @@ authRoutes.post("/login", async (c) => {
     throw new HTTPException(401, { message: "Invalid username/password" });
   }
 
-  // Session limit check
+  // Session limit check (best-effort; KV has no transactions, so concurrent logins may briefly exceed the limit)
   await cleanExpiredSessions(c.env.AUTH_KV, user.username);
   const sessionCount = await getSessionCount(c.env.AUTH_KV, user.username);
   if (sessionCount >= MAX_SESSIONS_PER_USER) {

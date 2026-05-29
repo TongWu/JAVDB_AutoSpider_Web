@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
+import { verifyPassword } from "../routes/auth";
 
 const LOGIN_BODY = JSON.stringify({
   username: "admin",
@@ -100,9 +101,35 @@ describe("Rate limiting", () => {
   });
 });
 
-describe("Plain-text password rejection in production", () => {
+describe("verifyPassword plain-text handling", () => {
   it("rejects plain: passwords when ENVIRONMENT=production", async () => {
-    // The test env uses ENVIRONMENT=test, so we test the function directly
-    // by importing verifyPassword — see note below
+    expect(await verifyPassword("testpassword123", "plain:testpassword123", "production")).toBe(false);
+  });
+  it("accepts correct plain: password in non-production", async () => {
+    expect(await verifyPassword("testpassword123", "plain:testpassword123", "test")).toBe(true);
+  });
+  it("rejects incorrect plain: password in non-production", async () => {
+    expect(await verifyPassword("wrong", "plain:testpassword123", "test")).toBe(false);
+  });
+});
+
+describe("Session limit", () => {
+  it("returns 429 session_limit after MAX_SESSIONS_PER_USER logins", async () => {
+    for (let i = 0; i < 3; i++) {
+      const ok = await app.request("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: LOGIN_BODY,
+      }, env);
+      expect(ok.status).toBe(200);
+    }
+    const res = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: LOGIN_BODY,
+    }, env);
+    expect(res.status).toBe(429);
+    const data = await res.json() as any;
+    expect(data.error.code).toBe("session_limit");
   });
 });
