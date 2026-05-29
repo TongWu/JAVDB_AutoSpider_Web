@@ -16,6 +16,12 @@ ADMIN_PASSWORD_HASH=plain:admin123
 # ACCESS_TOKEN_EXPIRE_SECONDS=1800
 # REFRESH_TOKEN_EXPIRE_SECONDS=604800
 
+# Optional — CORS allowed origins (production). Comma-separated exact origins.
+# In production (ENVIRONMENT=production) cross-origin requests are REJECTED unless
+# the Origin is listed here (fail-closed). In dev/test, localhost origins are
+# always allowed regardless of this value.
+# CORS_ORIGINS=https://app.example.com,https://admin.example.com
+
 # Optional — Feature flags
 # INGESTION_MODE=github
 # BACKEND_VERSION=2.0.0
