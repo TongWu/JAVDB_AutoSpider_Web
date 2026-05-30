@@ -112,6 +112,87 @@ statsRoutes.get("/summary", async (c) => {
   });
 });
 
+// --- Stats trend query builder (ADR-018 dual-backend contract) ---
+//
+// Pure SQL builder for the SQL-backed /api/stats/trend metrics. This is the
+// TypeScript mirror of the Python source of truth
+// (apps/api/routers/stats_query_builders.py) and is pinned byte-for-byte by the
+// ADR-018 query Contract Golden (server/__tests__/query-contract.test.ts).
+// SQL strings and the (db, cutoff) binding shape MUST stay in sync with Python.
+//
+// NOTE: the GET /trend handler below still issues its own inline SQL (with
+// `datetime('now', '-N days')` and column aliases) for execution; migrating it
+// to consume this builder is a tracked follow-up. The builder exists now so the
+// contract golden has a conformant TS counterpart.
+
+export type StatsTrendDb = "reports" | "history" | "operations";
+
+export interface StatsTrendQuery {
+  db: StatsTrendDb;
+  sql: string;
+  params: string[];
+}
+
+export const SQL_BACKED_TREND_METRICS = new Set<string>([
+  "success_rate",
+  "movies",
+  "torrents",
+  "history_growth",
+  "pikpak",
+  "dedup",
+]);
+
+export function isSqlBackedTrendMetric(metric: string): boolean {
+  return SQL_BACKED_TREND_METRICS.has(metric);
+}
+
+// Mirror of build_stats_trend_query_with_paths in Python; `cutoff` is the
+// inclusive lower-bound date string. Returns the target DB name plus the
+// parameterized SQL and its bind params.
+export function buildStatsTrendQuery(input: { metric: string; cutoff: string }): StatsTrendQuery {
+  const { metric, cutoff } = input;
+  switch (metric) {
+    case "success_rate":
+      return {
+        db: "reports",
+        sql: "SELECT DATE(DateTimeCreated), CAST(SUM(CASE WHEN Status='committed' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) FROM ReportSessions WHERE DateTimeCreated >= ? GROUP BY DATE(DateTimeCreated) ORDER BY DATE(DateTimeCreated)",
+        params: [cutoff],
+      };
+    case "movies":
+      return {
+        db: "reports",
+        sql: "SELECT DATE(rs.DateTimeCreated) AS d, COUNT(rm.Id) FROM ReportSessions rs LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id WHERE rs.DateTimeCreated >= ? GROUP BY d ORDER BY d",
+        params: [cutoff],
+      };
+    case "torrents":
+      return {
+        db: "reports",
+        sql: "SELECT DATE(rs.DateTimeCreated) AS d, COUNT(rt.Id) FROM ReportSessions rs LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id LEFT JOIN ReportTorrents rt ON rt.ReportMovieId = rm.Id WHERE rs.DateTimeCreated >= ? GROUP BY d ORDER BY d",
+        params: [cutoff],
+      };
+    case "history_growth":
+      return {
+        db: "history",
+        sql: "SELECT DATE(DateTimeCreated), COUNT(*) FROM MovieHistory WHERE DateTimeCreated >= ? GROUP BY DATE(DateTimeCreated) ORDER BY DATE(DateTimeCreated)",
+        params: [cutoff],
+      };
+    case "pikpak":
+      return {
+        db: "operations",
+        sql: "SELECT DATE(DateTimeUploadedToPikpak), COUNT(*) FROM PikpakHistory WHERE DateTimeUploadedToPikpak >= ? GROUP BY DATE(DateTimeUploadedToPikpak) ORDER BY DATE(DateTimeUploadedToPikpak)",
+        params: [cutoff],
+      };
+    case "dedup":
+      return {
+        db: "operations",
+        sql: "SELECT DATE(DateTimeDetected), COALESCE(SUM(ExistingFolderSize), 0) FROM DedupRecords WHERE IsDeleted=1 AND DateTimeDetected >= ? GROUP BY DATE(DateTimeDetected) ORDER BY DATE(DateTimeDetected)",
+        params: [cutoff],
+      };
+    default:
+      throw new Error(`metric has no SQL trend builder: ${metric}`);
+  }
+}
+
 // --- GET /trend ---
 
 const VALID_METRICS = new Set([
