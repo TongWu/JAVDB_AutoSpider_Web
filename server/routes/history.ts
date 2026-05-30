@@ -298,10 +298,20 @@ export function buildTorrentWhere(input: TorrentFilterInput): { where: string; b
 }
 
 function buildTorrentQuery(params: Record<string, string | undefined>, forExport: boolean) {
+  let resolutionType: number | undefined;
+  if (params.resolution_type !== undefined) {
+    resolutionType = parseInt(params.resolution_type, 10);
+    if (Number.isNaN(resolutionType)) {
+      throw new HTTPException(400, {
+        message: JSON.stringify({ error: { code: "history.invalid_resolution_type", message: "resolution_type must be an integer" } }),
+      });
+    }
+  }
+
   const { where, bindings } = buildTorrentWhere({
     cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
     q: params.q || undefined,
-    resolution_type: params.resolution_type !== undefined ? parseInt(params.resolution_type, 10) : undefined,
+    resolution_type: resolutionType,
     has_subtitle: params.has_subtitle !== undefined ? params.has_subtitle === "true" : undefined,
     uncensored: params.uncensored !== undefined ? params.uncensored === "true" : undefined,
     session_id: params.session_id || undefined,

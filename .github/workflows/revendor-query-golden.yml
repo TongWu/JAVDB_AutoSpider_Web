@@ -22,6 +22,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Don't persist the job's GITHUB_TOKEN in .git/config — npm ci runs
+          # third-party install scripts and we never use the persisted creds
+          # (the PR is pushed with the explicit REVENDOR_PR_TOKEN below).
+          persist-credentials: false
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
