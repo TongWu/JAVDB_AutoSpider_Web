@@ -36,19 +36,29 @@ const TOKEN =
   process.env['GITHUB_TOKEN'] ??
   ''
 
+// Validate shape, not just parseability — a valid-JSON-but-wrong-shape payload
+// would otherwise be vendored silently and only surface deep in the conformance
+// test. Mirror the minimal invariant the test relies on (non-empty cases array).
+function assertGolden(obj) {
+  if (!obj || !Array.isArray(obj.cases) || obj.cases.length === 0) {
+    throw new Error('golden payload missing a non-empty "cases" array')
+  }
+}
+
 async function resolveGolden() {
   if (SRC_PATH) {
     console.log(`[fetch-query-golden] reading local: ${SRC_PATH}`)
     const data = await readFile(SRC_PATH, 'utf-8')
-    JSON.parse(data) // validate
+    assertGolden(JSON.parse(data))
     return data
   }
   console.log(`[fetch-query-golden] fetching: ${SRC_URL}`)
   const headers = TOKEN ? { Authorization: `Bearer ${TOKEN}` } : {}
-  const res = await fetch(SRC_URL, { headers })
+  // Bound the request so a stalled upstream can't hang the CI step.
+  const res = await fetch(SRC_URL, { headers, signal: AbortSignal.timeout(15_000) })
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${SRC_URL}`)
   const text = await res.text()
-  JSON.parse(text) // validate
+  assertGolden(JSON.parse(text))
   return text
 }
 
