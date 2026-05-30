@@ -1,0 +1,63 @@
+name: Re-vendor OpenAPI types
+
+# Refreshes generated frontend types when the Python repo's published
+# docs/api/openapi.json changes. The repository_dispatch hook is for immediate
+# cross-repo notification; the schedule is a backstop when dispatch is missed.
+
+on:
+  repository_dispatch:
+    types: [openapi-updated]
+  workflow_dispatch:
+  schedule:
+    - cron: '17 3 * * *'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  revendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Don't persist the job's GITHUB_TOKEN in .git/config — npm ci runs
+          # third-party install scripts and we never use the persisted creds
+          # (the PR is pushed with the explicit REVENDOR_PR_TOKEN below).
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh generated OpenAPI types
+        env:
+          OPENAPI_URL: https://raw.githubusercontent.com/TongWu/JAVDB_AutoSpider_CICD/main/docs/api/openapi.json
+          OPENAPI_TOKEN: ${{ secrets.CICD_REPO_TOKEN }}
+        run: npm run gen:api-types
+
+      - name: Open re-vendor PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          # PAT (or GitHub App token) with contents:write + pull-requests:write
+          # on THIS repo. Required so the generated PR's commits trigger ci.yml.
+          token: ${{ secrets.REVENDOR_PR_TOKEN }}
+          branch: chore/revendor-openapi-types
+          title: 'chore: re-vendor OpenAPI types'
+          commit-message: 'chore: re-vendor OpenAPI types'
+          body: |
+            Upstream `docs/api/openapi.json` changed on Python `main`.
+
+            This PR refreshes generated frontend types in
+            `src/types/api.gen.ts` from the latest published schema.
+
+            - Freshness CI: should be green after this generated file update.
+            - Follow-up: if typecheck or tests fail, reconcile the affected API wrappers/UI code.

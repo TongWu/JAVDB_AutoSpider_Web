@@ -45,7 +45,7 @@ jobs:
           npm run gen:api-types
           if ! git diff --quiet src/types/api.gen.ts; then
             echo "::error::src/types/api.gen.ts is out of sync with upstream openapi.json."
-            echo "Run 'npm run gen:api-types' locally and commit the result."
+            echo "Run 'npm run gen:api-types' locally, or trigger the 'Re-vendor OpenAPI types' workflow, and commit the result."
             git --no-pager diff src/types/api.gen.ts | head -100
             exit 1
           fi

@@ -250,6 +250,13 @@ The FE also captures `csrf_token` from the login response body and sends it as t
 | `npm run typecheck:server` | TypeScript check for `server/` code |
 | `npm run cf:deploy` | Build + deploy to Cloudflare Workers (`wrangler deploy`) |
 
+`src/types/api.gen.ts` is committed intentionally. CI regenerates it from the
+main repo's `docs/api/openapi.json` and fails on drift; the **Re-vendor OpenAPI
+types** workflow can refresh the file and open/update a PR. That workflow listens
+for the `openapi-updated` repository dispatch event, supports manual dispatch,
+and runs daily as a backstop. It uses `CICD_REPO_TOKEN` to read the private main
+repo and `REVENDOR_PR_TOKEN` to push the re-vendor PR branch.
+
 ## Project layout
 
 ```text
