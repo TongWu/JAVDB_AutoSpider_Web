@@ -25,13 +25,14 @@ import {
 import HeartButton from '@/components/HeartButton.vue'
 import {
   listMovieRatings,
+  getMovieRating,
   upsertMovieRating,
   listContentPreferences,
   type MovieRating,
 } from '@/api/preferences'
 import { computePreferenceScore } from './preference-score'
 import { reduceBatchKey } from './batch-annotation'
-import { mergeRating, type RatingPatch } from './rating-merge'
+import { createRatingSaver } from './rating-saver'
 
 const { t } = useI18n()
 
@@ -205,19 +206,22 @@ async function loadRatings() {
   ratings.value = new Map(res.items.map((r) => [r.href, r]))
 }
 
-// Merge a single-field edit over the current row before saving, so the
-// backend's full-replace upsert never wipes the other fields (ADR-022 C1).
-async function saveRating(href: string, patch: RatingPatch) {
-  try {
-    // Reads the current row snapshot before `await`, so two overlapping saves
-    // on the SAME row are last-write-wins (acceptable here; controls are far apart).
-    const merged = mergeRating(ratings.value.get(href), patch)
-    const returned = await upsertMovieRating(href, merged)
-    ratings.value = new Map(ratings.value).set(href, returned)
-  } catch (e) {
+// Persist a single-field rating edit, merging it over the current row so the
+// backend's full-replace upsert never wipes the untouched fields (ADR-022 C1).
+// The saver fetches the canonical row when it's missing from the cache (the list
+// endpoint is clamped to 200, so not every row is loaded) and serializes saves
+// per href so concurrent same-row edits can't clobber each other.
+const saveRating = createRatingSaver({
+  getCached: (href) => ratings.value.get(href),
+  fetchRating: (href) => getMovieRating(href, { skipErrorToast: true }),
+  upsert: (href, payload) => upsertMovieRating(href, payload),
+  onSaved: (href, row) => {
+    ratings.value = new Map(ratings.value).set(href, row)
+  },
+  onError: (e) => {
     error.value = e instanceof Error ? e.message : String(e)
-  }
-}
+  },
+})
 
 async function loadActorHearted() {
   const res = await listContentPreferences({ content_type: 'actor' })
