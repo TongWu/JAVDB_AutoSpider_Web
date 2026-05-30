@@ -8,6 +8,7 @@ import {
   NButton,
   NEmpty,
   NAlert,
+  NTooltip,
   useMessage,
 } from 'naive-ui'
 import { useAuthStore } from '@/stores/auth'
@@ -63,23 +64,30 @@ const scoreDisplay = computed(() => score.value.toFixed(2))
 
 async function loadPreferenceContext(): Promise<void> {
   if (props.result.kind !== 'detail') return
+  // Latest-wins guard: capture the url at entry; bail before assigning state
+  // if a newer resolve has since superseded this one.
+  const reqUrl = url.value
   try {
     const [actorPrefs, categoryPrefs] = await Promise.all([
       listContentPreferences({ content_type: 'actor' }),
       listContentPreferences({ content_type: 'category' }),
     ])
+    if (reqUrl !== url.value) return
     actorHearted.value = new Map(actorPrefs.items.map((p) => [p.content_id, p.hearted]))
     categoryHearted.value = new Map(categoryPrefs.items.map((p) => [p.content_id, p.hearted]))
   } catch {
+    if (reqUrl !== url.value) return
     // A failed prefs fetch must not break the card; leave maps empty.
     actorHearted.value = new Map()
     categoryHearted.value = new Map()
   }
-  if (url.value) {
+  if (reqUrl) {
     try {
-      const r = await getMovieRating(url.value)
+      const r = await getMovieRating(reqUrl, { skipErrorToast: true })
+      if (reqUrl !== url.value) return
       movieRating.value = r.rating ?? null
     } catch {
+      if (reqUrl !== url.value) return
       // No rating (404) is expected; treat silently as null.
       movieRating.value = null
     }
@@ -207,14 +215,18 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             >
               {{ code }}
             </NTag>
-            <NTag
-              size="small"
-              type="warning"
-              round
-              :title="t('browse.resolve.scoreHint')"
-            >
-              {{ t('browse.resolve.score') }} {{ scoreDisplay }}
-            </NTag>
+            <NTooltip trigger="hover">
+              <template #trigger>
+                <NTag
+                  size="small"
+                  type="warning"
+                  round
+                >
+                  {{ t('browse.resolve.score') }} {{ scoreDisplay }}
+                </NTag>
+              </template>
+              {{ t('browse.resolve.scoreHint') }}
+            </NTooltip>
           </div>
           <p
             v-if="releaseDate"
