@@ -877,7 +877,25 @@
     "exportFailed": "CSV 导出失败",
     "annotate": "标注",
     "exitAnnotate": "退出标注",
-    "annotateHint": "标注中 {current} / {total} · 待定: {pending} · j/k 移动 · 1–5 评分 · Enter 保存 · Space 跳过"
+    "annotateHint": "标注中 {current} / {total} · 待定: {pending} · j/k 移动 · 1–5 评分 · Enter 保存 · Space 跳过",
+    "tagsLabel": "标签",
+    "tagsPlaceholder": "添加标签…",
+    "notesLabel": "备注",
+    "notesPlaceholder": "添加备注…",
+    "tags": {
+      "quality_high": "画质优秀",
+      "quality_low": "画质较差",
+      "resolution_bad": "分辨率差",
+      "encoding_bad": "编码差",
+      "plot_good": "剧情优秀",
+      "actress_standout": "演员出众",
+      "not_my_type": "非我所好",
+      "category_miss": "分类不符",
+      "would_rewatch": "值得重看",
+      "keep_long_term": "长期保留",
+      "delete_candidate": "待删除",
+      "upgrade_wanted": "待升级"
+    }
   },
   "torrents": {
     "subtitle": "搜索和浏览种子历史记录",

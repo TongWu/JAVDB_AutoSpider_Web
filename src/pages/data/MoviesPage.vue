@@ -7,6 +7,7 @@ import {
   NMessageProvider,
   NDataTable,
   NInput,
+  NSelect,
   NTag,
   NButton,
   NSwitch,
@@ -30,8 +31,25 @@ import {
 } from '@/api/preferences'
 import { computePreferenceScore } from './preference-score'
 import { reduceBatchKey } from './batch-annotation'
+import { mergeRating, type RatingPatch } from './rating-merge'
 
 const { t } = useI18n()
+
+// Valid tag slugs mirror the backend VALID_TAGS (ADR-022 C1); labels are i18n'd.
+const VALID_TAGS = [
+  'quality_high',
+  'quality_low',
+  'resolution_bad',
+  'encoding_bad',
+  'plot_good',
+  'actress_standout',
+  'not_my_type',
+  'category_miss',
+  'would_rewatch',
+  'keep_long_term',
+  'delete_candidate',
+  'upgrade_wanted',
+] as const
 
 // ---------- State ----------
 const items = ref<MovieSearchItem[]>([])
@@ -87,11 +105,7 @@ function handleKeydown(e: KeyboardEvent) {
   if (result.save) {
     const row = items.value[result.save.index]
     if (row) {
-      void upsertMovieRating(row.href, { rating: result.save.rating })
-        .then(loadRatings)
-        .catch((e) => {
-          error.value = e instanceof Error ? e.message : String(e)
-        })
+      void saveRating(row.href, { rating: result.save.rating })
     }
   }
 }
@@ -188,6 +202,18 @@ async function loadRatings() {
   ratings.value = new Map(res.items.map((r) => [r.href, r]))
 }
 
+// Merge a single-field edit over the current row before saving, so the
+// backend's full-replace upsert never wipes the other fields (ADR-022 C1).
+async function saveRating(href: string, patch: RatingPatch) {
+  try {
+    const merged = mergeRating(ratings.value.get(href), patch)
+    const returned = await upsertMovieRating(href, merged)
+    ratings.value = new Map(ratings.value).set(href, returned)
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : String(e)
+  }
+}
+
 async function loadActorHearted() {
   const res = await listContentPreferences({ content_type: 'actor' })
   actorHearted.value = new Map(res.items.map((p) => [p.content_id, p.hearted]))
@@ -251,7 +277,50 @@ function formatRelative(ts?: string | null): string {
   return new Date(ts).toLocaleString()
 }
 
+// Tags + notes editor shown in the expandable row (ADR-022 C1). Both controls
+// route through saveRating so a single-field edit never wipes the others.
+function renderExpand(row: MovieSearchItem) {
+  const current = ratings.value.get(row.href)
+  const tagOptions = VALID_TAGS.map((slug) => ({ label: t(`movies.tags.${slug}`), value: slug }))
+  return h('div', { style: 'display:flex;flex-direction:column;gap:8px;padding:8px 4px' }, [
+    h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
+      h('span', { style: 'font-size:13px;white-space:nowrap' }, t('movies.tagsLabel')),
+      h(NSelect, {
+        multiple: true,
+        size: 'small',
+        style: 'flex:1',
+        options: tagOptions,
+        value: current?.tags ?? [],
+        placeholder: t('movies.tagsPlaceholder'),
+        'onUpdate:value': (val: string[]) => {
+          void saveRating(row.href, { tags: val })
+        },
+      }),
+    ]),
+    h('div', { style: 'display:flex;align-items:flex-start;gap:8px' }, [
+      h('span', { style: 'font-size:13px;white-space:nowrap;padding-top:4px' }, t('movies.notesLabel')),
+      h(NInput, {
+        type: 'textarea',
+        size: 'small',
+        style: 'flex:1',
+        autosize: { minRows: 1, maxRows: 3 },
+        defaultValue: current?.notes ?? '',
+        placeholder: t('movies.notesPlaceholder'),
+        onBlur: (e: FocusEvent) => {
+          const value = (e.target as HTMLTextAreaElement).value
+          void saveRating(row.href, { notes: value || null })
+        },
+      }),
+    ]),
+  ])
+}
+
 const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
+  {
+    type: 'expand',
+    expandable: () => true,
+    renderExpand,
+  },
   {
     title: t('movies.col.videoCode'),
     key: 'video_code',
@@ -321,13 +390,8 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
         count: 5,
         size: 'small',
         clearable: true,
-        'onUpdate:value': async (val: number) => {
-          try {
-            await upsertMovieRating(row.href, { rating: val || null })
-            await loadRatings()
-          } catch (e) {
-            error.value = e instanceof Error ? e.message : String(e)
-          }
+        'onUpdate:value': (val: number) => {
+          void saveRating(row.href, { rating: val || null })
         },
       })
     },

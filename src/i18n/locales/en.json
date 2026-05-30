@@ -877,7 +877,25 @@
     "exportFailed": "CSV export failed",
     "annotate": "Annotate",
     "exitAnnotate": "Exit Annotate",
-    "annotateHint": "Annotating {current} / {total} · pending: {pending} · j/k move · 1–5 rate · Enter save · Space skip"
+    "annotateHint": "Annotating {current} / {total} · pending: {pending} · j/k move · 1–5 rate · Enter save · Space skip",
+    "tagsLabel": "Tags",
+    "tagsPlaceholder": "Add tags…",
+    "notesLabel": "Notes",
+    "notesPlaceholder": "Add notes…",
+    "tags": {
+      "quality_high": "High quality",
+      "quality_low": "Low quality",
+      "resolution_bad": "Bad resolution",
+      "encoding_bad": "Bad encoding",
+      "plot_good": "Good plot",
+      "actress_standout": "Standout actress",
+      "not_my_type": "Not my type",
+      "category_miss": "Category miss",
+      "would_rewatch": "Would rewatch",
+      "keep_long_term": "Keep long-term",
+      "delete_candidate": "Delete candidate",
+      "upgrade_wanted": "Upgrade wanted"
+    }
   },
   "torrents": {
     "subtitle": "Search and explore torrent history records",
