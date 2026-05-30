@@ -12,6 +12,7 @@ import {
   NSwitch,
   NDatePicker,
   NSpace,
+  NRate,
   type DataTableColumns,
 } from 'naive-ui'
 import {
@@ -20,6 +21,15 @@ import {
   type MovieSearchItem,
   type MovieSearchParams,
 } from '@/api/history'
+import HeartButton from '@/components/HeartButton.vue'
+import {
+  listMovieRatings,
+  upsertMovieRating,
+  listContentPreferences,
+  type MovieRating,
+} from '@/api/preferences'
+import { computePreferenceScore } from './preference-score'
+import { reduceBatchKey } from './batch-annotation'
 
 const { t } = useI18n()
 
@@ -32,6 +42,10 @@ const totalEstimate = ref(0)
 const loadingMore = ref(false)
 const exporting = ref(false)
 
+// Preferences (ADR-022)
+const ratings = ref<Map<string, MovieRating>>(new Map())
+const actorHearted = ref<Map<string, boolean>>(new Map())
+
 // Filters
 const searchQuery = ref('')
 const actorFilter = ref('')
@@ -39,6 +53,57 @@ const perfectMatchFilter = ref<boolean | null>(null)
 const hiResFilter = ref<boolean | null>(null)
 const sessionIdFilter = ref('')
 const dateRange = ref<[number, number] | null>(null)
+
+// Batch annotation mode (ADR-022 C3)
+const batchMode = ref(false)
+const focusedIndex = ref(0)
+const pendingRating = ref<number | null>(null)
+
+function toggleBatch() {
+  batchMode.value = !batchMode.value
+  focusedIndex.value = 0
+  pendingRating.value = null
+}
+
+function handleKeydown(e: KeyboardEvent) {
+  if (!batchMode.value) return
+  // Don't hijack typing in filter inputs while annotation mode is on.
+  const target = e.target as HTMLElement | null
+  if (
+    target &&
+    (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)
+  ) {
+    return
+  }
+  const result = reduceBatchKey(
+    e.key,
+    { focusedIndex: focusedIndex.value, pendingRating: pendingRating.value },
+    items.value.length,
+  )
+  if (!result) return
+  if (result.preventDefault) e.preventDefault()
+  focusedIndex.value = result.state.focusedIndex
+  pendingRating.value = result.state.pendingRating
+  if (result.save) {
+    const row = items.value[result.save.index]
+    if (row) {
+      void upsertMovieRating(row.href, { rating: result.save.rating })
+        .then(loadRatings)
+        .catch((e) => {
+          error.value = e instanceof Error ? e.message : String(e)
+        })
+    }
+  }
+}
+
+function rowProps(_row: MovieSearchItem, index: number) {
+  return {
+    style:
+      batchMode.value && index === focusedIndex.value
+        ? 'background: rgba(24,160,88,0.12);'
+        : '',
+  }
+}
 
 // Debounce
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
@@ -118,6 +183,22 @@ async function handleExport() {
   }
 }
 
+async function loadRatings() {
+  const res = await listMovieRatings({ limit: 1000, offset: 0 })
+  ratings.value = new Map(res.items.map((r) => [r.href, r]))
+}
+
+async function loadActorHearted() {
+  const res = await listContentPreferences({ content_type: 'actor' })
+  actorHearted.value = new Map(res.items.map((p) => [p.content_id, p.hearted]))
+}
+
+function preferenceScore(href: string, actorName: string | null): number {
+  const r = ratings.value.get(href)
+  const hearted = actorName ? (actorHearted.value.get(actorName) ?? false) : false
+  return computePreferenceScore(r?.rating ?? null, hearted)
+}
+
 function resetFilters() {
   searchQuery.value = ''
   actorFilter.value = ''
@@ -138,8 +219,24 @@ watch(
   () => debouncedFetch(),
 )
 
-onMounted(() => fetchMovies())
-onUnmounted(() => { if (debounceTimer) clearTimeout(debounceTimer) })
+// Keep the focused row valid when the result set shrinks (e.g. filter change).
+watch(items, () => {
+  focusedIndex.value = Math.min(focusedIndex.value, Math.max(0, items.value.length - 1))
+})
+
+onMounted(() => {
+  // Register synchronously so onUnmounted always removes a listener that was
+  // actually added (avoids a leak if the component unmounts mid-load).
+  window.addEventListener('keydown', handleKeydown)
+  void (async () => {
+    await fetchMovies()
+    await Promise.all([loadRatings(), loadActorHearted()])
+  })()
+})
+onUnmounted(() => {
+  if (debounceTimer) clearTimeout(debounceTimer)
+  window.removeEventListener('keydown', handleKeydown)
+})
 
 // ---------- Table ----------
 
@@ -168,7 +265,20 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
   {
     title: t('movies.col.actorName'),
     key: 'actor_name',
-    render: (row) => row.actor_name ?? '—',
+    render: (row) => {
+      const name = row.actor_name
+      if (!name) return '—'
+      return h('div', { style: 'display:flex;align-items:center;gap:4px' }, [
+        h('span', name),
+        h(HeartButton, {
+          contentType: 'actor',
+          contentId: name,
+          contentName: name,
+          initialHearted: actorHearted.value.get(name) ?? false,
+          onChange: (val: boolean) => actorHearted.value.set(name, val),
+        }),
+      ])
+    },
   },
   {
     title: t('movies.col.perfectMatch'),
@@ -201,6 +311,37 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
     render: (row) => String(row.torrent_count),
   },
   {
+    title: t('movies.col.rating'),
+    key: 'rating',
+    width: 180,
+    render(row) {
+      const rating = ratings.value.get(row.href)
+      return h(NRate, {
+        value: rating?.rating ?? 0,
+        count: 5,
+        size: 'small',
+        clearable: true,
+        'onUpdate:value': async (val: number) => {
+          try {
+            await upsertMovieRating(row.href, { rating: val || null })
+            await loadRatings()
+          } catch (e) {
+            error.value = e instanceof Error ? e.message : String(e)
+          }
+        },
+      })
+    },
+  },
+  {
+    title: t('movies.col.score'),
+    key: 'score',
+    width: 70,
+    render(row) {
+      const score = preferenceScore(row.href, row.actor_name ?? null)
+      return h('span', { style: 'font-size:12px;color:var(--n-text-color-3)' }, score.toFixed(2))
+    },
+  },
+  {
     title: t('movies.col.sessionId'),
     key: 'session_id',
     render: (row) =>
@@ -227,14 +368,39 @@ const hasMorePages = computed(() => !!nextCursor.value)
             {{ t('movies.subtitle') }}
           </p>
         </div>
-        <NButton
-          :loading="exporting"
-          size="small"
-          @click="handleExport"
+        <NSpace
+          align="center"
+          :size="8"
         >
-          {{ t('movies.exportCsv') }}
-        </NButton>
+          <NButton
+            :type="batchMode ? 'primary' : 'default'"
+            size="small"
+            @click="toggleBatch"
+          >
+            {{ batchMode ? t('movies.exitAnnotate') : t('movies.annotate') }}
+          </NButton>
+          <NButton
+            :loading="exporting"
+            size="small"
+            @click="handleExport"
+          >
+            {{ t('movies.exportCsv') }}
+          </NButton>
+        </NSpace>
       </header>
+
+      <div
+        v-if="batchMode"
+        class="annotate-hint"
+      >
+        {{
+          t('movies.annotateHint', {
+            current: items.length ? focusedIndex + 1 : 0,
+            total: items.length,
+            pending: pendingRating ?? '—',
+          })
+        }}
+      </div>
 
       <!-- Search bar -->
       <NInput
@@ -315,6 +481,7 @@ const hasMorePages = computed(() => !!nextCursor.value)
           :data="items"
           :loading="loading"
           :row-key="(row: MovieSearchItem) => row.id"
+          :row-props="rowProps"
           striped
           flex-height
           style="min-height: 360px"
@@ -382,5 +549,9 @@ const hasMorePages = computed(() => !!nextCursor.value)
   padding: 32px 0;
   color: var(--n-text-color-3);
   font-size: 14px;
+}
+.annotate-hint {
+  font-size: 12px;
+  color: var(--n-text-color-3);
 }
 </style>

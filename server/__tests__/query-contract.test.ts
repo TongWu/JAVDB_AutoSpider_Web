@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import golden from "./fixtures/query-builders.golden.json";
 import { buildMovieWhere, buildTorrentWhere } from "../routes/history";
 import { buildSessionQuery } from "../routes/sessions";
+import { buildStatsTrendQuery } from "../routes/stats";
 import { cursorDecode } from "../services/cursor";
 
 // ADR-018 query Contract Golden conformance.
@@ -40,6 +41,12 @@ const RUN: Record<string, (p: any) => { sql: string; bindings: (string | number)
     return { sql: r.where, bindings: r.bindings };
   },
   session_query: (p) => buildSessionQuery(mapSessionParams(p)),
+  stats_trend_query: (p) => {
+    const q = buildStatsTrendQuery({ metric: p.metric, cutoff: p.cutoff });
+    // The golden encodes the target DB as the first binding, followed by the
+    // SQL params (mirrors the Python contract dump).
+    return { sql: q.sql, bindings: [q.db, ...q.params] };
+  },
 };
 
 interface GoldenCase {

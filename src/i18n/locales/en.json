@@ -866,13 +866,18 @@
       "hiRes": "Hi-Res",
       "created": "Created",
       "torrents": "Torrents",
-      "sessionId": "Session"
+      "sessionId": "Session",
+      "rating": "Rating",
+      "score": "Score"
     },
     "exportCsv": "Export CSV",
     "loadMore": "Load more",
     "totalEstimate": "~{count} results",
     "noResults": "No movies found",
-    "exportFailed": "CSV export failed"
+    "exportFailed": "CSV export failed",
+    "annotate": "Annotate",
+    "exitAnnotate": "Exit Annotate",
+    "annotateHint": "Annotating {current} / {total} · pending: {pending} · j/k move · 1–5 rate · Enter save · Space skip"
   },
   "torrents": {
     "subtitle": "Search and explore torrent history records",
