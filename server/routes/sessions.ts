@@ -38,41 +38,64 @@ function mapSession(row: SessionRow) {
   };
 }
 
+// Input keys mirror the Python _build_session_query kwargs (decoded). Pinned by
+// the ADR-018 query Contract Golden against Python _build_session_query.
+export interface SessionQueryInput {
+  state?: string;
+  cursor_sid?: string;
+  limit: number;
+}
+
+// Pure query assembler returning the full SQL + bindings. Branch order MUST
+// match Python (state → cursor). The trailing bindings value is `limit + 1`:
+// the over-fetch is part of the builder contract — the handler uses the extra
+// row as a has-more lookahead (avoids a phantom next_cursor when the result
+// count is an exact multiple of limit).
+export function buildSessionQuery(input: SessionQueryInput): { sql: string; bindings: (string | number)[] } {
+  const clauses: string[] = [];
+  const bindings: (string | number)[] = [];
+
+  if (input.state) {
+    clauses.push("Status = ?");
+    bindings.push(input.state);
+  }
+  if (input.cursor_sid) {
+    clauses.push("Id < ?");
+    bindings.push(input.cursor_sid);
+  }
+
+  const where = clauses.length > 0 ? ` WHERE ${clauses.join(" AND ")}` : "";
+  const sql =
+    "SELECT Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated, " +
+    "ReportType, ReportDate, FailureReason " +
+    "FROM ReportSessions" +
+    where +
+    " ORDER BY Id DESC LIMIT ?";
+  bindings.push(input.limit + 1);
+  return { sql, bindings };
+}
+
 sessionsRoutes.get("/", async (c) => {
   const state = c.req.query("state");
   const cursor = c.req.query("cursor");
   const limit = Math.max(1, Math.min(200, parseInt(c.req.query("limit") ?? "50", 10) || 50));
 
-  const conditions: string[] = [];
-  const bindings: (string | number)[] = [];
-
-  if (state) {
-    conditions.push("Status = ?");
-    bindings.push(state);
-  }
-  if (cursor) {
-    conditions.push("Id < ?");
-    bindings.push(cursorDecode<{ sid: string }>(cursor).sid);
-  }
-
-  const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
-
-  const sql = `
-    SELECT Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated,
-           ReportType, ReportDate, FailureReason
-    FROM ReportSessions
-    ${where}
-    ORDER BY Id DESC
-    LIMIT ?`;
+  const { sql, bindings } = buildSessionQuery({
+    state: state || undefined,
+    cursor_sid: cursor ? cursorDecode<{ sid: string }>(cursor).sid : undefined,
+    limit,
+  });
 
   const rows = await c.env.REPORTS_DB
     .prepare(sql)
-    .bind(...bindings, limit)
+    .bind(...bindings)
     .all<SessionRow>();
 
-  const items = rows.results.map(mapSession);
+  // limit + 1 over-fetch: the extra row signals a next page exists.
+  const hasMore = rows.results.length > limit;
+  const items = rows.results.slice(0, limit).map(mapSession);
   const lastItem = items[items.length - 1];
-  const nextCursor = items.length === limit && lastItem ? cursorEncode({ sid: lastItem.session_id }) : null;
+  const nextCursor = hasMore && lastItem ? cursorEncode({ sid: lastItem.session_id }) : null;
 
   return c.json({ items, next_cursor: nextCursor });
 });

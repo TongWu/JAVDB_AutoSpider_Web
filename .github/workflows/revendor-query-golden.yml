@@ -1,0 +1,54 @@
+name: Re-vendor query Contract Golden
+
+# ADR-018 D6: dispatched by the Python repo (publish-query-contract.yml) when the
+# query Contract Golden changes on main. Re-fetches the vendored golden and opens
+# a reconcile PR. CI on that PR runs the freshness check (now green) and the
+# conformance test (red until a human reconciles the TS builders).
+
+on:
+  repository_dispatch:
+    types: [query-golden-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  revendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh vendored golden
+        env:
+          QUERY_GOLDEN_TOKEN: ${{ secrets.CICD_REPO_TOKEN }}
+        run: npm run gen:query-golden
+
+      - name: Open re-vendor PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          branch: chore/revendor-query-golden
+          title: "chore: re-vendor query Contract Golden"
+          commit-message: "chore: re-vendor query Contract Golden"
+          body: |
+            Upstream `query-builders.golden.json` changed on Python `main`.
+
+            A pinned query builder diverged. **Reconcile the TS builders**
+            (`buildMovieWhere` / `buildTorrentWhere` / `buildSessionQuery`) so
+            `npm run test:server` passes, then merge.
+
+            - Freshness CI: green (vendored now matches Python `main`).
+            - Conformance CI: red until the TS builders are reconciled.
