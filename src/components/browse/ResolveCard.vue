@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NCard,
@@ -8,11 +8,15 @@ import {
   NButton,
   NEmpty,
   NAlert,
+  NTooltip,
   useMessage,
 } from 'naive-ui'
 import { useAuthStore } from '@/stores/auth'
 import { useBrowseStore, type ResolveResult, type MagnetRow } from '@/stores/browse'
 import { extractErrorMessage } from '@/api/errors'
+import { getMovieRating, listContentPreferences } from '@/api/preferences'
+import HeartButton from '@/components/HeartButton.vue'
+import { resolvePreferenceScore } from './resolve-preferences'
 import ResolveMagnetTable from './ResolveMagnetTable.vue'
 
 const props = defineProps<{ result: ResolveResult }>()
@@ -48,6 +52,68 @@ const url = computed(() => {
 
 const actors = computed<string[]>(() => stringList(detail.value, ['actors', 'actresses']))
 const tags = computed<string[]>(() => stringList(detail.value, ['tags', 'categories', 'genres']))
+
+// ADR-022 B3/C4: preference context for the resolved detail. Hearts seed from
+// existing ContentPreferences; the score reuses the shared rule-based formula.
+const actorHearted = ref(new Map<string, boolean>())
+const categoryHearted = ref(new Map<string, boolean>())
+const movieRating = ref<number | null>(null)
+
+const score = computed(() => resolvePreferenceScore(movieRating.value, actors.value, actorHearted.value))
+const scoreDisplay = computed(() => score.value.toFixed(2))
+
+async function loadPreferenceContext(): Promise<void> {
+  if (props.result.kind !== 'detail') return
+  // Latest-wins guard: capture the url at entry; bail before assigning state
+  // if a newer resolve has since superseded this one.
+  const reqUrl = url.value
+  try {
+    const [actorPrefs, categoryPrefs] = await Promise.all([
+      listContentPreferences({ content_type: 'actor' }),
+      listContentPreferences({ content_type: 'category' }),
+    ])
+    if (reqUrl !== url.value) return
+    actorHearted.value = new Map(actorPrefs.items.map((p) => [p.content_id, p.hearted]))
+    categoryHearted.value = new Map(categoryPrefs.items.map((p) => [p.content_id, p.hearted]))
+  } catch {
+    if (reqUrl !== url.value) return
+    // A failed prefs fetch must not break the card; leave maps empty.
+    actorHearted.value = new Map()
+    categoryHearted.value = new Map()
+  }
+  if (reqUrl) {
+    try {
+      const r = await getMovieRating(reqUrl, { skipErrorToast: true })
+      if (reqUrl !== url.value) return
+      movieRating.value = r.rating ?? null
+    } catch {
+      if (reqUrl !== url.value) return
+      // No rating (404) is expected; treat silently as null.
+      movieRating.value = null
+    }
+  } else {
+    movieRating.value = null
+  }
+}
+
+function onActorHeart(name: string, val: boolean): void {
+  actorHearted.value = new Map(actorHearted.value).set(name, val)
+}
+
+function onCategoryHeart(name: string, val: boolean): void {
+  categoryHearted.value = new Map(categoryHearted.value).set(name, val)
+}
+
+onMounted(() => {
+  void loadPreferenceContext()
+})
+
+watch(
+  () => url.value,
+  () => {
+    void loadPreferenceContext()
+  },
+)
 
 const magnets = computed<MagnetRow[]>(() => {
   const raw = detail.value?.magnets ?? detail.value?.torrents
@@ -149,6 +215,18 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             >
               {{ code }}
             </NTag>
+            <NTooltip trigger="hover">
+              <template #trigger>
+                <NTag
+                  size="small"
+                  type="warning"
+                  round
+                >
+                  {{ t('browse.resolve.score') }} {{ scoreDisplay }}
+                </NTag>
+              </template>
+              {{ t('browse.resolve.scoreHint') }}
+            </NTooltip>
           </div>
           <p
             v-if="releaseDate"
@@ -161,14 +239,25 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             :size="4"
             wrap
           >
-            <NTag
+            <div
               v-for="a in actors"
               :key="a"
-              size="tiny"
-              round
+              class="heart-chip"
             >
-              {{ a }}
-            </NTag>
+              <NTag
+                size="tiny"
+                round
+              >
+                {{ a }}
+              </NTag>
+              <HeartButton
+                content-type="actor"
+                :content-id="a"
+                :content-name="a"
+                :initial-hearted="actorHearted.get(a) ?? false"
+                @change="(val) => onActorHeart(a, val)"
+              />
+            </div>
           </NSpace>
           <NSpace
             v-if="tags.length"
@@ -176,15 +265,26 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             wrap
             style="margin-top: 6px;"
           >
-            <NTag
+            <div
               v-for="g in tags"
               :key="g"
-              size="tiny"
-              type="info"
-              round
+              class="heart-chip"
             >
-              {{ g }}
-            </NTag>
+              <NTag
+                size="tiny"
+                type="info"
+                round
+              >
+                {{ g }}
+              </NTag>
+              <HeartButton
+                content-type="category"
+                :content-id="g"
+                :content-name="g"
+                :initial-hearted="categoryHearted.get(g) ?? false"
+                @change="(val) => onCategoryHeart(g, val)"
+              />
+            </div>
           </NSpace>
           <NSpace
             v-if="isAdmin"
@@ -283,6 +383,11 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
   margin: 0 0 8px;
   font-size: 12px;
   color: var(--n-text-color-2);
+}
+.heart-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 .code-results {
   list-style: none;

@@ -7,6 +7,7 @@ import {
   NMessageProvider,
   NDataTable,
   NInput,
+  NSelect,
   NTag,
   NButton,
   NSwitch,
@@ -24,14 +25,32 @@ import {
 import HeartButton from '@/components/HeartButton.vue'
 import {
   listMovieRatings,
+  getMovieRating,
   upsertMovieRating,
   listContentPreferences,
   type MovieRating,
 } from '@/api/preferences'
 import { computePreferenceScore } from './preference-score'
 import { reduceBatchKey } from './batch-annotation'
+import { createRatingSaver } from './rating-saver'
 
 const { t } = useI18n()
+
+// Valid tag slugs mirror the backend VALID_TAGS (ADR-022 C1); labels are i18n'd.
+const VALID_TAGS = [
+  'quality_high',
+  'quality_low',
+  'resolution_bad',
+  'encoding_bad',
+  'plot_good',
+  'actress_standout',
+  'not_my_type',
+  'category_miss',
+  'would_rewatch',
+  'keep_long_term',
+  'delete_candidate',
+  'upgrade_wanted',
+] as const
 
 // ---------- State ----------
 const items = ref<MovieSearchItem[]>([])
@@ -45,6 +64,9 @@ const exporting = ref(false)
 // Preferences (ADR-022)
 const ratings = ref<Map<string, MovieRating>>(new Map())
 const actorHearted = ref<Map<string, boolean>>(new Map())
+// In-progress notes text, keyed by href. Keeps the (controlled) notes input
+// from losing typed text when a sibling control reassigns `ratings`.
+const notesDraft = ref<Map<string, string>>(new Map())
 
 // Filters
 const searchQuery = ref('')
@@ -87,11 +109,7 @@ function handleKeydown(e: KeyboardEvent) {
   if (result.save) {
     const row = items.value[result.save.index]
     if (row) {
-      void upsertMovieRating(row.href, { rating: result.save.rating })
-        .then(loadRatings)
-        .catch((e) => {
-          error.value = e instanceof Error ? e.message : String(e)
-        })
+      void saveRating(row.href, { rating: result.save.rating })
     }
   }
 }
@@ -188,6 +206,23 @@ async function loadRatings() {
   ratings.value = new Map(res.items.map((r) => [r.href, r]))
 }
 
+// Persist a single-field rating edit, merging it over the current row so the
+// backend's full-replace upsert never wipes the untouched fields (ADR-022 C1).
+// The saver fetches the canonical row when it's missing from the cache (the list
+// endpoint is clamped to 200, so not every row is loaded) and serializes saves
+// per href so concurrent same-row edits can't clobber each other.
+const saveRating = createRatingSaver({
+  getCached: (href) => ratings.value.get(href),
+  fetchRating: (href) => getMovieRating(href, { skipErrorToast: true }),
+  upsert: (href, payload) => upsertMovieRating(href, payload),
+  onSaved: (href, row) => {
+    ratings.value = new Map(ratings.value).set(href, row)
+  },
+  onError: (e) => {
+    error.value = e instanceof Error ? e.message : String(e)
+  },
+})
+
 async function loadActorHearted() {
   const res = await listContentPreferences({ content_type: 'actor' })
   actorHearted.value = new Map(res.items.map((p) => [p.content_id, p.hearted]))
@@ -251,7 +286,53 @@ function formatRelative(ts?: string | null): string {
   return new Date(ts).toLocaleString()
 }
 
+// Tags + notes editor shown in the expandable row (ADR-022 C1). Both controls
+// route through saveRating so a single-field edit never wipes the others.
+function renderExpand(row: MovieSearchItem) {
+  const current = ratings.value.get(row.href)
+  const tagOptions = VALID_TAGS.map((slug) => ({ label: t(`movies.tags.${slug}`), value: slug }))
+  return h('div', { style: 'display:flex;flex-direction:column;gap:8px;padding:8px 4px' }, [
+    h('div', { style: 'display:flex;align-items:center;gap:8px' }, [
+      h('span', { style: 'font-size:13px;white-space:nowrap' }, t('movies.tagsLabel')),
+      h(NSelect, {
+        multiple: true,
+        size: 'small',
+        style: 'flex:1',
+        options: tagOptions,
+        value: current?.tags ?? [],
+        placeholder: t('movies.tagsPlaceholder'),
+        'onUpdate:value': (val: string[]) => {
+          void saveRating(row.href, { tags: val })
+        },
+      }),
+    ]),
+    h('div', { style: 'display:flex;align-items:flex-start;gap:8px' }, [
+      h('span', { style: 'font-size:13px;white-space:nowrap;padding-top:4px' }, t('movies.notesLabel')),
+      h(NInput, {
+        type: 'textarea',
+        size: 'small',
+        style: 'flex:1',
+        autosize: { minRows: 1, maxRows: 3 },
+        value: notesDraft.value.get(row.href) ?? (current?.notes ?? ''),
+        placeholder: t('movies.notesPlaceholder'),
+        'onUpdate:value': (v: string) => {
+          notesDraft.value = new Map(notesDraft.value).set(row.href, v)
+        },
+        onBlur: () => {
+          const draft = notesDraft.value.get(row.href) ?? ''
+          void saveRating(row.href, { notes: draft || null })
+        },
+      }),
+    ]),
+  ])
+}
+
 const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
+  {
+    type: 'expand',
+    expandable: () => true,
+    renderExpand,
+  },
   {
     title: t('movies.col.videoCode'),
     key: 'video_code',
@@ -275,7 +356,11 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
           contentId: name,
           contentName: name,
           initialHearted: actorHearted.value.get(name) ?? false,
-          onChange: (val: boolean) => actorHearted.value.set(name, val),
+          // Reassign a new Map (not in-place set) so the Score column's
+          // preferenceScore() recomputes when the actor heart toggles.
+          onChange: (val: boolean) => {
+            actorHearted.value = new Map(actorHearted.value).set(name, val)
+          },
         }),
       ])
     },
@@ -321,13 +406,8 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
         count: 5,
         size: 'small',
         clearable: true,
-        'onUpdate:value': async (val: number) => {
-          try {
-            await upsertMovieRating(row.href, { rating: val || null })
-            await loadRatings()
-          } catch (e) {
-            error.value = e instanceof Error ? e.message : String(e)
-          }
+        'onUpdate:value': (val: number) => {
+          void saveRating(row.href, { rating: val || null })
         },
       })
     },
