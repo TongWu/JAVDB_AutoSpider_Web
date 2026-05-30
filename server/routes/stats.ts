@@ -169,6 +169,100 @@ function periodToDays(period: string): number {
   }
 }
 
+type StatsTrendContractMetric =
+  | "success_rate"
+  | "movies"
+  | "torrents"
+  | "history_growth"
+  | "pikpak"
+  | "dedup";
+
+type StatsTrendDbAlias = "reports" | "history" | "operations";
+
+type StatsTrendColumns = { date: string; value: string };
+
+class StatsTrendRowShapeError extends Error {}
+
+export function buildStatsTrendQuery({
+  metric,
+  cutoff,
+}: {
+  metric: string;
+  cutoff: string;
+}): {
+  dbAlias: StatsTrendDbAlias;
+  sql: string;
+  bindings: [string];
+  columns: StatsTrendColumns;
+} | null {
+  const metricKey = metric as StatsTrendContractMetric;
+  switch (metricKey) {
+    case "success_rate":
+      return {
+        dbAlias: "reports",
+        sql: `SELECT DATE(DateTimeCreated), CAST(SUM(CASE WHEN Status='committed' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) FROM ReportSessions WHERE DateTimeCreated >= ? GROUP BY DATE(DateTimeCreated) ORDER BY DATE(DateTimeCreated)`,
+        bindings: [cutoff],
+        columns: {
+          date: "DATE(DateTimeCreated)",
+          value: "CAST(SUM(CASE WHEN Status='committed' THEN 1 ELSE 0 END) AS REAL) / COUNT(*)",
+        },
+      };
+    case "movies":
+      return {
+        dbAlias: "reports",
+        sql: `SELECT DATE(rs.DateTimeCreated) AS d, COUNT(rm.Id) FROM ReportSessions rs LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id WHERE rs.DateTimeCreated >= ? GROUP BY d ORDER BY d`,
+        bindings: [cutoff],
+        columns: { date: "d", value: "COUNT(rm.Id)" },
+      };
+    case "torrents":
+      return {
+        dbAlias: "reports",
+        sql: `SELECT DATE(rs.DateTimeCreated) AS d, COUNT(rt.Id) FROM ReportSessions rs LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id LEFT JOIN ReportTorrents rt ON rt.ReportMovieId = rm.Id WHERE rs.DateTimeCreated >= ? GROUP BY d ORDER BY d`,
+        bindings: [cutoff],
+        columns: { date: "d", value: "COUNT(rt.Id)" },
+      };
+    case "history_growth":
+      return {
+        dbAlias: "history",
+        sql: `SELECT DATE(DateTimeCreated), COUNT(*) FROM MovieHistory WHERE DateTimeCreated >= ? GROUP BY DATE(DateTimeCreated) ORDER BY DATE(DateTimeCreated)`,
+        bindings: [cutoff],
+        columns: { date: "DATE(DateTimeCreated)", value: "COUNT(*)" },
+      };
+    case "pikpak":
+      return {
+        dbAlias: "operations",
+        sql: `SELECT DATE(DateTimeUploadedToPikpak), COUNT(*) FROM PikpakHistory WHERE DateTimeUploadedToPikpak >= ? GROUP BY DATE(DateTimeUploadedToPikpak) ORDER BY DATE(DateTimeUploadedToPikpak)`,
+        bindings: [cutoff],
+        columns: { date: "DATE(DateTimeUploadedToPikpak)", value: "COUNT(*)" },
+      };
+    case "dedup":
+      return {
+        dbAlias: "operations",
+        sql: `SELECT DATE(DateTimeDetected), COALESCE(SUM(ExistingFolderSize), 0) FROM DedupRecords WHERE IsDeleted=1 AND DateTimeDetected >= ? GROUP BY DATE(DateTimeDetected) ORDER BY DATE(DateTimeDetected)`,
+        bindings: [cutoff],
+        columns: {
+          date: "DATE(DateTimeDetected)",
+          value: "COALESCE(SUM(ExistingFolderSize), 0)",
+        },
+      };
+    default:
+      return null;
+  }
+}
+
+function mapStatsTrendRow(
+  row: Record<string, unknown>,
+  columns: StatsTrendColumns,
+  metric: string,
+): { date: string; value: number } {
+  const date = row[columns.date];
+  const value = row[columns.value];
+  if (typeof date !== "string" || typeof value !== "number") {
+    throw new StatsTrendRowShapeError(`unexpected stats trend row shape for ${metric}`);
+  }
+  return { date, value };
+}
+
 statsRoutes.get("/trend", async (c) => {
   const metric = c.req.query("metric") ?? "success_rate";
   const period = c.req.query("period") ?? "30d";
@@ -196,22 +290,39 @@ statsRoutes.get("/trend", async (c) => {
   }
 
   const days = periodToDays(period);
+  const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000)
+    .toISOString()
+    .slice(0, 10);
   let dataPoints: Array<{ date: string; value: number }> = [];
 
   try {
+    const contractQuery = buildStatsTrendQuery({ metric, cutoff });
+    if (contractQuery) {
+      const db =
+        contractQuery.dbAlias === "reports"
+          ? c.env.REPORTS_DB
+          : contractQuery.dbAlias === "history"
+            ? c.env.HISTORY_DB
+            : c.env.OPERATIONS_DB;
+      const rows = await db
+        .prepare(contractQuery.sql)
+        .bind(...contractQuery.bindings)
+        .all<Record<string, unknown>>();
+      dataPoints = rows.results.map((row) =>
+        mapStatsTrendRow(row, contractQuery.columns, metric),
+      );
+      return c.json({
+        metric,
+        period,
+        available: true,
+        data_points: dataPoints,
+      });
+    }
+
     let db: D1Database;
     let sql: string;
 
     switch (metric) {
-      case "success_rate":
-        db = c.env.REPORTS_DB;
-        sql = `SELECT DATE(DateTimeCreated) AS date,
-                      CAST(SUM(CASE WHEN Status='committed' THEN 1 ELSE 0 END) AS REAL) / COUNT(*) AS value
-               FROM ReportSessions
-               WHERE DateTimeCreated >= datetime('now', '-${days} days')
-               GROUP BY DATE(DateTimeCreated)
-               ORDER BY date`;
-        break;
       case "duration":
         db = c.env.OPERATIONS_DB;
         sql = `SELECT DATE(created_at) AS date,
@@ -228,49 +339,6 @@ statsRoutes.get("/trend", async (c) => {
                FROM ReportSessions
                WHERE DateTimeCreated >= datetime('now', '-${days} days')
                GROUP BY DATE(DateTimeCreated)
-               ORDER BY date`;
-        break;
-      case "movies":
-        db = c.env.REPORTS_DB;
-        sql = `SELECT DATE(rs.DateTimeCreated) AS date, COUNT(rm.Id) AS value
-               FROM ReportSessions rs
-               LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id
-               WHERE rs.DateTimeCreated >= datetime('now', '-${days} days')
-               GROUP BY date
-               ORDER BY date`;
-        break;
-      case "torrents":
-        db = c.env.REPORTS_DB;
-        sql = `SELECT DATE(rs.DateTimeCreated) AS date, COUNT(rt.Id) AS value
-               FROM ReportSessions rs
-               LEFT JOIN ReportMovies rm ON rm.SessionId = rs.Id
-               LEFT JOIN ReportTorrents rt ON rt.ReportMovieId = rm.Id
-               WHERE rs.DateTimeCreated >= datetime('now', '-${days} days')
-               GROUP BY date
-               ORDER BY date`;
-        break;
-      case "history_growth":
-        db = c.env.HISTORY_DB;
-        sql = `SELECT DATE(DateTimeCreated) AS date, COUNT(*) AS value
-               FROM MovieHistory
-               WHERE DateTimeCreated >= datetime('now', '-${days} days')
-               GROUP BY DATE(DateTimeCreated)
-               ORDER BY date`;
-        break;
-      case "pikpak":
-        db = c.env.OPERATIONS_DB;
-        sql = `SELECT DATE(DateTimeUploadedToPikpak) AS date, COUNT(*) AS value
-               FROM PikpakHistory
-               WHERE DateTimeUploadedToPikpak >= datetime('now', '-${days} days')
-               GROUP BY DATE(DateTimeUploadedToPikpak)
-               ORDER BY date`;
-        break;
-      case "dedup":
-        db = c.env.OPERATIONS_DB;
-        sql = `SELECT DATE(DateTimeDetected) AS date, COALESCE(SUM(ExistingFolderSize), 0) AS value
-               FROM DedupRecords
-               WHERE IsDeleted=1 AND DateTimeDetected >= datetime('now', '-${days} days')
-               GROUP BY DATE(DateTimeDetected)
                ORDER BY date`;
         break;
       case "proxy_bans":
@@ -478,7 +546,10 @@ statsRoutes.get("/trend", async (c) => {
       const rows = await db.prepare(sql).all<{ date: string; value: number }>();
       dataPoints = rows.results;
     }
-  } catch {
+  } catch (error) {
+    if (error instanceof StatsTrendRowShapeError) {
+      throw error;
+    }
     // Table may not exist — return empty array
   }
 

@@ -304,6 +304,27 @@ describe("Stats routes", () => {
     }
   });
 
+  it("GET /api/stats/trend?metric=success_rate maps contract query rows", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/stats/trend?metric=success_rate&period=7d",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const data = (await res.json()) as any;
+
+    expect(data.metric).toBe("success_rate");
+    expect(data.period).toBe("7d");
+    expect(data.available).toBe(true);
+    expect(data.data_points).toHaveLength(2);
+    expect(data.data_points.map((dp: any) => dp.value)).toEqual([0, 1]);
+    for (const dp of data.data_points) {
+      expect(typeof dp.date).toBe("string");
+      expect(typeof dp.value).toBe("number");
+    }
+  });
+
   it("GET /api/stats/trend with invalid metric returns 400", async () => {
     const token = await getToken();
     const res = await app.request(

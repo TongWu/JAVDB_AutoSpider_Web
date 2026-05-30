@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import golden from "./fixtures/query-builders.golden.json";
 import { buildMovieWhere, buildTorrentWhere } from "../routes/history";
 import { buildSessionQuery } from "../routes/sessions";
+import { buildStatsTrendQuery } from "../routes/stats";
 import { cursorDecode } from "../services/cursor";
 
 // ADR-018 query Contract Golden conformance.
@@ -40,6 +41,13 @@ const RUN: Record<string, (p: any) => { sql: string; bindings: (string | number)
     return { sql: r.where, bindings: r.bindings };
   },
   session_query: (p) => buildSessionQuery(mapSessionParams(p)),
+  stats_trend_query: (p) => {
+    const r = buildStatsTrendQuery(p);
+    if (!r) {
+      throw new Error(`unsupported stats_trend_query metric: ${p.metric}`);
+    }
+    return { sql: r.sql, bindings: [r.dbAlias, ...r.bindings] };
+  },
 };
 
 interface GoldenCase {
