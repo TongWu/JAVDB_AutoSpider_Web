@@ -91,6 +91,16 @@ describe("History routes", () => {
     expect(data.items[0].movie_video_code).toBe("ABC-001");
   });
 
+  it("rejects a non-integer resolution_type with 400", async () => {
+    const token = await getToken();
+    const res = await app.request("/api/history/torrents?resolution_type=abc", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+    expect(res.status).toBe(400);
+    const data = await res.json() as any;
+    expect(data.error.code).toBe("history.invalid_resolution_type");
+  });
+
   it("GET /api/history/movies/export returns CSV", async () => {
     const token = await getToken();
     const res = await app.request("/api/history/movies/export", {

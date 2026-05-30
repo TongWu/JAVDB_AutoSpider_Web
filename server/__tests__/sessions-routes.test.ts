@@ -49,6 +49,34 @@ describe("Sessions routes", () => {
     expect(data.items[0].session_id).toBe("sess-003");
   });
 
+  it("paginates with limit+1 over-fetch: no phantom next_cursor at the exact boundary (ADR-018)", async () => {
+    const token = await getToken();
+    // Exactly 3 sessions seeded; limit=3 must NOT emit a next_cursor.
+    const res = await app.request("/api/sessions?limit=3", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+    const data = await res.json() as any;
+    expect(data.items).toHaveLength(3);
+    expect(data.next_cursor).toBeNull();
+  });
+
+  it("paginates with a real next_cursor when more rows remain (ADR-018)", async () => {
+    const token = await getToken();
+    const page1 = await app.request("/api/sessions?limit=2", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+    const p1 = await page1.json() as any;
+    expect(p1.items).toHaveLength(2);
+    expect(p1.next_cursor).toBeTruthy();
+
+    const page2 = await app.request(`/api/sessions?limit=2&cursor=${encodeURIComponent(p1.next_cursor)}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+    const p2 = await page2.json() as any;
+    expect(p2.items).toHaveLength(1);
+    expect(p2.next_cursor).toBeNull();
+  });
+
   it("filters sessions by state", async () => {
     const token = await getToken();
     const res = await app.request("/api/sessions?state=committed", {

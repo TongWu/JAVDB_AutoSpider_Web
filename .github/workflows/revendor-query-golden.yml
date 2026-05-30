@@ -1,0 +1,67 @@
+name: Re-vendor query Contract Golden
+
+# ADR-018 D6: dispatched by the Python repo (publish-query-contract.yml) when the
+# query Contract Golden changes on main. Re-fetches the vendored golden and opens
+# a reconcile PR. CI on that PR runs the freshness check (now green) and the
+# conformance test (red until a human reconciles the TS builders).
+
+on:
+  repository_dispatch:
+    types: [query-golden-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  revendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Don't persist the job's GITHUB_TOKEN in .git/config — npm ci runs
+          # third-party install scripts and we never use the persisted creds
+          # (the PR is pushed with the explicit REVENDOR_PR_TOKEN below).
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh vendored golden
+        env:
+          QUERY_GOLDEN_TOKEN: ${{ secrets.CICD_REPO_TOKEN }}
+        run: npm run gen:query-golden
+
+      - name: Open re-vendor PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          # PAT (or GitHub App token) with contents:write + pull-requests:write
+          # on THIS repo. Required so the PR's commits are authored by a real
+          # token and therefore TRIGGER ci.yml (freshness + conformance). GitHub
+          # deliberately suppresses workflow runs on PRs created with the default
+          # GITHUB_TOKEN, which would leave the re-vendor PR with no CI — exactly
+          # the conformance-red signal a human needs (PR review). May be the same
+          # PAT used as WEB_REPO_DISPATCH_TOKEN in the Python repo.
+          token: ${{ secrets.REVENDOR_PR_TOKEN }}
+          branch: chore/revendor-query-golden
+          title: "chore: re-vendor query Contract Golden"
+          commit-message: "chore: re-vendor query Contract Golden"
+          body: |
+            Upstream `query-builders.golden.json` changed on Python `main`.
+
+            A pinned query builder diverged. **Reconcile the TS builders**
+            (`buildMovieWhere` / `buildTorrentWhere` / `buildSessionQuery`) so
+            `npm run test:server` passes, then merge.
+
+            - Freshness CI: green (vendored now matches Python `main`).
+            - Conformance CI: red until the TS builders are reconciled.

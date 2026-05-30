@@ -43,45 +43,62 @@ interface MovieRow {
   torrent_count: number;
 }
 
-function buildMovieQuery(params: Record<string, string | undefined>, forExport: boolean) {
+// Input keys mirror the Python _build_movie_filters kwargs (decoded). Pinned
+// by the ADR-018 query Contract Golden so the two backends cannot drift.
+export interface MovieFilterInput {
+  q?: string;
+  actor?: string;
+  perfect_match?: boolean;
+  hi_res?: boolean;
+  session_id?: string;
+  date_from?: string;
+  date_to?: string;
+  cursor_id?: number;
+}
+
+// Pure WHERE-clause assembler. Branch order MUST match Python
+// _build_movie_filters (cursor → q → actor → perfect_match → hi_res →
+// session_id → date_from → date_to) so the joined string is byte-identical
+// after normalization.
+export function buildMovieWhere(input: MovieFilterInput): { where: string; bindings: (string | number)[] } {
   const conditions: string[] = [];
   const bindings: (string | number)[] = [];
 
-  if (params.cursor && !forExport) {
+  if (input.cursor_id !== undefined) {
     conditions.push("m.Id > ?");
-    bindings.push(cursorDecode<{ id: number }>(params.cursor).id);
+    bindings.push(input.cursor_id);
   }
-  if (params.q) {
-    const like = `%${params.q}%`;
+  if (input.q !== undefined) {
+    const like = `%${input.q}%`;
     conditions.push("(m.VideoCode LIKE ? OR m.ActorName LIKE ? OR m.SupportingActors LIKE ?)");
     bindings.push(like, like, like);
   }
-  if (params.actor) {
+  if (input.actor !== undefined) {
     conditions.push("m.ActorName = ?");
-    bindings.push(params.actor);
+    bindings.push(input.actor);
   }
-  if (params.perfect_match !== undefined) {
+  if (input.perfect_match !== undefined) {
     conditions.push("m.PerfectMatchIndicator = ?");
-    bindings.push(params.perfect_match === "true" ? 1 : 0);
+    bindings.push(input.perfect_match ? 1 : 0);
   }
-  if (params.hi_res !== undefined) {
+  if (input.hi_res !== undefined) {
     conditions.push("m.HiResIndicator = ?");
-    bindings.push(params.hi_res === "true" ? 1 : 0);
+    bindings.push(input.hi_res ? 1 : 0);
   }
-  if (params.session_id) {
+  if (input.session_id !== undefined) {
     conditions.push("m.SessionId = ?");
-    bindings.push(params.session_id);
+    bindings.push(input.session_id);
   }
-  if (params.date_from) {
-    const d = normalizeDate(params.date_from, false);
+  if (input.date_from !== undefined) {
+    const d = normalizeDate(input.date_from, false);
     if (!d) throw new HTTPException(400, {
       message: JSON.stringify({ error: { code: "history.invalid_date", message: "date_from could not be parsed" } }),
     });
     conditions.push("m.DateTimeCreated >= ?");
     bindings.push(d);
   }
-  if (params.date_to) {
-    const d = normalizeDate(params.date_to, true);
+  if (input.date_to !== undefined) {
+    const d = normalizeDate(input.date_to, true);
     if (!d) throw new HTTPException(400, {
       message: JSON.stringify({ error: { code: "history.invalid_date", message: "date_to could not be parsed" } }),
     });
@@ -90,6 +107,20 @@ function buildMovieQuery(params: Record<string, string | undefined>, forExport: 
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  return { where, bindings };
+}
+
+function buildMovieQuery(params: Record<string, string | undefined>, forExport: boolean) {
+  const { where, bindings } = buildMovieWhere({
+    cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
+    q: params.q || undefined,
+    actor: params.actor || undefined,
+    perfect_match: params.perfect_match !== undefined ? params.perfect_match === "true" : undefined,
+    hi_res: params.hi_res !== undefined ? params.hi_res === "true" : undefined,
+    session_id: params.session_id || undefined,
+    date_from: params.date_from || undefined,
+    date_to: params.date_to || undefined,
+  });
 
   const selectSql = `
     SELECT m.Id, m.VideoCode, m.Href, m.ActorName, m.ActorGender,
@@ -198,47 +229,63 @@ interface TorrentRow {
   SessionId: string | null;
 }
 
-function buildTorrentQuery(params: Record<string, string | undefined>, forExport: boolean) {
+// Input keys mirror the Python _build_torrent_filters kwargs (decoded). Pinned
+// by the ADR-018 query Contract Golden.
+export interface TorrentFilterInput {
+  q?: string;
+  resolution_type?: number;
+  has_subtitle?: boolean;
+  uncensored?: boolean;
+  session_id?: string;
+  date_from?: string;
+  date_to?: string;
+  cursor_id?: number;
+}
+
+// Pure WHERE-clause assembler. Branch order MUST match Python
+// _build_torrent_filters (cursor → q → resolution_type → has_subtitle →
+// uncensored → session_id → date_from → date_to).
+export function buildTorrentWhere(input: TorrentFilterInput): { where: string; bindings: (string | number)[] } {
   const conditions: string[] = [];
   const bindings: (string | number)[] = [];
 
-  if (params.cursor && !forExport) {
+  if (input.cursor_id !== undefined) {
     conditions.push("t.Id > ?");
-    bindings.push(cursorDecode<{ id: number }>(params.cursor).id);
+    bindings.push(input.cursor_id);
   }
-  if (params.q) {
+  if (input.q !== undefined) {
     conditions.push("m.VideoCode LIKE ?");
-    bindings.push(`%${params.q}%`);
+    bindings.push(`%${input.q}%`);
   }
-  if (params.resolution_type !== undefined) {
+  if (input.resolution_type !== undefined) {
     conditions.push("t.ResolutionType = ?");
-    bindings.push(parseInt(params.resolution_type, 10));
+    bindings.push(input.resolution_type);
   }
-  if (params.has_subtitle !== undefined) {
+  if (input.has_subtitle !== undefined) {
     conditions.push("t.SubtitleIndicator = ?");
-    bindings.push(params.has_subtitle === "true" ? 1 : 0);
+    bindings.push(input.has_subtitle ? 1 : 0);
   }
-  if (params.uncensored !== undefined) {
-    if (params.uncensored === "true") {
+  if (input.uncensored !== undefined) {
+    if (input.uncensored) {
       conditions.push("t.CensorIndicator = 0");
     } else {
       conditions.push("t.CensorIndicator != 0");
     }
   }
-  if (params.session_id) {
+  if (input.session_id !== undefined) {
     conditions.push("t.SessionId = ?");
-    bindings.push(params.session_id);
+    bindings.push(input.session_id);
   }
-  if (params.date_from) {
-    const d = normalizeDate(params.date_from, false);
+  if (input.date_from !== undefined) {
+    const d = normalizeDate(input.date_from, false);
     if (!d) throw new HTTPException(400, {
       message: JSON.stringify({ error: { code: "history.invalid_date", message: "date_from could not be parsed" } }),
     });
     conditions.push("t.DateTimeCreated >= ?");
     bindings.push(d);
   }
-  if (params.date_to) {
-    const d = normalizeDate(params.date_to, true);
+  if (input.date_to !== undefined) {
+    const d = normalizeDate(input.date_to, true);
     if (!d) throw new HTTPException(400, {
       message: JSON.stringify({ error: { code: "history.invalid_date", message: "date_to could not be parsed" } }),
     });
@@ -247,6 +294,30 @@ function buildTorrentQuery(params: Record<string, string | undefined>, forExport
   }
 
   const where = conditions.length > 0 ? `WHERE ${conditions.join(" AND ")}` : "";
+  return { where, bindings };
+}
+
+function buildTorrentQuery(params: Record<string, string | undefined>, forExport: boolean) {
+  let resolutionType: number | undefined;
+  if (params.resolution_type !== undefined) {
+    resolutionType = parseInt(params.resolution_type, 10);
+    if (Number.isNaN(resolutionType)) {
+      throw new HTTPException(400, {
+        message: JSON.stringify({ error: { code: "history.invalid_resolution_type", message: "resolution_type must be an integer" } }),
+      });
+    }
+  }
+
+  const { where, bindings } = buildTorrentWhere({
+    cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
+    q: params.q || undefined,
+    resolution_type: resolutionType,
+    has_subtitle: params.has_subtitle !== undefined ? params.has_subtitle === "true" : undefined,
+    uncensored: params.uncensored !== undefined ? params.uncensored === "true" : undefined,
+    session_id: params.session_id || undefined,
+    date_from: params.date_from || undefined,
+    date_to: params.date_to || undefined,
+  });
 
   const selectSql = `
     SELECT t.Id, m.VideoCode AS movie_video_code, m.Href AS movie_href,

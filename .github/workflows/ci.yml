@@ -50,11 +50,33 @@ jobs:
             exit 1
           fi
 
+      - name: Refresh query Contract Golden from main repo
+        # ADR-018 D6 freshness check: re-fetch the Python-main query golden and
+        # confirm the committed vendored copy matches. Catches Python-side drift
+        # (stale vendor). Mirrors the api.gen.ts gen-diff step above.
+        env:
+          QUERY_GOLDEN_URL: https://raw.githubusercontent.com/TongWu/JAVDB_AutoSpider_CICD/main/docs/api/contract/query-builders.golden.json
+          QUERY_GOLDEN_TOKEN: ${{ secrets.CICD_REPO_TOKEN }}
+        run: |
+          npm run gen:query-golden
+          if ! git diff --quiet server/__tests__/fixtures/query-builders.golden.json; then
+            echo "::error::Vendored query golden is out of sync with Python main."
+            echo "A builder changed upstream — run 'npm run gen:query-golden' and reconcile the TS builders."
+            git --no-pager diff server/__tests__/fixtures/query-builders.golden.json | head -100
+            exit 1
+          fi
+
       - name: Unit tests
         run: npm run test:unit -- --coverage
 
       - name: Contract tests
         run: npm run test:contract
+
+      - name: Server tests
+        # Runs the Hono backend route suite incl. the ADR-018 query-contract
+        # conformance test (server/__tests__/query-contract.test.ts), which
+        # catches TS-side builder drift against the vendored golden.
+        run: npm run test:server
 
       - name: Build
         run: npm run build
