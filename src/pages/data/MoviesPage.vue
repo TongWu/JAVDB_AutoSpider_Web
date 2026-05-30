@@ -352,7 +352,11 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
           contentId: name,
           contentName: name,
           initialHearted: actorHearted.value.get(name) ?? false,
-          onChange: (val: boolean) => actorHearted.value.set(name, val),
+          // Reassign a new Map (not in-place set) so the Score column's
+          // preferenceScore() recomputes when the actor heart toggles.
+          onChange: (val: boolean) => {
+            actorHearted.value = new Map(actorHearted.value).set(name, val)
+          },
         }),
       ])
     },
