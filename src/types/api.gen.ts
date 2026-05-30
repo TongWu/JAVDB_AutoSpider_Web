@@ -1094,6 +1094,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/preferences/": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Content Preferences */
+        get: operations["list_content_preferences_api_preferences__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preferences/metadata/{href}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Movie Metadata */
+        get: operations["get_movie_metadata_api_preferences_metadata__href__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preferences/movies/ratings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Movie Ratings */
+        get: operations["list_movie_ratings_api_preferences_movies_ratings_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preferences/movies/{href}/rating": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Movie Rating */
+        get: operations["get_movie_rating_api_preferences_movies__href__rating_get"];
+        /** Upsert Movie Rating */
+        put: operations["upsert_movie_rating_api_preferences_movies__href__rating_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/preferences/{content_type}/{content_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Upsert Content Preference */
+        put: operations["upsert_content_preference_api_preferences__content_type___content_id__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions": {
         parameters: {
             query?: never;
@@ -1491,6 +1577,41 @@ export interface components {
          */
         ConfigResponse: {
             [key: string]: unknown;
+        };
+        /** ContentPreferenceListResponse */
+        ContentPreferenceListResponse: {
+            /** Items */
+            items: components["schemas"]["ContentPreferenceResponse"][];
+        };
+        /** ContentPreferenceResponse */
+        ContentPreferenceResponse: {
+            /** Content Id */
+            content_id: string;
+            /** Content Name */
+            content_name: string;
+            /** Content Type */
+            content_type: string;
+            /** Hearted */
+            hearted: boolean;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Weight */
+            weight: number;
+        };
+        /** ContentPreferenceUpsert */
+        ContentPreferenceUpsert: {
+            /** Content Name */
+            content_name: string;
+            /**
+             * Hearted
+             * @default false
+             */
+            hearted: boolean;
+            /**
+             * Weight
+             * @default 1
+             */
+            weight: number;
         };
         /** CrawlIndexPayload */
         CrawlIndexPayload: {
@@ -2077,6 +2198,92 @@ export interface components {
         MigrationListResponse: {
             /** Migrations */
             migrations: components["schemas"]["MigrationItem"][];
+        };
+        /** MovieMetadataResponse */
+        MovieMetadataResponse: {
+            /** Categories */
+            categories?: {
+                [key: string]: string;
+            }[] | null;
+            /** Comment Count */
+            comment_count?: number | null;
+            /** Created At */
+            created_at?: string | null;
+            /** Directors */
+            directors?: {
+                [key: string]: string;
+            }[] | null;
+            /** Duration Minutes */
+            duration_minutes?: number | null;
+            /** Fanart Urls */
+            fanart_urls?: string[] | null;
+            /** Href */
+            href: string;
+            /** Maker */
+            maker?: {
+                [key: string]: string;
+            } | null;
+            /** Poster Url */
+            poster_url?: string | null;
+            /** Publisher */
+            publisher?: {
+                [key: string]: string;
+            } | null;
+            /** Rate */
+            rate?: number | null;
+            /** Release Date */
+            release_date?: string | null;
+            /** Review Count */
+            review_count?: number | null;
+            /** Series */
+            series?: {
+                [key: string]: string;
+            } | null;
+            /** Title */
+            title?: string | null;
+            /** Trailer Url */
+            trailer_url?: string | null;
+            /** Updated At */
+            updated_at?: string | null;
+            /** Video Code */
+            video_code?: string | null;
+            /** Want Count */
+            want_count?: number | null;
+            /** Watched Count */
+            watched_count?: number | null;
+        };
+        /** MovieRatingListResponse */
+        MovieRatingListResponse: {
+            /** Items */
+            items: components["schemas"]["MovieRatingResponse"][];
+            /** Total */
+            total: number;
+        };
+        /** MovieRatingResponse */
+        MovieRatingResponse: {
+            /** Href */
+            href: string;
+            /** Notes */
+            notes?: string | null;
+            /** Rated At */
+            rated_at?: string | null;
+            /** Rating */
+            rating?: number | null;
+            /** Tags */
+            tags?: string[];
+            /** Updated At */
+            updated_at?: string | null;
+            /** Video Code */
+            video_code: string;
+        };
+        /** MovieRatingUpsert */
+        MovieRatingUpsert: {
+            /** Notes */
+            notes?: string | null;
+            /** Rating */
+            rating?: number | null;
+            /** Tags */
+            tags?: string[];
         };
         /**
          * MovieSearchItem
@@ -4852,6 +5059,203 @@ export interface operations {
                 };
                 content: {
                     "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_content_preferences_api_preferences__get: {
+        parameters: {
+            query?: {
+                content_type?: string | null;
+                hearted_only?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentPreferenceListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_movie_metadata_api_preferences_metadata__href__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                href: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovieMetadataResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_movie_ratings_api_preferences_movies_ratings_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovieRatingListResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_movie_rating_api_preferences_movies__href__rating_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                href: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovieRatingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_movie_rating_api_preferences_movies__href__rating_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                href: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MovieRatingUpsert"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["MovieRatingResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upsert_content_preference_api_preferences__content_type___content_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                content_type: string;
+                content_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentPreferenceUpsert"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentPreferenceResponse"];
                 };
             };
             /** @description Validation Error */

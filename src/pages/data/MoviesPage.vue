@@ -87,7 +87,11 @@ function handleKeydown(e: KeyboardEvent) {
   if (result.save) {
     const row = items.value[result.save.index]
     if (row) {
-      void upsertMovieRating(row.href, { rating: result.save.rating }).then(loadRatings)
+      void upsertMovieRating(row.href, { rating: result.save.rating })
+        .then(loadRatings)
+        .catch((e) => {
+          error.value = e instanceof Error ? e.message : String(e)
+        })
     }
   }
 }
@@ -307,7 +311,7 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
     render: (row) => String(row.torrent_count),
   },
   {
-    title: 'Rating',
+    title: t('movies.col.rating'),
     key: 'rating',
     width: 180,
     render(row) {
@@ -318,14 +322,18 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
         size: 'small',
         clearable: true,
         'onUpdate:value': async (val: number) => {
-          await upsertMovieRating(row.href, { rating: val || null })
-          await loadRatings()
+          try {
+            await upsertMovieRating(row.href, { rating: val || null })
+            await loadRatings()
+          } catch (e) {
+            error.value = e instanceof Error ? e.message : String(e)
+          }
         },
       })
     },
   },
   {
-    title: 'Score',
+    title: t('movies.col.score'),
     key: 'score',
     width: 70,
     render(row) {
@@ -369,7 +377,7 @@ const hasMorePages = computed(() => !!nextCursor.value)
             size="small"
             @click="toggleBatch"
           >
-            {{ batchMode ? 'Exit Annotate' : 'Annotate' }}
+            {{ batchMode ? t('movies.exitAnnotate') : t('movies.annotate') }}
           </NButton>
           <NButton
             :loading="exporting"
@@ -385,8 +393,13 @@ const hasMorePages = computed(() => !!nextCursor.value)
         v-if="batchMode"
         class="annotate-hint"
       >
-        Annotating {{ items.length ? focusedIndex + 1 : 0 }} / {{ items.length }} ·
-        pending: {{ pendingRating ?? '—' }} · j/k move · 1–5 rate · Enter save · Space skip
+        {{
+          t('movies.annotateHint', {
+            current: items.length ? focusedIndex + 1 : 0,
+            total: items.length,
+            pending: pendingRating ?? '—',
+          })
+        }}
       </div>
 
       <!-- Search bar -->

@@ -49,8 +49,16 @@ function safeParseJson(s: string | null): unknown {
 // PUT /movies/:href/rating — upsert a rating.
 preferencesRoutes.put("/movies/:href/rating", async (c) => {
   const href = c.req.param("href");
-  const body = await c.req.json<{ rating?: number | null; tags?: string[]; notes?: string | null }>();
+  let body: { rating?: number | null; tags?: string[]; notes?: string | null };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json(errJson("preferences.invalid_body", "Request body must be valid JSON"), 422);
+  }
   const tags = body.tags ?? [];
+  if (!Array.isArray(tags)) {
+    return c.json(errJson("preferences.invalid_tags", "tags must be an array of strings"), 422);
+  }
 
   const invalid = tags.filter((t) => !VALID_TAGS.has(t));
   if (invalid.length > 0) {
@@ -97,14 +105,19 @@ preferencesRoutes.put("/:contentType/:contentId", async (c) => {
     return c.json(errJson("preferences.invalid_content_type", "content_type must be one of: actor, category, maker, director"), 422);
   }
   const contentId = c.req.param("contentId");
-  const body = await c.req.json<{ content_name?: string; hearted?: boolean; weight?: number }>();
+  let body: { content_name?: string; hearted?: boolean; weight?: number };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json(errJson("preferences.invalid_body", "Request body must be valid JSON"), 422);
+  }
 
   // Mirror Python schema: content_name is required, weight is bounded [0.0, 10.0].
   if (typeof body.content_name !== "string" || body.content_name.length === 0) {
     return c.json(errJson("preferences.invalid_content_name", "content_name is required"), 422);
   }
   const weight = body.weight ?? 1.0;
-  if (weight < 0 || weight > 10) {
+  if (typeof weight !== "number" || Number.isNaN(weight) || weight < 0 || weight > 10) {
     return c.json(errJson("preferences.invalid_weight", "weight must be between 0.0 and 10.0"), 422);
   }
 

@@ -866,13 +866,18 @@
       "hiRes": "高清",
       "created": "创建时间",
       "torrents": "种子数",
-      "sessionId": "会话"
+      "sessionId": "会话",
+      "rating": "评分",
+      "score": "偏好分"
     },
     "exportCsv": "导出 CSV",
     "loadMore": "加载更多",
     "totalEstimate": "约 {count} 条结果",
     "noResults": "未找到影片",
-    "exportFailed": "CSV 导出失败"
+    "exportFailed": "CSV 导出失败",
+    "annotate": "标注",
+    "exitAnnotate": "退出标注",
+    "annotateHint": "标注中 {current} / {total} · 待定: {pending} · j/k 移动 · 1–5 评分 · Enter 保存 · Space 跳过"
   },
   "torrents": {
     "subtitle": "搜索和浏览种子历史记录",

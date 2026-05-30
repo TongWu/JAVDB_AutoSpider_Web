@@ -866,13 +866,18 @@
       "hiRes": "高画質",
       "created": "作成日時",
       "torrents": "トレント",
-      "sessionId": "セッション"
+      "sessionId": "セッション",
+      "rating": "評価",
+      "score": "スコア"
     },
     "exportCsv": "CSV エクスポート",
     "loadMore": "さらに読み込む",
     "totalEstimate": "約 {count} 件",
     "noResults": "動画が見つかりません",
-    "exportFailed": "CSV エクスポートに失敗しました"
+    "exportFailed": "CSV エクスポートに失敗しました",
+    "annotate": "注釈",
+    "exitAnnotate": "注釈終了",
+    "annotateHint": "注釈中 {current} / {total} · 保留: {pending} · j/k 移動 · 1–5 評価 · Enter 保存 · Space スキップ"
   },
   "torrents": {
     "subtitle": "トレント履歴レコードを検索・閲覧",

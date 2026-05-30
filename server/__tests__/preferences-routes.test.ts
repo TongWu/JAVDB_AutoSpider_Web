@@ -294,4 +294,66 @@ describe("Preferences routes", () => {
     const res = await app.request("/api/preferences/movies/ratings", {}, env);
     expect(res.status).toBe(401);
   });
+
+  // -----------------------------------------------------------------------
+  // 10. Non-array tags → 422 preferences.invalid_tags (no 500 TypeError)
+  // -----------------------------------------------------------------------
+  it("rejects a non-array tags value with 422 preferences.invalid_tags", async () => {
+    const { accessToken, csrfToken } = await login();
+    const seg = encodeURIComponent("/v/test-roundtrip");
+
+    const res = await app.request(
+      `/api/preferences/movies/${seg}/rating`,
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ tags: "plot_good" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("preferences.invalid_tags");
+  });
+
+  // -----------------------------------------------------------------------
+  // 11. Malformed JSON body → 422 preferences.invalid_body (no 500)
+  // -----------------------------------------------------------------------
+  it("rejects a malformed JSON body with 422 preferences.invalid_body", async () => {
+    const { accessToken, csrfToken } = await login();
+    const seg = encodeURIComponent("/v/test-roundtrip");
+
+    const res = await app.request(
+      `/api/preferences/movies/${seg}/rating`,
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: "{ not valid json",
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("preferences.invalid_body");
+  });
+
+  // -----------------------------------------------------------------------
+  // 12. Non-numeric weight → 422 preferences.invalid_weight
+  // -----------------------------------------------------------------------
+  it("rejects a non-numeric weight with 422 preferences.invalid_weight", async () => {
+    const { accessToken, csrfToken } = await login();
+
+    const res = await app.request(
+      `/api/preferences/actor/${encodeURIComponent("/actors/badweight")}`,
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ content_name: "X", hearted: false, weight: "heavy" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("preferences.invalid_weight");
+  });
 });
