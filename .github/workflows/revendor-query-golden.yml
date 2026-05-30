@@ -40,6 +40,14 @@ jobs:
       - name: Open re-vendor PR
         uses: peter-evans/create-pull-request@v6
         with:
+          # PAT (or GitHub App token) with contents:write + pull-requests:write
+          # on THIS repo. Required so the PR's commits are authored by a real
+          # token and therefore TRIGGER ci.yml (freshness + conformance). GitHub
+          # deliberately suppresses workflow runs on PRs created with the default
+          # GITHUB_TOKEN, which would leave the re-vendor PR with no CI — exactly
+          # the conformance-red signal a human needs (PR review). May be the same
+          # PAT used as WEB_REPO_DISPATCH_TOKEN in the Python repo.
+          token: ${{ secrets.REVENDOR_PR_TOKEN }}
           branch: chore/revendor-query-golden
           title: "chore: re-vendor query Contract Golden"
           commit-message: "chore: re-vendor query Contract Golden"
