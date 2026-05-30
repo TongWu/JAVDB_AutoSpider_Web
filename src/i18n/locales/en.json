@@ -1133,6 +1133,8 @@
     "resolve": {
       "empty": "Search for a video code or URL to see results here.",
       "untitled": "(untitled)",
+      "score": "Score",
+      "scoreHint": "Computed preference score based on your rating and favourites.",
       "oneClick": {
         "button": "One-click download",
         "noUrl": "No detail URL available for one-click.",
