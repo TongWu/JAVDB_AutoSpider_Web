@@ -63,6 +63,9 @@ const exporting = ref(false)
 // Preferences (ADR-022)
 const ratings = ref<Map<string, MovieRating>>(new Map())
 const actorHearted = ref<Map<string, boolean>>(new Map())
+// In-progress notes text, keyed by href. Keeps the (controlled) notes input
+// from losing typed text when a sibling control reassigns `ratings`.
+const notesDraft = ref<Map<string, string>>(new Map())
 
 // Filters
 const searchQuery = ref('')
@@ -206,6 +209,8 @@ async function loadRatings() {
 // backend's full-replace upsert never wipes the other fields (ADR-022 C1).
 async function saveRating(href: string, patch: RatingPatch) {
   try {
+    // Reads the current row snapshot before `await`, so two overlapping saves
+    // on the SAME row are last-write-wins (acceptable here; controls are far apart).
     const merged = mergeRating(ratings.value.get(href), patch)
     const returned = await upsertMovieRating(href, merged)
     ratings.value = new Map(ratings.value).set(href, returned)
@@ -304,11 +309,14 @@ function renderExpand(row: MovieSearchItem) {
         size: 'small',
         style: 'flex:1',
         autosize: { minRows: 1, maxRows: 3 },
-        defaultValue: current?.notes ?? '',
+        value: notesDraft.value.get(row.href) ?? (current?.notes ?? ''),
         placeholder: t('movies.notesPlaceholder'),
-        onBlur: (e: FocusEvent) => {
-          const value = (e.target as HTMLTextAreaElement).value
-          void saveRating(row.href, { notes: value || null })
+        'onUpdate:value': (v: string) => {
+          notesDraft.value = new Map(notesDraft.value).set(row.href, v)
+        },
+        onBlur: () => {
+          const draft = notesDraft.value.get(row.href) ?? ''
+          void saveRating(row.href, { notes: draft || null })
         },
       }),
     ]),
