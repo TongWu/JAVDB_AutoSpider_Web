@@ -12,6 +12,7 @@ import {
   NSwitch,
   NDatePicker,
   NSpace,
+  NRate,
   type DataTableColumns,
 } from 'naive-ui'
 import {
@@ -20,6 +21,14 @@ import {
   type MovieSearchItem,
   type MovieSearchParams,
 } from '@/api/history'
+import HeartButton from '@/components/HeartButton.vue'
+import {
+  listMovieRatings,
+  upsertMovieRating,
+  listContentPreferences,
+  type MovieRating,
+} from '@/api/preferences'
+import { computePreferenceScore } from './preference-score'
 
 const { t } = useI18n()
 
@@ -31,6 +40,10 @@ const nextCursor = ref<string | null>(null)
 const totalEstimate = ref(0)
 const loadingMore = ref(false)
 const exporting = ref(false)
+
+// Preferences (ADR-022)
+const ratings = ref<Map<string, MovieRating>>(new Map())
+const actorHearted = ref<Map<string, boolean>>(new Map())
 
 // Filters
 const searchQuery = ref('')
@@ -118,6 +131,22 @@ async function handleExport() {
   }
 }
 
+async function loadRatings() {
+  const res = await listMovieRatings({ limit: 1000, offset: 0 })
+  ratings.value = new Map(res.items.map((r) => [r.href, r]))
+}
+
+async function loadActorHearted() {
+  const res = await listContentPreferences({ content_type: 'actor' })
+  actorHearted.value = new Map(res.items.map((p) => [p.content_id, p.hearted]))
+}
+
+function preferenceScore(href: string, actorName: string | null): number {
+  const r = ratings.value.get(href)
+  const hearted = actorName ? (actorHearted.value.get(actorName) ?? false) : false
+  return computePreferenceScore(r?.rating ?? null, hearted)
+}
+
 function resetFilters() {
   searchQuery.value = ''
   actorFilter.value = ''
@@ -138,7 +167,10 @@ watch(
   () => debouncedFetch(),
 )
 
-onMounted(() => fetchMovies())
+onMounted(async () => {
+  await fetchMovies()
+  await Promise.all([loadRatings(), loadActorHearted()])
+})
 onUnmounted(() => { if (debounceTimer) clearTimeout(debounceTimer) })
 
 // ---------- Table ----------
@@ -168,7 +200,20 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
   {
     title: t('movies.col.actorName'),
     key: 'actor_name',
-    render: (row) => row.actor_name ?? '—',
+    render: (row) => {
+      const name = row.actor_name
+      if (!name) return '—'
+      return h('div', { style: 'display:flex;align-items:center;gap:4px' }, [
+        h('span', name),
+        h(HeartButton, {
+          contentType: 'actor',
+          contentId: name,
+          contentName: name,
+          initialHearted: actorHearted.value.get(name) ?? false,
+          onChange: (val: boolean) => actorHearted.value.set(name, val),
+        }),
+      ])
+    },
   },
   {
     title: t('movies.col.perfectMatch'),
@@ -199,6 +244,33 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
     title: t('movies.col.torrents'),
     key: 'torrent_count',
     render: (row) => String(row.torrent_count),
+  },
+  {
+    title: 'Rating',
+    key: 'rating',
+    width: 180,
+    render(row) {
+      const rating = ratings.value.get(row.href)
+      return h(NRate, {
+        value: rating?.rating ?? 0,
+        count: 5,
+        size: 'small',
+        clearable: true,
+        'onUpdate:value': async (val: number) => {
+          await upsertMovieRating(row.href, { rating: val || null })
+          await loadRatings()
+        },
+      })
+    },
+  },
+  {
+    title: 'Score',
+    key: 'score',
+    width: 70,
+    render(row) {
+      const score = preferenceScore(row.href, row.actor_name ?? null)
+      return h('span', { style: 'font-size:12px;color:var(--n-text-color-3)' }, score.toFixed(2))
+    },
   },
   {
     title: t('movies.col.sessionId'),
