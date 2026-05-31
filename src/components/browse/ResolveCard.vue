@@ -114,24 +114,16 @@ async function loadPreferenceContext(): Promise<void> {
     directorHearted.value = reconcileHearted(new Map(), directorHearted.value, lockedHearts.director)
   }
   if (reqUrl) {
-    try {
-      const r = await getMovieRating(reqUrl, { skipErrorToast: true })
-      if (reqUrl !== url.value) return
-      movieRating.value = r.rating ?? null
-    } catch {
-      if (reqUrl !== url.value) return
-      // No rating (404) is expected; treat silently as null.
-      movieRating.value = null
-    }
-    try {
-      // Best-effort: maker/director chips just stay hidden if metadata is absent.
-      const meta = await getMovieMetadata(reqUrl)
-      if (reqUrl !== url.value) return
-      metadata.value = meta
-    } catch {
-      if (reqUrl !== url.value) return
-      metadata.value = null
-    }
+    // Independent fetches — run concurrently. Both are best-effort: a 404 rating
+    // (unrated) or absent metadata (maker/director chips just stay hidden) is normal.
+    const [ratingResult, metaResult] = await Promise.allSettled([
+      getMovieRating(reqUrl, { skipErrorToast: true }),
+      getMovieMetadata(reqUrl),
+    ])
+    if (reqUrl !== url.value) return
+    movieRating.value =
+      ratingResult.status === 'fulfilled' ? (ratingResult.value.rating ?? null) : null
+    metadata.value = metaResult.status === 'fulfilled' ? metaResult.value : null
   } else {
     movieRating.value = null
     metadata.value = null
