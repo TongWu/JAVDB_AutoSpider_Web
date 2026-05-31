@@ -1115,6 +1115,10 @@
     "resolve": {
       "empty": "Search for a video code or URL to see results here.",
       "untitled": "(untitled)",
+      "dimensions": {
+        "maker": "Maker:",
+        "director": "Director:"
+      },
       "oneClick": {
         "button": "One-click download",
         "noUrl": "No detail URL available for one-click.",

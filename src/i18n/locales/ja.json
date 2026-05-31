@@ -1115,6 +1115,10 @@
     "resolve": {
       "empty": "上で動画コードまたは URL を検索すると、結果がここに表示されます。",
       "untitled": "（タイトルなし）",
+      "dimensions": {
+        "maker": "メーカー：",
+        "director": "監督："
+      },
       "oneClick": {
         "button": "ワンクリック ダウンロード",
         "noUrl": "ワンクリックに使う詳細 URL がありません。",

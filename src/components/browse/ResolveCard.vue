@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NCard,
@@ -13,6 +13,13 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { useBrowseStore, type ResolveResult, type MagnetRow } from '@/stores/browse'
 import { extractErrorMessage } from '@/api/errors'
+import {
+  listContentPreferences,
+  getMovieMetadata,
+  type MovieMetadata,
+} from '@/api/preferences'
+import HeartButton from '@/components/HeartButton.vue'
+import { extractDimensionNames } from './resolve-dimensions'
 import ResolveMagnetTable from './ResolveMagnetTable.vue'
 
 const props = defineProps<{ result: ResolveResult }>()
@@ -24,6 +31,60 @@ const message = useMessage()
 
 const isAdmin = computed(() => auth.role === 'admin')
 const oneClickLoading = ref(false)
+
+// ADR-022 §C4 — hearted state per dimension. Keyed by content_id, which equals
+// the dimension name (name-as-id convention) so rows are shared across pages.
+// Preferences load asynchronously after first paint, so this stays reactive to
+// flip chips from white to filled hearts once the lists arrive.
+type HeartDimension = 'actor' | 'category' | 'maker' | 'director'
+const hearted = ref<Record<HeartDimension, Map<string, boolean>>>({
+  actor: new Map(),
+  category: new Map(),
+  maker: new Map(),
+  director: new Map(),
+})
+
+// maker/director are absent from the resolve detail; fetch them from metadata.
+const metadata = ref<MovieMetadata | null>(null)
+const makers = computed<string[]>(() => extractDimensionNames(metadata.value?.maker))
+const directors = computed<string[]>(() => extractDimensionNames(metadata.value?.directors))
+
+function isHearted(dim: HeartDimension, name: string): boolean {
+  return hearted.value[dim].get(name) ?? false
+}
+
+function setHearted(dim: HeartDimension, name: string, val: boolean): void {
+  hearted.value[dim].set(name, val)
+}
+
+async function loadHearted(dim: HeartDimension): Promise<void> {
+  try {
+    const res = await listContentPreferences({ content_type: dim })
+    hearted.value[dim] = new Map(res.items.map((p) => [p.content_id, p.hearted]))
+  } catch {
+    // Best-effort: leave the map empty so chips default to un-hearted.
+  }
+}
+
+async function loadMetadata(detailUrl: string): Promise<void> {
+  metadata.value = null
+  if (!detailUrl) return
+  try {
+    metadata.value = await getMovieMetadata(detailUrl)
+  } catch {
+    // Supplementary data — a failure just hides the maker/director chips.
+    metadata.value = null
+  }
+}
+
+onMounted(() => {
+  void Promise.all([
+    loadHearted('actor'),
+    loadHearted('category'),
+    loadHearted('maker'),
+    loadHearted('director'),
+  ])
+})
 
 // `detail` and `index` are loose `Record<string, unknown>` on the BE schema.
 // Pull common fields defensively.
@@ -48,6 +109,10 @@ const url = computed(() => {
 
 const actors = computed<string[]>(() => stringList(detail.value, ['actors', 'actresses']))
 const tags = computed<string[]>(() => stringList(detail.value, ['tags', 'categories', 'genres']))
+
+// Re-fetch metadata whenever the resolved detail URL changes (the card instance
+// is reused across resolves, so a watcher — not onMounted — is required).
+watch(url, (u) => void loadMetadata(u), { immediate: true })
 
 const magnets = computed<MagnetRow[]>(() => {
   const raw = detail.value?.magnets ?? detail.value?.torrents
@@ -161,14 +226,25 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             :size="4"
             wrap
           >
-            <NTag
+            <span
               v-for="a in actors"
               :key="a"
-              size="tiny"
-              round
+              class="chip"
             >
-              {{ a }}
-            </NTag>
+              <NTag
+                size="tiny"
+                round
+              >
+                {{ a }}
+              </NTag>
+              <HeartButton
+                content-type="actor"
+                :content-id="a"
+                :content-name="a"
+                :initial-hearted="isHearted('actor', a)"
+                @change="(v: boolean) => setHearted('actor', a, v)"
+              />
+            </span>
           </NSpace>
           <NSpace
             v-if="tags.length"
@@ -176,15 +252,84 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             wrap
             style="margin-top: 6px;"
           >
-            <NTag
+            <span
               v-for="g in tags"
               :key="g"
-              size="tiny"
-              type="info"
-              round
+              class="chip"
             >
-              {{ g }}
-            </NTag>
+              <NTag
+                size="tiny"
+                type="info"
+                round
+              >
+                {{ g }}
+              </NTag>
+              <HeartButton
+                content-type="category"
+                :content-id="g"
+                :content-name="g"
+                :initial-hearted="isHearted('category', g)"
+                @change="(v: boolean) => setHearted('category', g, v)"
+              />
+            </span>
+          </NSpace>
+          <NSpace
+            v-if="makers.length"
+            :size="4"
+            wrap
+            align="center"
+            style="margin-top: 6px;"
+          >
+            <span class="dim-label">{{ t('browse.resolve.dimensions.maker') }}</span>
+            <span
+              v-for="m in makers"
+              :key="m"
+              class="chip"
+            >
+              <NTag
+                size="tiny"
+                type="warning"
+                round
+              >
+                {{ m }}
+              </NTag>
+              <HeartButton
+                content-type="maker"
+                :content-id="m"
+                :content-name="m"
+                :initial-hearted="isHearted('maker', m)"
+                @change="(v: boolean) => setHearted('maker', m, v)"
+              />
+            </span>
+          </NSpace>
+          <NSpace
+            v-if="directors.length"
+            :size="4"
+            wrap
+            align="center"
+            style="margin-top: 6px;"
+          >
+            <span class="dim-label">{{ t('browse.resolve.dimensions.director') }}</span>
+            <span
+              v-for="d in directors"
+              :key="d"
+              class="chip"
+            >
+              <NTag
+                size="tiny"
+                type="success"
+                round
+              >
+                {{ d }}
+              </NTag>
+              <HeartButton
+                content-type="director"
+                :content-id="d"
+                :content-name="d"
+                :initial-hearted="isHearted('director', d)"
+                @change="(v: boolean) => setHearted('director', d, v)"
+              />
+            </span>
           </NSpace>
           <NSpace
             v-if="isAdmin"
@@ -283,6 +428,15 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
   margin: 0 0 8px;
   font-size: 12px;
   color: var(--n-text-color-2);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.dim-label {
+  font-size: 11px;
+  color: var(--n-text-color-3);
 }
 .code-results {
   list-style: none;

@@ -1115,6 +1115,10 @@
     "resolve": {
       "empty": "在上方输入番号或链接查询，结果将显示在这里。",
       "untitled": "（无标题）",
+      "dimensions": {
+        "maker": "片商：",
+        "director": "导演："
+      },
       "oneClick": {
         "button": "一键下载",
         "noUrl": "未找到可用于一键下载的详情链接。",
