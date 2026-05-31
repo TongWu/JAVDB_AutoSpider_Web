@@ -21,7 +21,7 @@ import {
   type MovieMetadata,
 } from '@/api/preferences'
 import HeartButton from '@/components/HeartButton.vue'
-import { resolvePreferenceScore } from './resolve-preferences'
+import { reconcileHearted, resolvePreferenceScore } from './resolve-preferences'
 import { extractDimensionNames } from './resolve-dimensions'
 import ResolveMagnetTable from './ResolveMagnetTable.vue'
 
@@ -70,6 +70,15 @@ const directorHearted = ref(new Map<string, boolean>())
 const movieRating = ref<number | null>(null)
 const metadata = ref<MovieMetadata | null>(null)
 
+// Names the user toggled this session, per dimension. A later-arriving prefs
+// snapshot must not clobber these (it may predate the click) — see reconcileHearted.
+const lockedHearts: Record<'actor' | 'category' | 'maker' | 'director', Set<string>> = {
+  actor: new Set(),
+  category: new Set(),
+  maker: new Set(),
+  director: new Set(),
+}
+
 const makers = computed<string[]>(() => extractDimensionNames(metadata.value?.maker))
 const directors = computed<string[]>(() => extractDimensionNames(metadata.value?.directors))
 
@@ -89,17 +98,20 @@ async function loadPreferenceContext(): Promise<void> {
       listContentPreferences({ content_type: 'director' }),
     ])
     if (reqUrl !== url.value) return
-    actorHearted.value = new Map(actorPrefs.items.map((p) => [p.content_id, p.hearted]))
-    categoryHearted.value = new Map(categoryPrefs.items.map((p) => [p.content_id, p.hearted]))
-    makerHearted.value = new Map(makerPrefs.items.map((p) => [p.content_id, p.hearted]))
-    directorHearted.value = new Map(directorPrefs.items.map((p) => [p.content_id, p.hearted]))
+    // Overlay each snapshot, preserving hearts toggled locally during the fetch.
+    const snap = (items: { content_id: string; hearted: boolean }[]) =>
+      new Map(items.map((p) => [p.content_id, p.hearted]))
+    actorHearted.value = reconcileHearted(snap(actorPrefs.items), actorHearted.value, lockedHearts.actor)
+    categoryHearted.value = reconcileHearted(snap(categoryPrefs.items), categoryHearted.value, lockedHearts.category)
+    makerHearted.value = reconcileHearted(snap(makerPrefs.items), makerHearted.value, lockedHearts.maker)
+    directorHearted.value = reconcileHearted(snap(directorPrefs.items), directorHearted.value, lockedHearts.director)
   } catch {
     if (reqUrl !== url.value) return
-    // A failed prefs fetch must not break the card; leave maps empty.
-    actorHearted.value = new Map()
-    categoryHearted.value = new Map()
-    makerHearted.value = new Map()
-    directorHearted.value = new Map()
+    // A failed prefs fetch must not break the card; keep only local toggles.
+    actorHearted.value = reconcileHearted(new Map(), actorHearted.value, lockedHearts.actor)
+    categoryHearted.value = reconcileHearted(new Map(), categoryHearted.value, lockedHearts.category)
+    makerHearted.value = reconcileHearted(new Map(), makerHearted.value, lockedHearts.maker)
+    directorHearted.value = reconcileHearted(new Map(), directorHearted.value, lockedHearts.director)
   }
   if (reqUrl) {
     try {
@@ -127,18 +139,22 @@ async function loadPreferenceContext(): Promise<void> {
 }
 
 function onActorHeart(name: string, val: boolean): void {
+  lockedHearts.actor.add(name)
   actorHearted.value = new Map(actorHearted.value).set(name, val)
 }
 
 function onCategoryHeart(name: string, val: boolean): void {
+  lockedHearts.category.add(name)
   categoryHearted.value = new Map(categoryHearted.value).set(name, val)
 }
 
 function onMakerHeart(name: string, val: boolean): void {
+  lockedHearts.maker.add(name)
   makerHearted.value = new Map(makerHearted.value).set(name, val)
 }
 
 function onDirectorHeart(name: string, val: boolean): void {
+  lockedHearts.director.add(name)
   directorHearted.value = new Map(directorHearted.value).set(name, val)
 }
 
