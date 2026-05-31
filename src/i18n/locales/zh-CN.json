@@ -1135,6 +1135,10 @@
       "untitled": "（无标题）",
       "score": "偏好分",
       "scoreHint": "根据你的评分与收藏计算的偏好分。",
+      "dimensions": {
+        "maker": "片商：",
+        "director": "导演："
+      },
       "oneClick": {
         "button": "一键下载",
         "noUrl": "未找到可用于一键下载的详情链接。",

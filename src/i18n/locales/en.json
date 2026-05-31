@@ -1135,6 +1135,10 @@
       "untitled": "(untitled)",
       "score": "Score",
       "scoreHint": "Computed preference score based on your rating and favourites.",
+      "dimensions": {
+        "maker": "Maker:",
+        "director": "Director:"
+      },
       "oneClick": {
         "button": "One-click download",
         "noUrl": "No detail URL available for one-click.",

@@ -1,3 +1,4 @@
+import axios from 'axios'
 import { http } from './client'
 
 // Hand-typed until the openapi.json snapshot (and src/types/api.gen.ts) is
@@ -30,6 +31,21 @@ export interface ContentPreference {
 
 export interface ContentPreferenceListResponse {
   items: ContentPreference[]
+}
+
+// Dimension link objects (maker, director, category) are `{name, href}` pairs;
+// the backend JSON-decodes them from the MovieMetadata table. We only read
+// `name` here, so the value type stays loose (mirrors api.gen MovieMetadataResponse).
+export type DimensionLink = Record<string, string>
+
+export interface MovieMetadata {
+  href: string
+  title: string | null
+  video_code: string | null
+  maker: DimensionLink | null
+  directors: DimensionLink[] | null
+  categories: DimensionLink[] | null
+  [key: string]: unknown
 }
 
 // `href` is sent percent-encoded as a single path segment (the backend route
@@ -88,4 +104,20 @@ export async function listContentPreferences(
     { params },
   )
   return data
+}
+
+// Movie metadata holds maker/director links that the resolve detail does not.
+// A 404 is the normal "not scraped yet" case, so we return null (and opt out of
+// the global error toast) instead of surfacing it as an error.
+export async function getMovieMetadata(href: string): Promise<MovieMetadata | null> {
+  try {
+    const { data } = await http.get<MovieMetadata>(
+      `/api/preferences/metadata/${encodeURIComponent(href)}`,
+      { skipErrorToast: true },
+    )
+    return data
+  } catch (err) {
+    if (axios.isAxiosError(err) && err.response?.status === 404) return null
+    throw err
+  }
 }

@@ -14,9 +14,15 @@ import {
 import { useAuthStore } from '@/stores/auth'
 import { useBrowseStore, type ResolveResult, type MagnetRow } from '@/stores/browse'
 import { extractErrorMessage } from '@/api/errors'
-import { getMovieRating, listContentPreferences } from '@/api/preferences'
+import {
+  getMovieRating,
+  getMovieMetadata,
+  listContentPreferences,
+  type MovieMetadata,
+} from '@/api/preferences'
 import HeartButton from '@/components/HeartButton.vue'
-import { resolvePreferenceScore } from './resolve-preferences'
+import { reconcileHearted, resolvePreferenceScore } from './resolve-preferences'
+import { extractDimensionNames } from './resolve-dimensions'
 import ResolveMagnetTable from './ResolveMagnetTable.vue'
 
 const props = defineProps<{ result: ResolveResult }>()
@@ -55,9 +61,26 @@ const tags = computed<string[]>(() => stringList(detail.value, ['tags', 'categor
 
 // ADR-022 B3/C4: preference context for the resolved detail. Hearts seed from
 // existing ContentPreferences; the score reuses the shared rule-based formula.
+// maker/director are absent from the resolve detail, so they come from the
+// separate MovieMetadata fetch (a 404 just means the movie was never scraped).
 const actorHearted = ref(new Map<string, boolean>())
 const categoryHearted = ref(new Map<string, boolean>())
+const makerHearted = ref(new Map<string, boolean>())
+const directorHearted = ref(new Map<string, boolean>())
 const movieRating = ref<number | null>(null)
+const metadata = ref<MovieMetadata | null>(null)
+
+// Names the user toggled this session, per dimension. A later-arriving prefs
+// snapshot must not clobber these (it may predate the click) — see reconcileHearted.
+const lockedHearts: Record<'actor' | 'category' | 'maker' | 'director', Set<string>> = {
+  actor: new Set(),
+  category: new Set(),
+  maker: new Set(),
+  director: new Set(),
+}
+
+const makers = computed<string[]>(() => extractDimensionNames(metadata.value?.maker))
+const directors = computed<string[]>(() => extractDimensionNames(metadata.value?.directors))
 
 const score = computed(() => resolvePreferenceScore(movieRating.value, actors.value, actorHearted.value))
 const scoreDisplay = computed(() => score.value.toFixed(2))
@@ -68,40 +91,63 @@ async function loadPreferenceContext(): Promise<void> {
   // if a newer resolve has since superseded this one.
   const reqUrl = url.value
   try {
-    const [actorPrefs, categoryPrefs] = await Promise.all([
+    const [actorPrefs, categoryPrefs, makerPrefs, directorPrefs] = await Promise.all([
       listContentPreferences({ content_type: 'actor' }),
       listContentPreferences({ content_type: 'category' }),
+      listContentPreferences({ content_type: 'maker' }),
+      listContentPreferences({ content_type: 'director' }),
     ])
     if (reqUrl !== url.value) return
-    actorHearted.value = new Map(actorPrefs.items.map((p) => [p.content_id, p.hearted]))
-    categoryHearted.value = new Map(categoryPrefs.items.map((p) => [p.content_id, p.hearted]))
+    // Overlay each snapshot, preserving hearts toggled locally during the fetch.
+    const snap = (items: { content_id: string; hearted: boolean }[]) =>
+      new Map(items.map((p) => [p.content_id, p.hearted]))
+    actorHearted.value = reconcileHearted(snap(actorPrefs.items), actorHearted.value, lockedHearts.actor)
+    categoryHearted.value = reconcileHearted(snap(categoryPrefs.items), categoryHearted.value, lockedHearts.category)
+    makerHearted.value = reconcileHearted(snap(makerPrefs.items), makerHearted.value, lockedHearts.maker)
+    directorHearted.value = reconcileHearted(snap(directorPrefs.items), directorHearted.value, lockedHearts.director)
   } catch {
     if (reqUrl !== url.value) return
-    // A failed prefs fetch must not break the card; leave maps empty.
-    actorHearted.value = new Map()
-    categoryHearted.value = new Map()
+    // A failed prefs fetch must not break the card; keep only local toggles.
+    actorHearted.value = reconcileHearted(new Map(), actorHearted.value, lockedHearts.actor)
+    categoryHearted.value = reconcileHearted(new Map(), categoryHearted.value, lockedHearts.category)
+    makerHearted.value = reconcileHearted(new Map(), makerHearted.value, lockedHearts.maker)
+    directorHearted.value = reconcileHearted(new Map(), directorHearted.value, lockedHearts.director)
   }
   if (reqUrl) {
-    try {
-      const r = await getMovieRating(reqUrl, { skipErrorToast: true })
-      if (reqUrl !== url.value) return
-      movieRating.value = r.rating ?? null
-    } catch {
-      if (reqUrl !== url.value) return
-      // No rating (404) is expected; treat silently as null.
-      movieRating.value = null
-    }
+    // Independent fetches — run concurrently. Both are best-effort: a 404 rating
+    // (unrated) or absent metadata (maker/director chips just stay hidden) is normal.
+    const [ratingResult, metaResult] = await Promise.allSettled([
+      getMovieRating(reqUrl, { skipErrorToast: true }),
+      getMovieMetadata(reqUrl),
+    ])
+    if (reqUrl !== url.value) return
+    movieRating.value =
+      ratingResult.status === 'fulfilled' ? (ratingResult.value.rating ?? null) : null
+    metadata.value = metaResult.status === 'fulfilled' ? metaResult.value : null
   } else {
     movieRating.value = null
+    metadata.value = null
   }
 }
 
 function onActorHeart(name: string, val: boolean): void {
+  lockedHearts.actor.add(name)
   actorHearted.value = new Map(actorHearted.value).set(name, val)
 }
 
 function onCategoryHeart(name: string, val: boolean): void {
+  lockedHearts.category.add(name)
   categoryHearted.value = new Map(categoryHearted.value).set(name, val)
+}
+
+function onMakerHeart(name: string, val: boolean): void {
+  lockedHearts.maker.add(name)
+  makerHearted.value = new Map(makerHearted.value).set(name, val)
+}
+
+function onDirectorHeart(name: string, val: boolean): void {
+  lockedHearts.director.add(name)
+  directorHearted.value = new Map(directorHearted.value).set(name, val)
 }
 
 onMounted(() => {
@@ -287,6 +333,64 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             </div>
           </NSpace>
           <NSpace
+            v-if="makers.length"
+            :size="4"
+            wrap
+            align="center"
+            style="margin-top: 6px;"
+          >
+            <span class="dim-label">{{ t('browse.resolve.dimensions.maker') }}</span>
+            <div
+              v-for="m in makers"
+              :key="m"
+              class="heart-chip"
+            >
+              <NTag
+                size="tiny"
+                type="warning"
+                round
+              >
+                {{ m }}
+              </NTag>
+              <HeartButton
+                content-type="maker"
+                :content-id="m"
+                :content-name="m"
+                :initial-hearted="makerHearted.get(m) ?? false"
+                @change="(val) => onMakerHeart(m, val)"
+              />
+            </div>
+          </NSpace>
+          <NSpace
+            v-if="directors.length"
+            :size="4"
+            wrap
+            align="center"
+            style="margin-top: 6px;"
+          >
+            <span class="dim-label">{{ t('browse.resolve.dimensions.director') }}</span>
+            <div
+              v-for="d in directors"
+              :key="d"
+              class="heart-chip"
+            >
+              <NTag
+                size="tiny"
+                type="success"
+                round
+              >
+                {{ d }}
+              </NTag>
+              <HeartButton
+                content-type="director"
+                :content-id="d"
+                :content-name="d"
+                :initial-hearted="directorHearted.get(d) ?? false"
+                @change="(val) => onDirectorHeart(d, val)"
+              />
+            </div>
+          </NSpace>
+          <NSpace
             v-if="isAdmin"
             style="margin-top: 10px;"
           >
@@ -388,6 +492,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
   display: inline-flex;
   align-items: center;
   gap: 2px;
+}
+.dim-label {
+  font-size: 11px;
+  color: var(--n-text-color-3);
 }
 .code-results {
   list-style: none;

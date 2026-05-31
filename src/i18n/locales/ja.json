@@ -1135,6 +1135,10 @@
       "untitled": "（タイトルなし）",
       "score": "スコア",
       "scoreHint": "評価とお気に入りに基づいて計算された好みスコア。",
+      "dimensions": {
+        "maker": "メーカー：",
+        "director": "監督："
+      },
       "oneClick": {
         "button": "ワンクリック ダウンロード",
         "noUrl": "ワンクリックに使う詳細 URL がありません。",

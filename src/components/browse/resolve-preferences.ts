@@ -14,3 +14,20 @@ export function resolvePreferenceScore(
 ): number {
   return computePreferenceScore(rating, leadActorHearted(actors, actorHearted))
 }
+
+// Overlay a freshly-fetched ContentPreferences snapshot onto the in-memory map
+// without clobbering hearts the user toggled locally before the snapshot landed
+// (ADR-022 §C4). `locked` holds the names the user changed this session; those
+// keep their current local value, everything else comes from the server snapshot.
+// Returns a new Map so Vue refs assigned to it stay reactive.
+export function reconcileHearted(
+  snapshot: Map<string, boolean>,
+  current: Map<string, boolean>,
+  locked: Set<string>,
+): Map<string, boolean> {
+  const merged = new Map(snapshot)
+  for (const name of locked) {
+    merged.set(name, current.get(name) ?? false)
+  }
+  return merged
+}
