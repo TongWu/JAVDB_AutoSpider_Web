@@ -11,6 +11,7 @@ vi.mock('@/api/client', () => ({
 }))
 
 import {
+  getMovieRating,
   listContentPreferences,
   upsertContentPreference,
   upsertMovieRating,
@@ -34,6 +35,32 @@ describe('preferences API client — path building', () => {
       { rating: 4 },
     )
     expect(res).toEqual(body)
+  })
+
+  it('getMovieRating forwards skipErrorToast so 404-means-unrated stays silent', async () => {
+    const body = { href: '/v/abc', video_code: 'ABC-1', rating: null }
+    getSpy.mockResolvedValueOnce({ data: body })
+
+    const res = await getMovieRating('/v/abc', { skipErrorToast: true })
+
+    expect(getSpy).toHaveBeenCalledTimes(1)
+    expect(getSpy).toHaveBeenCalledWith(
+      '/api/preferences/movies/%2Fv%2Fabc/rating',
+      { skipErrorToast: true },
+    )
+    expect(res).toEqual(body)
+  })
+
+  it('getMovieRating omits skipErrorToast by default', async () => {
+    const body = { href: '/v/abc', video_code: 'ABC-1', rating: 4 }
+    getSpy.mockResolvedValueOnce({ data: body })
+
+    await getMovieRating('/v/abc')
+
+    expect(getSpy).toHaveBeenCalledWith(
+      '/api/preferences/movies/%2Fv%2Fabc/rating',
+      { skipErrorToast: undefined },
+    )
   })
 
   it('upsertContentPreference percent-encodes the contentId slash into one segment', async () => {
