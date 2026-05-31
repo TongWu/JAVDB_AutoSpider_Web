@@ -877,7 +877,25 @@
     "exportFailed": "CSV エクスポートに失敗しました",
     "annotate": "注釈",
     "exitAnnotate": "注釈終了",
-    "annotateHint": "注釈中 {current} / {total} · 保留: {pending} · j/k 移動 · 1–5 評価 · Enter 保存 · Space スキップ"
+    "annotateHint": "注釈中 {current} / {total} · 保留: {pending} · j/k 移動 · 1–5 評価 · Enter 保存 · Space スキップ",
+    "tagsLabel": "タグ",
+    "tagsPlaceholder": "タグを追加…",
+    "notesLabel": "メモ",
+    "notesPlaceholder": "メモを追加…",
+    "tags": {
+      "quality_high": "高画質",
+      "quality_low": "低画質",
+      "resolution_bad": "解像度が悪い",
+      "encoding_bad": "エンコードが悪い",
+      "plot_good": "ストーリーが良い",
+      "actress_standout": "女優が際立つ",
+      "not_my_type": "好みではない",
+      "category_miss": "カテゴリ不一致",
+      "would_rewatch": "また見たい",
+      "keep_long_term": "長期保存",
+      "delete_candidate": "削除候補",
+      "upgrade_wanted": "アップグレード希望"
+    }
   },
   "torrents": {
     "subtitle": "トレント履歴レコードを検索・閲覧",
@@ -1115,6 +1133,8 @@
     "resolve": {
       "empty": "上で動画コードまたは URL を検索すると、結果がここに表示されます。",
       "untitled": "（タイトルなし）",
+      "score": "スコア",
+      "scoreHint": "評価とお気に入りに基づいて計算された好みスコア。",
       "dimensions": {
         "maker": "メーカー：",
         "director": "監督："

@@ -50,9 +50,13 @@ export interface MovieMetadata {
 
 // `href` is sent percent-encoded as a single path segment (the backend route
 // param decodes it back to e.g. "/v/abc123").
-export async function getMovieRating(href: string): Promise<MovieRating> {
+export async function getMovieRating(
+  href: string,
+  opts: { skipErrorToast?: boolean } = {},
+): Promise<MovieRating> {
   const { data } = await http.get<MovieRating>(
     `/api/preferences/movies/${encodeURIComponent(href)}/rating`,
+    { skipErrorToast: opts.skipErrorToast },
   )
   return data
 }

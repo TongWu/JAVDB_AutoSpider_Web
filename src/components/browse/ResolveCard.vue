@@ -8,17 +8,20 @@ import {
   NButton,
   NEmpty,
   NAlert,
+  NTooltip,
   useMessage,
 } from 'naive-ui'
 import { useAuthStore } from '@/stores/auth'
 import { useBrowseStore, type ResolveResult, type MagnetRow } from '@/stores/browse'
 import { extractErrorMessage } from '@/api/errors'
 import {
-  listContentPreferences,
+  getMovieRating,
   getMovieMetadata,
+  listContentPreferences,
   type MovieMetadata,
 } from '@/api/preferences'
 import HeartButton from '@/components/HeartButton.vue'
+import { resolvePreferenceScore } from './resolve-preferences'
 import { extractDimensionNames } from './resolve-dimensions'
 import ResolveMagnetTable from './ResolveMagnetTable.vue'
 
@@ -31,60 +34,6 @@ const message = useMessage()
 
 const isAdmin = computed(() => auth.role === 'admin')
 const oneClickLoading = ref(false)
-
-// ADR-022 §C4 — hearted state per dimension. Keyed by content_id, which equals
-// the dimension name (name-as-id convention) so rows are shared across pages.
-// Preferences load asynchronously after first paint, so this stays reactive to
-// flip chips from white to filled hearts once the lists arrive.
-type HeartDimension = 'actor' | 'category' | 'maker' | 'director'
-const hearted = ref<Record<HeartDimension, Map<string, boolean>>>({
-  actor: new Map(),
-  category: new Map(),
-  maker: new Map(),
-  director: new Map(),
-})
-
-// maker/director are absent from the resolve detail; fetch them from metadata.
-const metadata = ref<MovieMetadata | null>(null)
-const makers = computed<string[]>(() => extractDimensionNames(metadata.value?.maker))
-const directors = computed<string[]>(() => extractDimensionNames(metadata.value?.directors))
-
-function isHearted(dim: HeartDimension, name: string): boolean {
-  return hearted.value[dim].get(name) ?? false
-}
-
-function setHearted(dim: HeartDimension, name: string, val: boolean): void {
-  hearted.value[dim].set(name, val)
-}
-
-async function loadHearted(dim: HeartDimension): Promise<void> {
-  try {
-    const res = await listContentPreferences({ content_type: dim })
-    hearted.value[dim] = new Map(res.items.map((p) => [p.content_id, p.hearted]))
-  } catch {
-    // Best-effort: leave the map empty so chips default to un-hearted.
-  }
-}
-
-async function loadMetadata(detailUrl: string): Promise<void> {
-  metadata.value = null
-  if (!detailUrl) return
-  try {
-    metadata.value = await getMovieMetadata(detailUrl)
-  } catch {
-    // Supplementary data — a failure just hides the maker/director chips.
-    metadata.value = null
-  }
-}
-
-onMounted(() => {
-  void Promise.all([
-    loadHearted('actor'),
-    loadHearted('category'),
-    loadHearted('maker'),
-    loadHearted('director'),
-  ])
-})
 
 // `detail` and `index` are loose `Record<string, unknown>` on the BE schema.
 // Pull common fields defensively.
@@ -110,9 +59,99 @@ const url = computed(() => {
 const actors = computed<string[]>(() => stringList(detail.value, ['actors', 'actresses']))
 const tags = computed<string[]>(() => stringList(detail.value, ['tags', 'categories', 'genres']))
 
-// Re-fetch metadata whenever the resolved detail URL changes (the card instance
-// is reused across resolves, so a watcher — not onMounted — is required).
-watch(url, (u) => void loadMetadata(u), { immediate: true })
+// ADR-022 B3/C4: preference context for the resolved detail. Hearts seed from
+// existing ContentPreferences; the score reuses the shared rule-based formula.
+// maker/director are absent from the resolve detail, so they come from the
+// separate MovieMetadata fetch (a 404 just means the movie was never scraped).
+const actorHearted = ref(new Map<string, boolean>())
+const categoryHearted = ref(new Map<string, boolean>())
+const makerHearted = ref(new Map<string, boolean>())
+const directorHearted = ref(new Map<string, boolean>())
+const movieRating = ref<number | null>(null)
+const metadata = ref<MovieMetadata | null>(null)
+
+const makers = computed<string[]>(() => extractDimensionNames(metadata.value?.maker))
+const directors = computed<string[]>(() => extractDimensionNames(metadata.value?.directors))
+
+const score = computed(() => resolvePreferenceScore(movieRating.value, actors.value, actorHearted.value))
+const scoreDisplay = computed(() => score.value.toFixed(2))
+
+async function loadPreferenceContext(): Promise<void> {
+  if (props.result.kind !== 'detail') return
+  // Latest-wins guard: capture the url at entry; bail before assigning state
+  // if a newer resolve has since superseded this one.
+  const reqUrl = url.value
+  try {
+    const [actorPrefs, categoryPrefs, makerPrefs, directorPrefs] = await Promise.all([
+      listContentPreferences({ content_type: 'actor' }),
+      listContentPreferences({ content_type: 'category' }),
+      listContentPreferences({ content_type: 'maker' }),
+      listContentPreferences({ content_type: 'director' }),
+    ])
+    if (reqUrl !== url.value) return
+    actorHearted.value = new Map(actorPrefs.items.map((p) => [p.content_id, p.hearted]))
+    categoryHearted.value = new Map(categoryPrefs.items.map((p) => [p.content_id, p.hearted]))
+    makerHearted.value = new Map(makerPrefs.items.map((p) => [p.content_id, p.hearted]))
+    directorHearted.value = new Map(directorPrefs.items.map((p) => [p.content_id, p.hearted]))
+  } catch {
+    if (reqUrl !== url.value) return
+    // A failed prefs fetch must not break the card; leave maps empty.
+    actorHearted.value = new Map()
+    categoryHearted.value = new Map()
+    makerHearted.value = new Map()
+    directorHearted.value = new Map()
+  }
+  if (reqUrl) {
+    try {
+      const r = await getMovieRating(reqUrl, { skipErrorToast: true })
+      if (reqUrl !== url.value) return
+      movieRating.value = r.rating ?? null
+    } catch {
+      if (reqUrl !== url.value) return
+      // No rating (404) is expected; treat silently as null.
+      movieRating.value = null
+    }
+    try {
+      // Best-effort: maker/director chips just stay hidden if metadata is absent.
+      const meta = await getMovieMetadata(reqUrl)
+      if (reqUrl !== url.value) return
+      metadata.value = meta
+    } catch {
+      if (reqUrl !== url.value) return
+      metadata.value = null
+    }
+  } else {
+    movieRating.value = null
+    metadata.value = null
+  }
+}
+
+function onActorHeart(name: string, val: boolean): void {
+  actorHearted.value = new Map(actorHearted.value).set(name, val)
+}
+
+function onCategoryHeart(name: string, val: boolean): void {
+  categoryHearted.value = new Map(categoryHearted.value).set(name, val)
+}
+
+function onMakerHeart(name: string, val: boolean): void {
+  makerHearted.value = new Map(makerHearted.value).set(name, val)
+}
+
+function onDirectorHeart(name: string, val: boolean): void {
+  directorHearted.value = new Map(directorHearted.value).set(name, val)
+}
+
+onMounted(() => {
+  void loadPreferenceContext()
+})
+
+watch(
+  () => url.value,
+  () => {
+    void loadPreferenceContext()
+  },
+)
 
 const magnets = computed<MagnetRow[]>(() => {
   const raw = detail.value?.magnets ?? detail.value?.torrents
@@ -214,6 +253,18 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             >
               {{ code }}
             </NTag>
+            <NTooltip trigger="hover">
+              <template #trigger>
+                <NTag
+                  size="small"
+                  type="warning"
+                  round
+                >
+                  {{ t('browse.resolve.score') }} {{ scoreDisplay }}
+                </NTag>
+              </template>
+              {{ t('browse.resolve.scoreHint') }}
+            </NTooltip>
           </div>
           <p
             v-if="releaseDate"
@@ -226,10 +277,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             :size="4"
             wrap
           >
-            <span
+            <div
               v-for="a in actors"
               :key="a"
-              class="chip"
+              class="heart-chip"
             >
               <NTag
                 size="tiny"
@@ -241,10 +292,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
                 content-type="actor"
                 :content-id="a"
                 :content-name="a"
-                :initial-hearted="isHearted('actor', a)"
-                @change="(v: boolean) => setHearted('actor', a, v)"
+                :initial-hearted="actorHearted.get(a) ?? false"
+                @change="(val) => onActorHeart(a, val)"
               />
-            </span>
+            </div>
           </NSpace>
           <NSpace
             v-if="tags.length"
@@ -252,10 +303,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             wrap
             style="margin-top: 6px;"
           >
-            <span
+            <div
               v-for="g in tags"
               :key="g"
-              class="chip"
+              class="heart-chip"
             >
               <NTag
                 size="tiny"
@@ -268,10 +319,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
                 content-type="category"
                 :content-id="g"
                 :content-name="g"
-                :initial-hearted="isHearted('category', g)"
-                @change="(v: boolean) => setHearted('category', g, v)"
+                :initial-hearted="categoryHearted.get(g) ?? false"
+                @change="(val) => onCategoryHeart(g, val)"
               />
-            </span>
+            </div>
           </NSpace>
           <NSpace
             v-if="makers.length"
@@ -281,10 +332,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             style="margin-top: 6px;"
           >
             <span class="dim-label">{{ t('browse.resolve.dimensions.maker') }}</span>
-            <span
+            <div
               v-for="m in makers"
               :key="m"
-              class="chip"
+              class="heart-chip"
             >
               <NTag
                 size="tiny"
@@ -297,10 +348,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
                 content-type="maker"
                 :content-id="m"
                 :content-name="m"
-                :initial-hearted="isHearted('maker', m)"
-                @change="(v: boolean) => setHearted('maker', m, v)"
+                :initial-hearted="makerHearted.get(m) ?? false"
+                @change="(val) => onMakerHeart(m, val)"
               />
-            </span>
+            </div>
           </NSpace>
           <NSpace
             v-if="directors.length"
@@ -310,10 +361,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
             style="margin-top: 6px;"
           >
             <span class="dim-label">{{ t('browse.resolve.dimensions.director') }}</span>
-            <span
+            <div
               v-for="d in directors"
               :key="d"
-              class="chip"
+              class="heart-chip"
             >
               <NTag
                 size="tiny"
@@ -326,10 +377,10 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
                 content-type="director"
                 :content-id="d"
                 :content-name="d"
-                :initial-hearted="isHearted('director', d)"
-                @change="(v: boolean) => setHearted('director', d, v)"
+                :initial-hearted="directorHearted.get(d) ?? false"
+                @change="(val) => onDirectorHeart(d, val)"
               />
-            </span>
+            </div>
           </NSpace>
           <NSpace
             v-if="isAdmin"
@@ -429,7 +480,7 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
   font-size: 12px;
   color: var(--n-text-color-2);
 }
-.chip {
+.heart-chip {
   display: inline-flex;
   align-items: center;
   gap: 2px;
