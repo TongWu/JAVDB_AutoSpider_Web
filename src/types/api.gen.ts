@@ -1180,6 +1180,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/quality/evaluations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Evaluations */
+        get: operations["list_evaluations_api_quality_evaluations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/quality/evidence/{info_hash}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Evidence */
+        get: operations["get_evidence_api_quality_evidence__info_hash__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions": {
         parameters: {
             query?: never;
@@ -2936,6 +2970,89 @@ export interface components {
             daily_success: number;
         } & {
             [key: string]: unknown;
+        };
+        /** TorrentQualityEvaluationListResponse */
+        TorrentQualityEvaluationListResponse: {
+            /** Items */
+            items: components["schemas"]["TorrentQualityEvaluationSchema"][];
+        };
+        /**
+         * TorrentQualityEvaluationSchema
+         * @description Movie-context shadow evaluation.
+         */
+        TorrentQualityEvaluationSchema: {
+            /** Category Consistent */
+            category_consistent?: boolean | null;
+            /** Decision */
+            decision?: string | null;
+            /** Inferred Category */
+            inferred_category?: string | null;
+            /** Info Hash */
+            info_hash: string;
+            /** Javdb Category */
+            javdb_category?: string | null;
+            /** Magnet Name */
+            magnet_name?: string | null;
+            /** Movie Href */
+            movie_href: string;
+            /** Policy Mode */
+            policy_mode?: string | null;
+            /**
+             * Reasons
+             * @default []
+             */
+            reasons: string[];
+            /** Score */
+            score?: number | null;
+            /** Scoring Version */
+            scoring_version: string;
+            /** Shadow Rank */
+            shadow_rank?: number | null;
+            /** Subtitle Evidence */
+            subtitle_evidence?: string | null;
+            /** Video Code */
+            video_code?: string | null;
+            /** Would Replace Current Choice */
+            would_replace_current_choice?: boolean | null;
+        };
+        /**
+         * TorrentQualityEvidenceSchema
+         * @description Torrent-level objective evidence.
+         */
+        TorrentQualityEvidenceSchema: {
+            /** Info Hash */
+            info_hash: string;
+            /** Junk Size Bytes */
+            junk_size_bytes?: number | null;
+            /** Junk Size Ratio */
+            junk_size_ratio?: number | null;
+            /** Main Video Ratio */
+            main_video_ratio?: number | null;
+            /** Main Video Size Bytes */
+            main_video_size_bytes?: number | null;
+            /** Metadata Status */
+            metadata_status?: string | null;
+            /** Non Video File Count */
+            non_video_file_count?: number | null;
+            /** Probe Schema Version */
+            probe_schema_version: string;
+            /** Probe Target Name */
+            probe_target_name?: string | null;
+            /**
+             * Reasons
+             * @default []
+             */
+            reasons: string[];
+            /** Subtitle File Count */
+            subtitle_file_count?: number | null;
+            /** Suspicious File Count */
+            suspicious_file_count?: number | null;
+            /** Target Role */
+            target_role: string;
+            /** Total Size Bytes */
+            total_size_bytes?: number | null;
+            /** Video File Count */
+            video_file_count?: number | null;
         };
         /**
          * TorrentSearchItem
@@ -5256,6 +5373,136 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentPreferenceResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_evaluations_api_quality_evaluations_get: {
+        parameters: {
+            query?: {
+                /** @description Number of recent evaluations to return. Values greater than 200 are truncated to 200 by the server. */
+                limit?: number;
+                movie_href?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TorrentQualityEvaluationListResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_evidence_api_quality_evidence__info_hash__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                info_hash: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TorrentQualityEvidenceSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Not Found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
                 };
             };
             /** @description Validation Error */
