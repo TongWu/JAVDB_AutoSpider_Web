@@ -107,7 +107,7 @@ diagnosticsRoutes.get("/ops-incidents", async (c) => {
 });
 
 diagnosticsRoutes.get("/ops-incidents/analytics", async (c) => {
-  const rows = await c.env.REPORTS_DB.prepare("SELECT incident_type, status, confidence FROM OpsIncidents LIMIT 500").all<any>();
+  const rows = await c.env.REPORTS_DB.prepare("SELECT incident_type, status, confidence FROM OpsIncidents ORDER BY created_at DESC LIMIT 500").all<any>();
   const byType: Record<string, number> = {};
   const byStatus: Record<string, number> = {};
   const byConfidence: Record<string, number> = {};
