@@ -43,6 +43,49 @@ async function seedTables(db: D1Database) {
     .run();
 }
 
+async function seedOpsIncidentTables(db: D1Database) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS OpsIncidents (
+      incident_id TEXT PRIMARY KEY,
+      trigger_source TEXT NOT NULL,
+      run_id TEXT,
+      run_attempt INTEGER,
+      session_id TEXT,
+      incident_type TEXT NOT NULL,
+      status TEXT NOT NULL,
+      persistence_status TEXT NOT NULL,
+      model_version TEXT NOT NULL,
+      detector_version TEXT NOT NULL,
+      bundle_schema_version TEXT NOT NULL,
+      confidence TEXT NOT NULL,
+      confirmed_findings_json TEXT NOT NULL,
+      likely_causes_json TEXT NOT NULL,
+      unknowns_json TEXT NOT NULL,
+      recommended_next_actions_json TEXT NOT NULL,
+      unsafe_actions_json TEXT NOT NULL,
+      evidence_refs_json TEXT NOT NULL,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      resolved_at TEXT
+    )
+  `).run();
+  await db.prepare("DELETE FROM OpsIncidents").run();
+  await db.prepare(`
+    INSERT INTO OpsIncidents (
+      incident_id, trigger_source, run_id, run_attempt, session_id, incident_type, status,
+      persistence_status, model_version, detector_version, bundle_schema_version, confidence,
+      confirmed_findings_json, likely_causes_json, unknowns_json, recommended_next_actions_json,
+      unsafe_actions_json, evidence_refs_json, created_at, updated_at, resolved_at
+    )
+    VALUES (
+      'opsinc_test', 'workflow_failure', '100', 1, '20260527T000000.000000Z-0000-0000', 'failed_ingestion', 'open',
+      'd1_written', 'fallback-v1', 'detectors-v1', 'bundle-v1', 'low',
+      '["Workflow result is failure."]', '[]', '[]', '["Inspect logs."]',
+      '[]', '[]', '2026-05-27T00:00:00Z', '2026-05-27T00:00:00Z', NULL
+    )
+  `).run();
+}
+
 describe("Diagnostics routes", () => {
   beforeAll(async () => {
     await seedTables(env.OPERATIONS_DB);
@@ -119,5 +162,59 @@ describe("Diagnostics routes", () => {
     const data = (await res.json()) as any;
     expect(data.success).toBe(false);
     expect(data.error).toContain("unavailable");
+  });
+
+  it("GET /api/diag/ops-incidents returns persisted incidents", async () => {
+    await seedOpsIncidentTables(env.REPORTS_DB);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.items[0].incident_id).toBe("opsinc_test");
+    expect(data.items[0].confirmed_findings).toEqual(["Workflow result is failure."]);
+  });
+
+  it("GET /api/diag/ops-incidents/analytics returns counts", async () => {
+    await seedOpsIncidentTables(env.REPORTS_DB);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents/analytics", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.total).toBe(1);
+    expect(data.by_type.failed_ingestion).toBe(1);
+  });
+
+  it("GET /api/diag/ops-incidents/:incident_id returns the mapped incident", async () => {
+    await seedOpsIncidentTables(env.REPORTS_DB);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents/opsinc_test", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.incident_id).toBe("opsinc_test");
+    expect(data.confirmed_findings).toEqual(["Workflow result is failure."]);
+    expect(data.recommended_next_actions).toEqual(["Inspect logs."]);
+  });
+
+  it("GET /api/diag/ops-incidents/:incident_id returns 404 for unknown id", async () => {
+    await seedOpsIncidentTables(env.REPORTS_DB);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents/opsinc_missing", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(404);
   });
 });

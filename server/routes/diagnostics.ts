@@ -43,6 +43,98 @@ diagnosticsRoutes.get("/javdb-session", async (c) => {
   });
 });
 
+function parseJsonArray(value: string | null): unknown[] {
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+// bundle_schema_version is storage-internal and intentionally excluded from the API surface (matches Python OpsIncidentSchema).
+function mapOpsIncident(row: any) {
+  return {
+    incident_id: row.incident_id,
+    trigger_source: row.trigger_source,
+    run_id: row.run_id ?? null,
+    run_attempt: row.run_attempt ?? null,
+    session_id: row.session_id ?? null,
+    incident_type: row.incident_type,
+    status: row.status,
+    persistence_status: row.persistence_status,
+    model_version: row.model_version,
+    detector_version: row.detector_version,
+    confidence: row.confidence,
+    confirmed_findings: parseJsonArray(row.confirmed_findings_json),
+    likely_causes: parseJsonArray(row.likely_causes_json),
+    unknowns: parseJsonArray(row.unknowns_json),
+    recommended_next_actions: parseJsonArray(row.recommended_next_actions_json),
+    unsafe_actions: parseJsonArray(row.unsafe_actions_json),
+    evidence_refs: parseJsonArray(row.evidence_refs_json),
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    resolved_at: row.resolved_at ?? null,
+  };
+}
+
+diagnosticsRoutes.get("/ops-incidents", async (c) => {
+  const status = c.req.query("status");
+  const incidentType = c.req.query("incident_type");
+  const confidence = c.req.query("confidence");
+  const limit = Math.max(1, Math.min(100, parseInt(c.req.query("limit") ?? "50", 10) || 50));
+  const clauses: string[] = [];
+  const bindings: (string | number)[] = [];
+  if (status) {
+    clauses.push("status = ?");
+    bindings.push(status);
+  }
+  if (incidentType) {
+    clauses.push("incident_type = ?");
+    bindings.push(incidentType);
+  }
+  if (confidence) {
+    clauses.push("confidence = ?");
+    bindings.push(confidence);
+  }
+  const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
+  const rows = await c.env.REPORTS_DB
+    .prepare(`SELECT * FROM OpsIncidents ${where} ORDER BY created_at DESC LIMIT ?`)
+    .bind(...bindings, limit)
+    .all();
+  return c.json({ items: rows.results.map(mapOpsIncident) });
+});
+
+diagnosticsRoutes.get("/ops-incidents/analytics", async (c) => {
+  const rows = await c.env.REPORTS_DB.prepare("SELECT incident_type, status, confidence FROM OpsIncidents LIMIT 500").all<any>();
+  const byType: Record<string, number> = {};
+  const byStatus: Record<string, number> = {};
+  const byConfidence: Record<string, number> = {};
+  for (const row of rows.results) {
+    byType[row.incident_type] = (byType[row.incident_type] ?? 0) + 1;
+    byStatus[row.status] = (byStatus[row.status] ?? 0) + 1;
+    byConfidence[row.confidence] = (byConfidence[row.confidence] ?? 0) + 1;
+  }
+  return c.json({
+    total: rows.results.length,
+    by_type: byType,
+    by_status: byStatus,
+    by_confidence: byConfidence,
+    open_high_confidence: rows.results.filter((row) => row.status === "open" && row.confidence === "high").length,
+  });
+});
+
+diagnosticsRoutes.get("/ops-incidents/:incident_id", async (c) => {
+  const incidentId = c.req.param("incident_id");
+  const row = await c.env.REPORTS_DB
+    .prepare("SELECT * FROM OpsIncidents WHERE incident_id = ?")
+    .bind(incidentId)
+    .first();
+  if (!row) throw new HTTPException(404, { message: "Incident not found" });
+  return c.json(mapOpsIncident(row));
+});
+
 diagnosticsRoutes.post("/javdb-session/refresh", requireRole("admin"), async (c) => {
   const body = await c.req.json<{ method: string; cookie_value?: string | null }>();
 
