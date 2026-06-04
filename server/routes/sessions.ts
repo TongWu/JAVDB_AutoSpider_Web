@@ -152,6 +152,15 @@ function isGhActionsConfigured(env: Env): boolean {
 
 const COMMITTABLE_STATES = new Set(["in_progress", "finalizing"]);
 
+export async function ensureReportSessionsCommittedAtColumn(db: D1Database): Promise<void> {
+  const columns = await db
+    .prepare("PRAGMA table_info(ReportSessions)")
+    .all<{ name: string }>();
+  if (columns.results.some((column) => column.name === "CommittedAt")) return;
+
+  await db.prepare("ALTER TABLE ReportSessions ADD COLUMN CommittedAt TEXT").run();
+}
+
 // POST /:session_id/commit — commit a session
 sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
   const sessionId = c.req.param("session_id");
@@ -211,6 +220,7 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
 
   // Step 2: Update session status
   try {
+    await ensureReportSessionsCommittedAtColumn(c.env.REPORTS_DB);
     await c.env.REPORTS_DB
       .prepare(
         [
