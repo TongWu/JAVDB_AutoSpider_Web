@@ -7,6 +7,9 @@ type StatsEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const statsRoutes = new Hono<StatsEnv>();
 
+export const SUMMARY_DEDUP_FREED_SQL =
+  "SELECT SUM(ExistingFolderSize) AS total_freed FROM DedupRecords WHERE IsDeleted=1";
+
 // --- GET /summary ---
 
 statsRoutes.get("/summary", async (c) => {
@@ -89,9 +92,7 @@ statsRoutes.get("/summary", async (c) => {
   // DedupRecords freed bytes (OPERATIONS_DB)
   try {
     const r = await opsDb
-      .prepare(
-        "SELECT SUM(ExistingFolderSize) AS total_freed FROM DedupRecords WHERE Status='completed'",
-      )
+      .prepare(SUMMARY_DEDUP_FREED_SQL)
       .first<{ total_freed: number | null }>();
     if (r && r.total_freed !== null) {
       totalDedupFreedBytes = r.total_freed;

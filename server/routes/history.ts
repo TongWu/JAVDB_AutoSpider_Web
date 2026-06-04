@@ -26,6 +26,12 @@ function clampLimit(raw: string | undefined): number {
   return Math.max(1, Math.min(200, isNaN(n) ? 50 : n));
 }
 
+const LIST_TOTAL_ESTIMATE_CAP = 10_000;
+
+function countExpression(forExport: boolean): string {
+  return forExport ? "COUNT(*)" : `MIN(COUNT(*), ${LIST_TOTAL_ESTIMATE_CAP})`;
+}
+
 // --- Movie search ---
 
 interface MovieRow {
@@ -110,7 +116,7 @@ export function buildMovieWhere(input: MovieFilterInput): { where: string; bindi
   return { where, bindings };
 }
 
-function buildMovieQuery(params: Record<string, string | undefined>, forExport: boolean) {
+export function buildMovieQuery(params: Record<string, string | undefined>, forExport: boolean) {
   const { where, bindings } = buildMovieWhere({
     cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
     q: params.q || undefined,
@@ -133,7 +139,8 @@ function buildMovieQuery(params: Record<string, string | undefined>, forExport: 
     GROUP BY m.Id
     ORDER BY m.Id`;
 
-  const countSql = `SELECT COUNT(*) AS cnt FROM MovieHistory m ${where}`;
+  // ADR-047 D1b: cap list estimates, but keep export counts exact for truncation.
+  const countSql = `SELECT ${countExpression(forExport)} AS cnt FROM MovieHistory m ${where}`;
 
   return { selectSql, countSql, bindings };
 }
@@ -297,7 +304,7 @@ export function buildTorrentWhere(input: TorrentFilterInput): { where: string; b
   return { where, bindings };
 }
 
-function buildTorrentQuery(params: Record<string, string | undefined>, forExport: boolean) {
+export function buildTorrentQuery(params: Record<string, string | undefined>, forExport: boolean) {
   let resolutionType: number | undefined;
   if (params.resolution_type !== undefined) {
     resolutionType = parseInt(params.resolution_type, 10);
@@ -329,7 +336,7 @@ function buildTorrentQuery(params: Record<string, string | undefined>, forExport
     ORDER BY t.Id`;
 
   const countSql = `
-    SELECT COUNT(*) AS cnt
+    SELECT ${countExpression(forExport)} AS cnt
     FROM TorrentHistory t
     JOIN MovieHistory m ON m.Id = t.MovieHistoryId
     ${where}`;
