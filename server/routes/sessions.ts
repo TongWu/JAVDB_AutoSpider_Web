@@ -213,7 +213,12 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
   try {
     await c.env.REPORTS_DB
       .prepare(
-        "UPDATE ReportSessions SET Status = 'committed', DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')) WHERE Id = ?"
+        [
+          "UPDATE ReportSessions",
+          "SET Status = 'committed',",
+          "DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')),",
+          "CommittedAt = COALESCE(CommittedAt, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) WHERE Id = ?",
+        ].join(" ")
       )
       .bind(sessionId)
       .run();

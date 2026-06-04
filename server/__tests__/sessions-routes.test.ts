@@ -23,7 +23,7 @@ async function getCsrf() {
 }
 
 async function seedSessions(db: D1Database) {
-  await db.prepare("CREATE TABLE IF NOT EXISTS ReportSessions (Id TEXT PRIMARY KEY, ReportType TEXT NOT NULL, ReportDate TEXT NOT NULL, UrlType TEXT, DisplayName TEXT, Url TEXT, StartPage INTEGER, EndPage INTEGER, CsvFilename TEXT NOT NULL, DateTimeCreated TEXT NOT NULL, Status TEXT DEFAULT 'in_progress', RunId TEXT, RunAttempt INTEGER, FailureReason TEXT, WriteMode TEXT DEFAULT 'pending')").run();
+  await db.prepare("CREATE TABLE IF NOT EXISTS ReportSessions (Id TEXT PRIMARY KEY, ReportType TEXT NOT NULL, ReportDate TEXT NOT NULL, UrlType TEXT, DisplayName TEXT, Url TEXT, StartPage INTEGER, EndPage INTEGER, CsvFilename TEXT NOT NULL, DateTimeCreated TEXT NOT NULL, Status TEXT DEFAULT 'in_progress', RunId TEXT, RunAttempt INTEGER, FailureReason TEXT, WriteMode TEXT DEFAULT 'pending', CommittedAt TEXT)").run();
   await db.prepare("CREATE TABLE IF NOT EXISTS ReportMovies (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, Href TEXT, VideoCode TEXT, Page INTEGER, Actor TEXT, Rate REAL, CommentNumber INTEGER)").run();
   await db.prepare("CREATE TABLE IF NOT EXISTS ReportTorrents (Id INTEGER PRIMARY KEY AUTOINCREMENT, ReportMovieId INTEGER NOT NULL, VideoCode TEXT, MagnetUri TEXT, SubtitleIndicator INTEGER, CensorIndicator INTEGER, ResolutionType INTEGER, Size TEXT, FileCount INTEGER)").run();
   await db.prepare("INSERT INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode, RunId, RunAttempt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)").bind("sess-001", "daily", "2026-01-01", "report1.csv", "2026-01-01 10:00:00", "committed", "pending", "run-1", 1).run();
@@ -127,6 +127,12 @@ describe("Sessions routes", () => {
     expect(data.session_id).toBe("sess-003");
     expect(data.new_state).toBe("committed");
     expect(data.pending_dropped).toBe(0);
+
+    const row = await env.REPORTS_DB.prepare(
+      "SELECT Status, CommittedAt FROM ReportSessions WHERE Id = ?"
+    ).bind("sess-003").first<{ Status: string; CommittedAt: string | null }>();
+    expect(row?.Status).toBe("committed");
+    expect(row?.CommittedAt).toEqual(expect.any(String));
   });
 
   it("POST /api/sessions/:id/commit returns 404 for unknown session", async () => {
