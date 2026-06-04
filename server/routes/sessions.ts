@@ -12,7 +12,7 @@ type SessEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const sessionsRoutes = new Hono<SessEnv>();
 
-interface SessionRow {
+export interface SessionRow {
   Id: string;
   Status: string | null;
   WriteMode: string | null;
@@ -24,7 +24,7 @@ interface SessionRow {
   FailureReason: string | null;
 }
 
-function mapSession(row: SessionRow) {
+export function mapSession(row: SessionRow) {
   return {
     session_id: row.Id,
     state: row.Status ?? "in_progress",
