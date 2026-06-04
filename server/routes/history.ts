@@ -27,10 +27,7 @@ function clampLimit(raw: string | undefined): number {
 }
 
 const LIST_TOTAL_ESTIMATE_CAP = 10_000;
-
-function countExpression(forExport: boolean): string {
-  return forExport ? "COUNT(*)" : `MIN(COUNT(*), ${LIST_TOTAL_ESTIMATE_CAP})`;
-}
+const CAPPED_COUNT_EXPRESSION = `MIN(COUNT(*), ${LIST_TOTAL_ESTIMATE_CAP})`;
 
 // --- Movie search ---
 
@@ -116,8 +113,13 @@ export function buildMovieWhere(input: MovieFilterInput): { where: string; bindi
   return { where, bindings };
 }
 
+export function buildMovieCount(input: MovieFilterInput): { sql: string; bindings: (string | number)[] } {
+  const { where, bindings } = buildMovieWhere(input);
+  return { sql: `SELECT ${CAPPED_COUNT_EXPRESSION} AS cnt FROM MovieHistory m ${where}`, bindings };
+}
+
 export function buildMovieQuery(params: Record<string, string | undefined>, forExport: boolean) {
-  const { where, bindings } = buildMovieWhere({
+  const input: MovieFilterInput = {
     cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
     q: params.q || undefined,
     actor: params.actor || undefined,
@@ -126,7 +128,8 @@ export function buildMovieQuery(params: Record<string, string | undefined>, forE
     session_id: params.session_id || undefined,
     date_from: params.date_from || undefined,
     date_to: params.date_to || undefined,
-  });
+  };
+  const { where, bindings } = buildMovieWhere(input);
 
   const selectSql = `
     SELECT m.Id, m.VideoCode, m.Href, m.ActorName, m.ActorGender,
@@ -140,18 +143,20 @@ export function buildMovieQuery(params: Record<string, string | undefined>, forE
     ORDER BY m.Id`;
 
   // ADR-047 D1b: cap list estimates, but keep export counts exact for truncation.
-  const countSql = `SELECT ${countExpression(forExport)} AS cnt FROM MovieHistory m ${where}`;
+  const count = forExport
+    ? { sql: `SELECT COUNT(*) AS cnt FROM MovieHistory m ${where}`, bindings }
+    : buildMovieCount(input);
 
-  return { selectSql, countSql, bindings };
+  return { selectSql, countSql: count.sql, bindings, countBindings: count.bindings };
 }
 
 historyRoutes.get("/movies", async (c) => {
   const params = c.req.query();
   const limit = clampLimit(params.limit);
-  const { selectSql, countSql, bindings } = buildMovieQuery(params, false);
+  const { selectSql, countSql, bindings, countBindings } = buildMovieQuery(params, false);
 
   const db = c.env.HISTORY_DB;
-  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const countResult = await db.prepare(countSql).bind(...countBindings).first<{ cnt: number }>();
   const rows = await db.prepare(`${selectSql} LIMIT ?`).bind(...bindings, limit).all<MovieRow>();
 
   const items = rows.results.map((r) => ({
@@ -183,10 +188,10 @@ const EXPORT_LIMIT = 100_000;
 
 historyRoutes.get("/movies/export", async (c) => {
   const params = c.req.query();
-  const { selectSql, countSql, bindings } = buildMovieQuery(params, true);
+  const { selectSql, countSql, bindings, countBindings } = buildMovieQuery(params, true);
   const db = c.env.HISTORY_DB;
 
-  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const countResult = await db.prepare(countSql).bind(...countBindings).first<{ cnt: number }>();
   const totalCount = countResult?.cnt ?? 0;
   const rows = await db.prepare(`${selectSql} LIMIT ${EXPORT_LIMIT}`).bind(...bindings).all<MovieRow>();
   const truncated = rows.results.length >= EXPORT_LIMIT && totalCount > EXPORT_LIMIT;
@@ -304,6 +309,17 @@ export function buildTorrentWhere(input: TorrentFilterInput): { where: string; b
   return { where, bindings };
 }
 
+export function buildTorrentCount(input: TorrentFilterInput): { sql: string; bindings: (string | number)[] } {
+  const { where, bindings } = buildTorrentWhere(input);
+  return {
+    sql: (
+      `SELECT ${CAPPED_COUNT_EXPRESSION} AS cnt ` +
+      `FROM TorrentHistory t JOIN MovieHistory m ON m.Id = t.MovieHistoryId ${where}`
+    ),
+    bindings,
+  };
+}
+
 export function buildTorrentQuery(params: Record<string, string | undefined>, forExport: boolean) {
   let resolutionType: number | undefined;
   if (params.resolution_type !== undefined) {
@@ -315,7 +331,7 @@ export function buildTorrentQuery(params: Record<string, string | undefined>, fo
     }
   }
 
-  const { where, bindings } = buildTorrentWhere({
+  const input: TorrentFilterInput = {
     cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
     q: params.q || undefined,
     resolution_type: resolutionType,
@@ -324,7 +340,8 @@ export function buildTorrentQuery(params: Record<string, string | undefined>, fo
     session_id: params.session_id || undefined,
     date_from: params.date_from || undefined,
     date_to: params.date_to || undefined,
-  });
+  };
+  const { where, bindings } = buildTorrentWhere(input);
 
   const selectSql = `
     SELECT t.Id, m.VideoCode AS movie_video_code, m.Href AS movie_href,
@@ -335,22 +352,27 @@ export function buildTorrentQuery(params: Record<string, string | undefined>, fo
     ${where}
     ORDER BY t.Id`;
 
-  const countSql = `
-    SELECT ${countExpression(forExport)} AS cnt
-    FROM TorrentHistory t
-    JOIN MovieHistory m ON m.Id = t.MovieHistoryId
-    ${where}`;
+  const count = forExport
+    ? {
+      sql: `
+      SELECT COUNT(*) AS cnt
+      FROM TorrentHistory t
+      JOIN MovieHistory m ON m.Id = t.MovieHistoryId
+      ${where}`,
+      bindings,
+    }
+    : buildTorrentCount(input);
 
-  return { selectSql, countSql, bindings };
+  return { selectSql, countSql: count.sql, bindings, countBindings: count.bindings };
 }
 
 historyRoutes.get("/torrents", async (c) => {
   const params = c.req.query();
   const limit = clampLimit(params.limit);
-  const { selectSql, countSql, bindings } = buildTorrentQuery(params, false);
+  const { selectSql, countSql, bindings, countBindings } = buildTorrentQuery(params, false);
 
   const db = c.env.HISTORY_DB;
-  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const countResult = await db.prepare(countSql).bind(...countBindings).first<{ cnt: number }>();
   const rows = await db.prepare(`${selectSql} LIMIT ?`).bind(...bindings, limit).all<TorrentRow>();
 
   const items = rows.results.map((r) => ({
@@ -379,10 +401,10 @@ historyRoutes.get("/torrents", async (c) => {
 
 historyRoutes.get("/torrents/export", async (c) => {
   const params = c.req.query();
-  const { selectSql, countSql, bindings } = buildTorrentQuery(params, true);
+  const { selectSql, countSql, bindings, countBindings } = buildTorrentQuery(params, true);
   const db = c.env.HISTORY_DB;
 
-  const countResult = await db.prepare(countSql).bind(...bindings).first<{ cnt: number }>();
+  const countResult = await db.prepare(countSql).bind(...countBindings).first<{ cnt: number }>();
   const totalCount = countResult?.cnt ?? 0;
   const rows = await db.prepare(`${selectSql} LIMIT ${EXPORT_LIMIT}`).bind(...bindings).all<TorrentRow>();
   const truncated = rows.results.length >= EXPORT_LIMIT && totalCount > EXPORT_LIMIT;
