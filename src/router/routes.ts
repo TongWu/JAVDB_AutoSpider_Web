@@ -195,6 +195,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/diag/ops-incidents',
+    name: 'diag-ops-incidents',
+    component: () => import('@/pages/diagnostics/OpsIncidentsPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
   },

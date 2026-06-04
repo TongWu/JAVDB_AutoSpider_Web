@@ -63,3 +63,70 @@ export async function loginRefresh(): Promise<Record<string, unknown>> {
   const { data } = await http.post<Record<string, unknown>>('/api/login/refresh')
   return data
 }
+
+// ── Ops Incidents ─────────────────────────────────────────────────────
+export interface EvidenceRef {
+  kind: string
+  ref: string
+  label?: string | null
+}
+
+export interface OpsIncident {
+  incident_id: string
+  trigger_source: string
+  run_id?: string | null
+  run_attempt?: number | null
+  session_id?: string | null
+  incident_type: string
+  status: string
+  persistence_status: string
+  model_version: string
+  detector_version: string
+  confidence: string
+  confirmed_findings: string[]
+  likely_causes: string[]
+  unknowns: string[]
+  recommended_next_actions: string[]
+  unsafe_actions: string[]
+  evidence_refs: EvidenceRef[]
+  created_at: string
+  updated_at: string
+  resolved_at?: string | null
+}
+
+export interface OpsIncidentListResponse {
+  items: OpsIncident[]
+}
+
+export interface OpsIncidentAnalytics {
+  total: number
+  by_type: Record<string, number>
+  by_status: Record<string, number>
+  by_confidence: Record<string, number>
+  open_high_confidence: number
+}
+
+export interface ListOpsIncidentParams {
+  status?: string
+  incident_type?: string
+  confidence?: string
+  run_id?: string
+  session_id?: string
+}
+
+export async function listOpsIncidents(params: ListOpsIncidentParams = {}): Promise<OpsIncidentListResponse> {
+  const { data } = await http.get<OpsIncidentListResponse>('/api/diag/ops-incidents', { params })
+  return data
+}
+
+// Part of the API contract; the detail drawer currently populates from in-memory list data,
+// but this endpoint is available for future on-demand detail-fetch use.
+export async function getOpsIncident(incidentId: string): Promise<OpsIncident> {
+  const { data } = await http.get<OpsIncident>(`/api/diag/ops-incidents/${incidentId}`)
+  return data
+}
+
+export async function getOpsIncidentAnalytics(): Promise<OpsIncidentAnalytics> {
+  const { data } = await http.get<OpsIncidentAnalytics>('/api/diag/ops-incidents/analytics')
+  return data
+}
