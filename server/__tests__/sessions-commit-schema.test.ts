@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
+import { ensureReportSessionsCommittedAtColumn } from "../routes/sessions";
 
 async function getCsrf() {
   const res = await app.request("/api/auth/login", {
@@ -11,6 +12,45 @@ async function getCsrf() {
   const data = (await res.json()) as any;
   return { token: data.access_token, csrfToken: data.csrf_token, csrfCookie: `csrf_token=${data.csrf_token}` };
 }
+
+describe("ensureReportSessionsCommittedAtColumn", () => {
+  it("accepts duplicate ALTER errors when a concurrent migration added the column", async () => {
+    let pragmaCalls = 0;
+    let alterCalls = 0;
+
+    const db = {
+      prepare(sql: string) {
+        if (sql === "PRAGMA table_info(ReportSessions)") {
+          return {
+            all: async () => {
+              pragmaCalls += 1;
+              return {
+                results: pragmaCalls === 1
+                  ? [{ name: "Id" }]
+                  : [{ name: "Id" }, { name: "CommittedAt" }],
+              };
+            },
+          };
+        }
+
+        if (sql === "ALTER TABLE ReportSessions ADD COLUMN CommittedAt TEXT") {
+          return {
+            run: async () => {
+              alterCalls += 1;
+              throw new Error("duplicate column name: CommittedAt");
+            },
+          };
+        }
+
+        throw new Error(`Unexpected SQL: ${sql}`);
+      },
+    } as unknown as D1Database;
+
+    await expect(ensureReportSessionsCommittedAtColumn(db)).resolves.toBeUndefined();
+    expect(pragmaCalls).toBe(2);
+    expect(alterCalls).toBe(1);
+  });
+});
 
 describe("POST /api/sessions/:id/commit legacy schema compatibility", () => {
   beforeAll(async () => {

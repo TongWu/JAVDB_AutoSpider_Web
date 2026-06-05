@@ -152,13 +152,27 @@ function isGhActionsConfigured(env: Env): boolean {
 
 const COMMITTABLE_STATES = new Set(["in_progress", "finalizing"]);
 
-export async function ensureReportSessionsCommittedAtColumn(db: D1Database): Promise<void> {
+async function hasReportSessionsColumn(db: D1Database, columnName: string): Promise<boolean> {
   const columns = await db
     .prepare("PRAGMA table_info(ReportSessions)")
     .all<{ name: string }>();
-  if (columns.results.some((column) => column.name === "CommittedAt")) return;
+  return columns.results.some((column) => column.name === columnName);
+}
 
-  await db.prepare("ALTER TABLE ReportSessions ADD COLUMN CommittedAt TEXT").run();
+function isDuplicateColumnError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return /duplicate column name|column .*already exists|already exists.*column/i.test(err.message);
+}
+
+export async function ensureReportSessionsCommittedAtColumn(db: D1Database): Promise<void> {
+  if (await hasReportSessionsColumn(db, "CommittedAt")) return;
+
+  try {
+    await db.prepare("ALTER TABLE ReportSessions ADD COLUMN CommittedAt TEXT").run();
+  } catch (err) {
+    if (isDuplicateColumnError(err) && await hasReportSessionsColumn(db, "CommittedAt")) return;
+    throw err;
+  }
 }
 
 // POST /:session_id/commit — commit a session
