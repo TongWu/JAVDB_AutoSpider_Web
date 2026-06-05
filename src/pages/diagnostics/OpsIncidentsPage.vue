@@ -35,8 +35,10 @@ const filterConfidence = ref<string | null>(null)
 const incidents = ref<OpsIncident[]>([])
 const listLoading = ref(false)
 const listError = ref<string | null>(null)
+let listReqSeq = 0
 
 async function fetchIncidents() {
+  const reqSeq = ++listReqSeq
   listLoading.value = true
   listError.value = null
   const params: ListOpsIncidentParams = {}
@@ -45,11 +47,17 @@ async function fetchIncidents() {
   if (filterConfidence.value) params.confidence = filterConfidence.value
   try {
     const res = await listOpsIncidents(params)
-    incidents.value = res.items
+    if (reqSeq === listReqSeq) {
+      incidents.value = res.items
+    }
   } catch (e) {
-    listError.value = e instanceof Error ? e.message : String(e)
+    if (reqSeq === listReqSeq) {
+      listError.value = e instanceof Error ? e.message : String(e)
+    }
   } finally {
-    listLoading.value = false
+    if (reqSeq === listReqSeq) {
+      listLoading.value = false
+    }
   }
 }
 
@@ -96,7 +104,7 @@ function copyId(id: string) {
   void navigator.clipboard.writeText(id).then(() => {
     copied.value = true
     setTimeout(() => { copied.value = false }, 1500)
-  })
+  }).catch(() => { copied.value = false })
 }
 
 // ── Table columns ────────────────────────────────────────────────────
