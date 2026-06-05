@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import golden from "./fixtures/query-builders.golden.json";
-import { buildMovieWhere, buildTorrentWhere } from "../routes/history";
+import { buildMovieWhere, buildTorrentWhere, buildMovieCount, buildTorrentCount } from "../routes/history";
 import { buildSessionQuery } from "../routes/sessions";
 import { buildStatsTrendQuery } from "../routes/stats";
 import { cursorDecode } from "../services/cursor";
@@ -40,6 +40,8 @@ const RUN: Record<string, (p: any) => { sql: string; bindings: (string | number)
     const r = buildTorrentWhere(p);
     return { sql: r.where, bindings: r.bindings };
   },
+  movie_count: (p) => buildMovieCount(p),
+  torrent_count: (p) => buildTorrentCount(p),
   session_query: (p) => buildSessionQuery(mapSessionParams(p)),
   stats_trend_query: (p) => {
     const q = buildStatsTrendQuery({ metric: p.metric, cutoff: p.cutoff });

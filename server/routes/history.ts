@@ -110,8 +110,17 @@ export function buildMovieWhere(input: MovieFilterInput): { where: string; bindi
   return { where, bindings };
 }
 
+// Count assembler for the list view's `total_estimate`. Mirrors the Python
+// movie_count contract: COUNT(*) capped at 10000 via MIN(...) so large tables
+// short-circuit instead of scanning every row. Pinned by the ADR-018 query
+// Contract Golden.
+export function buildMovieCount(input: MovieFilterInput): { sql: string; bindings: (string | number)[] } {
+  const { where, bindings } = buildMovieWhere(input);
+  return { sql: `SELECT MIN(COUNT(*), 10000) AS cnt FROM MovieHistory m ${where}`, bindings };
+}
+
 function buildMovieQuery(params: Record<string, string | undefined>, forExport: boolean) {
-  const { where, bindings } = buildMovieWhere({
+  const input: MovieFilterInput = {
     cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
     q: params.q || undefined,
     actor: params.actor || undefined,
@@ -120,7 +129,8 @@ function buildMovieQuery(params: Record<string, string | undefined>, forExport: 
     session_id: params.session_id || undefined,
     date_from: params.date_from || undefined,
     date_to: params.date_to || undefined,
-  });
+  };
+  const { where, bindings } = buildMovieWhere(input);
 
   const selectSql = `
     SELECT m.Id, m.VideoCode, m.Href, m.ActorName, m.ActorGender,
@@ -133,7 +143,11 @@ function buildMovieQuery(params: Record<string, string | undefined>, forExport: 
     GROUP BY m.Id
     ORDER BY m.Id`;
 
-  const countSql = `SELECT COUNT(*) AS cnt FROM MovieHistory m ${where}`;
+  // List view uses the capped count (matches Python). Export needs the true
+  // total for its truncation check against EXPORT_LIMIT, so it stays uncapped.
+  const countSql = forExport
+    ? `SELECT COUNT(*) AS cnt FROM MovieHistory m ${where}`
+    : buildMovieCount(input).sql;
 
   return { selectSql, countSql, bindings };
 }
@@ -297,6 +311,18 @@ export function buildTorrentWhere(input: TorrentFilterInput): { where: string; b
   return { where, bindings };
 }
 
+// Count assembler for the list view's `total_estimate`. Mirrors the Python
+// torrent_count contract: COUNT(*) capped at 10000 via MIN(...) so large tables
+// short-circuit instead of scanning every row. Pinned by the ADR-018 query
+// Contract Golden.
+export function buildTorrentCount(input: TorrentFilterInput): { sql: string; bindings: (string | number)[] } {
+  const { where, bindings } = buildTorrentWhere(input);
+  return {
+    sql: `SELECT MIN(COUNT(*), 10000) AS cnt FROM TorrentHistory t JOIN MovieHistory m ON m.Id = t.MovieHistoryId ${where}`,
+    bindings,
+  };
+}
+
 function buildTorrentQuery(params: Record<string, string | undefined>, forExport: boolean) {
   let resolutionType: number | undefined;
   if (params.resolution_type !== undefined) {
@@ -308,7 +334,7 @@ function buildTorrentQuery(params: Record<string, string | undefined>, forExport
     }
   }
 
-  const { where, bindings } = buildTorrentWhere({
+  const input: TorrentFilterInput = {
     cursor_id: params.cursor && !forExport ? cursorDecode<{ id: number }>(params.cursor).id : undefined,
     q: params.q || undefined,
     resolution_type: resolutionType,
@@ -317,7 +343,8 @@ function buildTorrentQuery(params: Record<string, string | undefined>, forExport
     session_id: params.session_id || undefined,
     date_from: params.date_from || undefined,
     date_to: params.date_to || undefined,
-  });
+  };
+  const { where, bindings } = buildTorrentWhere(input);
 
   const selectSql = `
     SELECT t.Id, m.VideoCode AS movie_video_code, m.Href AS movie_href,
@@ -328,11 +355,15 @@ function buildTorrentQuery(params: Record<string, string | undefined>, forExport
     ${where}
     ORDER BY t.Id`;
 
-  const countSql = `
+  // List view uses the capped count (matches Python). Export needs the true
+  // total for its truncation check against EXPORT_LIMIT, so it stays uncapped.
+  const countSql = forExport
+    ? `
     SELECT COUNT(*) AS cnt
     FROM TorrentHistory t
     JOIN MovieHistory m ON m.Id = t.MovieHistoryId
-    ${where}`;
+    ${where}`
+    : buildTorrentCount(input).sql;
 
   return { selectSql, countSql, bindings };
 }
