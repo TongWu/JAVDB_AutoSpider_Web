@@ -12,7 +12,7 @@ type SessEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const sessionsRoutes = new Hono<SessEnv>();
 
-interface SessionRow {
+export interface SessionRow {
   Id: string;
   Status: string | null;
   WriteMode: string | null;
@@ -24,7 +24,7 @@ interface SessionRow {
   FailureReason: string | null;
 }
 
-function mapSession(row: SessionRow) {
+export function mapSession(row: SessionRow) {
   return {
     session_id: row.Id,
     state: row.Status ?? "in_progress",
@@ -152,6 +152,29 @@ function isGhActionsConfigured(env: Env): boolean {
 
 const COMMITTABLE_STATES = new Set(["in_progress", "finalizing"]);
 
+async function hasReportSessionsColumn(db: D1Database, columnName: string): Promise<boolean> {
+  const columns = await db
+    .prepare("PRAGMA table_info(ReportSessions)")
+    .all<{ name: string }>();
+  return columns.results.some((column) => column.name === columnName);
+}
+
+function isDuplicateColumnError(err: unknown): boolean {
+  if (!(err instanceof Error)) return false;
+  return /duplicate column name|column .*already exists|already exists.*column/i.test(err.message);
+}
+
+export async function ensureReportSessionsCommittedAtColumn(db: D1Database): Promise<void> {
+  if (await hasReportSessionsColumn(db, "CommittedAt")) return;
+
+  try {
+    await db.prepare("ALTER TABLE ReportSessions ADD COLUMN CommittedAt TEXT").run();
+  } catch (err) {
+    if (isDuplicateColumnError(err) && await hasReportSessionsColumn(db, "CommittedAt")) return;
+    throw err;
+  }
+}
+
 // POST /:session_id/commit — commit a session
 sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
   const sessionId = c.req.param("session_id");
@@ -211,9 +234,15 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
 
   // Step 2: Update session status
   try {
+    await ensureReportSessionsCommittedAtColumn(c.env.REPORTS_DB);
     await c.env.REPORTS_DB
       .prepare(
-        "UPDATE ReportSessions SET Status = 'committed', DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')) WHERE Id = ?"
+        [
+          "UPDATE ReportSessions",
+          "SET Status = 'committed',",
+          "DateTimeCreated = COALESCE(DateTimeCreated, datetime('now')),",
+          "CommittedAt = COALESCE(CommittedAt, strftime('%Y-%m-%dT%H:%M:%fZ', 'now')) WHERE Id = ?",
+        ].join(" ")
       )
       .bind(sessionId)
       .run();

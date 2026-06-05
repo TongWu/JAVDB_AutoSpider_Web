@@ -7,6 +7,15 @@ type StatsEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const statsRoutes = new Hono<StatsEnv>();
 
+export const SUMMARY_TORRENT_COUNT_SQL = "SELECT COUNT(*) AS cnt FROM TorrentHistory";
+
+export const SUMMARY_AVG_DURATION_SQL =
+  `SELECT AVG(CAST((julianday(CommittedAt) - julianday(DateTimeCreated)) * 86400 AS INTEGER)) AS avg_dur
+         FROM ReportSessions
+         WHERE Status='committed' AND CommittedAt IS NOT NULL`;
+export const SUMMARY_DEDUP_FREED_SQL =
+  "SELECT SUM(ExistingFolderSize) AS total_freed FROM DedupRecords WHERE IsDeleted=1";
+
 // --- GET /summary ---
 
 statsRoutes.get("/summary", async (c) => {
@@ -35,7 +44,7 @@ statsRoutes.get("/summary", async (c) => {
   // TorrentHistory count (HISTORY_DB)
   try {
     const r = await historyDb
-      .prepare("SELECT COUNT(*) AS cnt FROM TorrentHistory")
+      .prepare(SUMMARY_TORRENT_COUNT_SQL)
       .first<{ cnt: number }>();
     if (r) totalTorrents = r.cnt;
   } catch {
@@ -63,11 +72,7 @@ statsRoutes.get("/summary", async (c) => {
   // Average duration of committed sessions (REPORTS_DB)
   try {
     const r = await reportsDb
-      .prepare(
-        `SELECT AVG(CAST((julianday(CommittedAt) - julianday(DateTimeCreated)) * 86400 AS INTEGER)) AS avg_dur
-         FROM ReportSessions
-         WHERE Status='committed' AND CommittedAt IS NOT NULL`,
-      )
+      .prepare(SUMMARY_AVG_DURATION_SQL)
       .first<{ avg_dur: number | null }>();
     if (r && r.avg_dur !== null) {
       avgDurationSeconds = Math.round(r.avg_dur);
@@ -89,9 +94,7 @@ statsRoutes.get("/summary", async (c) => {
   // DedupRecords freed bytes (OPERATIONS_DB)
   try {
     const r = await opsDb
-      .prepare(
-        "SELECT SUM(ExistingFolderSize) AS total_freed FROM DedupRecords WHERE Status='completed'",
-      )
+      .prepare(SUMMARY_DEDUP_FREED_SQL)
       .first<{ total_freed: number | null }>();
     if (r && r.total_freed !== null) {
       totalDedupFreedBytes = r.total_freed;
