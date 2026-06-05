@@ -228,4 +228,39 @@ describe("Diagnostics routes", () => {
 
     expect(res.status).toBe(404);
   });
+
+  it("GET /api/diag/ops-incidents filters by run_id", async () => {
+    await seedOpsIncidentTables(env.REPORTS_DB);
+    // Insert a second incident with a different run_id
+    await env.REPORTS_DB.prepare(`
+      INSERT INTO OpsIncidents (
+        incident_id, trigger_source, run_id, run_attempt, session_id, incident_type, status,
+        persistence_status, model_version, detector_version, bundle_schema_version, confidence,
+        confirmed_findings_json, likely_causes_json, unknowns_json, recommended_next_actions_json,
+        unsafe_actions_json, evidence_refs_json, created_at, updated_at, resolved_at
+      )
+      VALUES (
+        'opsinc_other_run', 'workflow_failure', '999', 1, '20260528T000000.000000Z-0001-0001', 'failed_ingestion', 'open',
+        'd1_written', 'fallback-v1', 'detectors-v1', 'bundle-v1', 'low',
+        '[]', '[]', '[]', '[]',
+        '[]', '[]', '2026-05-28T00:00:00Z', '2026-05-28T00:00:00Z', NULL
+      )
+    `).run();
+
+    const token = await getToken();
+
+    // Query with run_id=100 — only opsinc_test should be returned
+    const res = await app.request("/api/diag/ops-incidents?run_id=100", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: { incident_id: string }[] };
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].incident_id).toBe("opsinc_test");
+
+    // Verify the other run's incident is excluded (not in this result)
+    const otherIds = data.items.map((i) => i.incident_id);
+    expect(otherIds).not.toContain("opsinc_other_run");
+  });
 });

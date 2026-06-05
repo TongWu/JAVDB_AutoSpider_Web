@@ -53,8 +53,31 @@ function parseJsonArray(value: string | null): unknown[] {
   }
 }
 
+interface OpsIncidentRow {
+  incident_id: string
+  trigger_source: string
+  run_id: string | null
+  run_attempt: number | null
+  session_id: string | null
+  incident_type: string
+  status: string
+  persistence_status: string
+  model_version: string
+  detector_version: string
+  confidence: string
+  confirmed_findings_json: string | null
+  likely_causes_json: string | null
+  unknowns_json: string | null
+  recommended_next_actions_json: string | null
+  unsafe_actions_json: string | null
+  evidence_refs_json: string | null
+  created_at: string
+  updated_at: string
+  resolved_at: string | null
+}
+
 // bundle_schema_version is storage-internal and intentionally excluded from the API surface (matches Python OpsIncidentSchema).
-function mapOpsIncident(row: any) {
+function mapOpsIncident(row: OpsIncidentRow) {
   return {
     incident_id: row.incident_id,
     trigger_source: row.trigger_source,
@@ -83,6 +106,8 @@ diagnosticsRoutes.get("/ops-incidents", async (c) => {
   const status = c.req.query("status");
   const incidentType = c.req.query("incident_type");
   const confidence = c.req.query("confidence");
+  const runId = c.req.query("run_id");
+  const sessionId = c.req.query("session_id");
   const rawLimit = c.req.query("limit");
   let limit = 50;
   if (rawLimit !== undefined) {
@@ -106,16 +131,24 @@ diagnosticsRoutes.get("/ops-incidents", async (c) => {
     clauses.push("confidence = ?");
     bindings.push(confidence);
   }
+  if (runId) {
+    clauses.push("run_id = ?");
+    bindings.push(runId);
+  }
+  if (sessionId) {
+    clauses.push("session_id = ?");
+    bindings.push(sessionId);
+  }
   const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
   const rows = await c.env.REPORTS_DB
     .prepare(`SELECT * FROM OpsIncidents ${where} ORDER BY created_at DESC LIMIT ?`)
     .bind(...bindings, limit)
-    .all();
+    .all<OpsIncidentRow>();
   return c.json({ items: rows.results.map(mapOpsIncident) });
 });
 
 diagnosticsRoutes.get("/ops-incidents/analytics", async (c) => {
-  const rows = await c.env.REPORTS_DB.prepare("SELECT incident_type, status, confidence FROM OpsIncidents ORDER BY created_at DESC LIMIT 500").all<any>();
+  const rows = await c.env.REPORTS_DB.prepare("SELECT incident_type, status, confidence FROM OpsIncidents ORDER BY created_at DESC LIMIT 500").all<Pick<OpsIncidentRow, "incident_type" | "status" | "confidence">>();
   const byType: Record<string, number> = {};
   const byStatus: Record<string, number> = {};
   const byConfidence: Record<string, number> = {};
@@ -138,7 +171,7 @@ diagnosticsRoutes.get("/ops-incidents/:incident_id", async (c) => {
   const row = await c.env.REPORTS_DB
     .prepare("SELECT * FROM OpsIncidents WHERE incident_id = ?")
     .bind(incidentId)
-    .first();
+    .first<OpsIncidentRow>();
   if (!row) throw new HTTPException(404, { message: "Incident not found" });
   return c.json(mapOpsIncident(row));
 });
