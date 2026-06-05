@@ -83,7 +83,15 @@ diagnosticsRoutes.get("/ops-incidents", async (c) => {
   const status = c.req.query("status");
   const incidentType = c.req.query("incident_type");
   const confidence = c.req.query("confidence");
-  const limit = Math.max(1, Math.min(100, parseInt(c.req.query("limit") ?? "50", 10) || 50));
+  const rawLimit = c.req.query("limit");
+  let limit = 50;
+  if (rawLimit !== undefined) {
+    const parsed = Number.parseInt(rawLimit, 10);
+    if (!Number.isFinite(parsed) || parsed <= 0) {
+      throw new HTTPException(400, { message: "limit must be a positive integer" });
+    }
+    limit = Math.min(100, parsed);
+  }
   const clauses: string[] = [];
   const bindings: (string | number)[] = [];
   if (status) {

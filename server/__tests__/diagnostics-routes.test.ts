@@ -178,6 +178,17 @@ describe("Diagnostics routes", () => {
     expect(data.items[0].confirmed_findings).toEqual(["Workflow result is failure."]);
   });
 
+  it("GET /api/diag/ops-incidents rejects non-positive limit with 400", async () => {
+    await seedOpsIncidentTables(env.REPORTS_DB);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents?limit=0", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(400);
+  });
+
   it("GET /api/diag/ops-incidents/analytics returns counts", async () => {
     await seedOpsIncidentTables(env.REPORTS_DB);
     const token = await getToken();
