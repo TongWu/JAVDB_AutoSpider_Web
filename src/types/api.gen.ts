@@ -218,6 +218,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/ops-incidents/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Ops Incident Analytics
+         * @description Return aggregated analytics over persisted operations incidents.
+         */
+        get: operations["get_ops_incident_analytics_api_diag_ops_incidents_analytics_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diag/ops-incidents/{incident_id}": {
         parameters: {
             query?: never;
@@ -230,6 +250,26 @@ export interface paths {
          * @description Return one persisted read-only operations diagnosis incident.
          */
         get: operations["get_ops_incident_api_diag_ops_incidents__incident_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/ops-incidents/{incident_id}/similar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Similar Ops Incidents
+         * @description Return incidents most similar to the given incident, ranked by feature overlap.
+         */
+        get: operations["get_similar_ops_incidents_api_diag_ops_incidents__incident_id__similar_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2402,6 +2442,25 @@ export interface components {
             /** Ok */
             ok: boolean;
         };
+        /** OpsIncidentAnalyticsResponse */
+        OpsIncidentAnalyticsResponse: {
+            /** By Confidence */
+            by_confidence: {
+                [key: string]: number;
+            };
+            /** By Status */
+            by_status: {
+                [key: string]: number;
+            };
+            /** By Type */
+            by_type: {
+                [key: string]: number;
+            };
+            /** Open High Confidence */
+            open_high_confidence: number;
+            /** Total */
+            total: number;
+        };
         /**
          * OpsIncidentListResponse
          * @description List response for operations incidents.
@@ -2455,6 +2514,13 @@ export interface components {
             unsafe_actions: string[];
             /** Updated At */
             updated_at: string;
+        };
+        /** OpsIncidentSimilarityResponse */
+        OpsIncidentSimilarityResponse: {
+            /** Incident Id */
+            incident_id: string;
+            /** Items */
+            items: components["schemas"]["SimilarIncidentSchema"][];
         };
         /** PikPakQueueItem */
         PikPakQueueItem: {
@@ -2799,6 +2865,15 @@ export interface components {
             summary: {
                 [key: string]: unknown;
             };
+        };
+        /** SimilarIncidentSchema */
+        SimilarIncidentSchema: {
+            /** Incident Id */
+            incident_id: string;
+            /** Matched Reasons */
+            matched_reasons: string[];
+            /** Score */
+            score: number;
         };
         /** SpiderJobPayload */
         SpiderJobPayload: {
@@ -3595,6 +3670,8 @@ export interface operations {
                 status?: string | null;
                 run_id?: string | null;
                 session_id?: string | null;
+                incident_type?: string | null;
+                confidence?: string | null;
                 limit?: number;
             };
             header?: never;
@@ -3612,6 +3689,17 @@ export interface operations {
                     "application/json": components["schemas"]["OpsIncidentListResponse"];
                 };
             };
+            /** @description limit must be a positive integer */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
             /** @description Validation Error */
             422: {
                 headers: {
@@ -3619,6 +3707,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_ops_incident_analytics_api_diag_ops_incidents_analytics_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsIncidentAnalyticsResponse"];
                 };
             };
         };
@@ -3641,6 +3749,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpsIncidentSchema"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_similar_ops_incidents_api_diag_ops_incidents__incident_id__similar_get: {
+        parameters: {
+            query?: {
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsIncidentSimilarityResponse"];
+                };
+            };
+            /** @description limit must be a positive integer */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Incident features not found */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
                 };
             };
             /** @description Validation Error */
