@@ -17,6 +17,7 @@ import { tasksRoutes } from "./routes/tasks";
 import { ghActionsRoutes } from "./routes/gh-actions";
 import { operationsRoutes } from "./routes/operations";
 import { statsRoutes } from "./routes/stats";
+import { libraryRoutes } from "./routes/library";
 import { preferencesRoutes } from "./routes/preferences";
 import { stubRoutes } from "./routes/stubs";
 import { initializeTables } from "./services/table-init";
@@ -77,6 +78,7 @@ app.route("/api/tasks", tasksRoutes);
 app.route("/api/gh-actions", ghActionsRoutes);
 app.route("/api/ops", operationsRoutes);
 app.route("/api/stats", statsRoutes);
+app.route("/api/library", libraryRoutes);
 app.route("/api/preferences", preferencesRoutes);
 app.route("/api", stubRoutes);
 
