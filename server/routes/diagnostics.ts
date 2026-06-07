@@ -213,10 +213,15 @@ diagnosticsRoutes.get("/parse-field-health", async (c) => {
       )
       .all<FieldFill>();
     fills = res.results;
-  } catch {
-    // ParseRunFieldFill is created by the parse pipeline; absent on a fresh
-    // deployment. Mirror the defensive ops reads and return an empty surface.
-    return c.json({ items: [] });
+  } catch (err) {
+    // ParseRunFieldFill is created by the parse pipeline; on a fresh deployment
+    // the table is simply absent — treat ONLY that as an empty surface. Let
+    // transient D1 / binding / schema errors propagate (→ 500) so a backend
+    // outage isn't masked as "no drift observed".
+    if (err instanceof Error && /no such table/i.test(err.message)) {
+      return c.json({ items: [] });
+    }
+    throw err;
   }
 
   if (fills.length === 0) {

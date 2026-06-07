@@ -371,6 +371,7 @@ describe("Diagnostics routes", () => {
       headers: { Authorization: `Bearer ${token}` },
     }, env);
 
+    expect(res.status).toBe(200);
     const data = await res.json() as { items: { page_type: string; field: string; fill_rate: number; status: string }[] };
     const href = data.items.find((i) => i.field === "href")!;
     expect(href.fill_rate).toBe(1.0);
@@ -387,6 +388,7 @@ describe("Diagnostics routes", () => {
       headers: { Authorization: `Bearer ${token}` },
     }, env);
 
+    expect(res.status).toBe(200);
     const data = await res.json() as { items: { field: string; status: string }[] };
     const vc = data.items.find((i) => i.field === "video_code")!;
     expect(vc.status).toBe("critical_drift");
@@ -411,6 +413,7 @@ describe("Diagnostics routes", () => {
       headers: { Authorization: `Bearer ${token}` },
     }, env);
 
+    expect(res.status).toBe(200);
     const data = await res.json() as {
       items: { field: string; severity: string; baseline: number | null; threshold: number | null; status: string }[];
     };
@@ -440,6 +443,7 @@ describe("Diagnostics routes", () => {
       headers: { Authorization: `Bearer ${token}` },
     }, env);
 
+    expect(res.status).toBe(200);
     const data = await res.json() as { items: { field: string; status: string }[] };
     const href = data.items.find((i) => i.field === "href")!;
     expect(href.status).toBe("insufficient_sample");
@@ -449,6 +453,21 @@ describe("Diagnostics routes", () => {
     await seedParseFieldFills(env.REPORTS_DB, [
       { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 100, observed_at: "2026-06-01T00:00:00Z", committed: 0 },
     ]);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: unknown[] };
+    expect(data.items).toEqual([]);
+  });
+
+  it("GET /api/diag/parse-field-health returns an empty surface when the fills table is absent", async () => {
+    // Fresh deployment: the parse pipeline hasn't created ParseRunFieldFill yet.
+    // Only the missing-table error is swallowed; other D1 errors must propagate.
+    await env.REPORTS_DB.prepare("DROP TABLE IF EXISTS ParseRunFieldFill").run();
     const token = await getToken();
 
     const res = await app.request("/api/diag/parse-field-health", {
