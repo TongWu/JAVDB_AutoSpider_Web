@@ -29,6 +29,8 @@ capabilitiesRoutes.get("/", (c) => {
       proxy_pool: true,
       javdb_login: !!env.JAVDB_USERNAME,
       proxy_preview: true,
+      // ADR-035 Phase 3: gates the frontend site-drift sentinel panel.
+      site_drift_sentinel: true,
     },
     deployment: "cloudflare",
     build: {
