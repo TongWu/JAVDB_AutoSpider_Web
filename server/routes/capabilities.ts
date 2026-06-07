@@ -10,8 +10,19 @@ function envBool(val: string | undefined): boolean {
   return val === "true" || val === "1" || val === "yes";
 }
 
-capabilitiesRoutes.get("/", (c) => {
+/** True when the ADR-033 AcquisitionOutcome table is queryable in OPERATIONS_DB (capability honesty). */
+async function closedLoopEnabled(env: Env): Promise<boolean> {
+  try {
+    await env.OPERATIONS_DB.prepare("SELECT 1 FROM AcquisitionOutcome LIMIT 1").first();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+capabilitiesRoutes.get("/", async (c) => {
   const env = c.env;
+  const closed_loop = await closedLoopEnabled(env);
 
   return c.json({
     version: "2.0.0",
@@ -29,6 +40,7 @@ capabilitiesRoutes.get("/", (c) => {
       proxy_pool: true,
       javdb_login: !!env.JAVDB_USERNAME,
       proxy_preview: true,
+      closed_loop,
       // ADR-035 Phase 3: gates the frontend site-drift sentinel panel.
       site_drift_sentinel: true,
     },

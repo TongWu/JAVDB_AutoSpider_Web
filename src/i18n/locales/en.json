@@ -35,7 +35,8 @@
     "appearance": "Appearance",
     "migrations": "Migrations",
     "logs": "Logs",
-    "stats": "Statistics"
+    "stats": "Statistics",
+    "library": "Library"
   },
   "common": {
     "save": "Save",
@@ -1317,5 +1318,42 @@
     "statements": "{n} statement(s)",
     "applyDisabled": "Remote execution not yet supported. Use Wrangler CLI.",
     "unappliedCount": "{n} unapplied"
+  },
+  "library": {
+    "subtitle": "What was acquired, owned, and watched.",
+    "tabs": {
+      "acquisition": "Acquisition",
+      "ownership": "Ownership",
+      "consumption": "Consumption"
+    },
+    "loadError": "Failed to load acquisition data.",
+    "comingSoon": "Coming soon",
+    "funnel": "Acquisition funnel",
+    "trend": "Acquisition trend",
+    "recent": "Recent acquisitions",
+    "allStates": "All states",
+    "kpi": {
+      "queued": "Queued",
+      "downloading": "Downloading",
+      "completed": "Completed",
+      "stalled": "Stalled",
+      "failed": "Failed"
+    },
+    "state": {
+      "queued": "Queued",
+      "downloading": "Downloading",
+      "completed": "Completed",
+      "in_library": "In library",
+      "stalled": "Stalled",
+      "failed": "Failed"
+    },
+    "col": {
+      "videoCode": "Code",
+      "category": "Category",
+      "state": "State",
+      "queuedAt": "Queued",
+      "completedAt": "Completed",
+      "lastSeenAt": "Last seen"
+    }
   }
 }

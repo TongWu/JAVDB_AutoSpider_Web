@@ -35,7 +35,8 @@
     "appearance": "外观",
     "migrations": "数据迁移",
     "logs": "日志",
-    "stats": "统计"
+    "stats": "统计",
+    "library": "资源库"
   },
   "common": {
     "save": "保存",
@@ -1317,5 +1318,42 @@
     "statements": "{n} 条语句",
     "applyDisabled": "远程执行暂不支持，请使用 Wrangler CLI。",
     "unappliedCount": "{n} 条待应用"
+  },
+  "library": {
+    "subtitle": "已获取、已拥有、已观看的内容。",
+    "tabs": {
+      "acquisition": "获取",
+      "ownership": "拥有",
+      "consumption": "消费"
+    },
+    "loadError": "加载获取数据失败。",
+    "comingSoon": "敬请期待",
+    "funnel": "获取漏斗",
+    "trend": "获取趋势",
+    "recent": "最近获取",
+    "allStates": "全部状态",
+    "kpi": {
+      "queued": "排队中",
+      "downloading": "下载中",
+      "completed": "已完成",
+      "stalled": "已停滞",
+      "failed": "失败"
+    },
+    "state": {
+      "queued": "排队中",
+      "downloading": "下载中",
+      "completed": "已完成",
+      "in_library": "已入库",
+      "stalled": "已停滞",
+      "failed": "失败"
+    },
+    "col": {
+      "videoCode": "番号",
+      "category": "分类",
+      "state": "状态",
+      "queuedAt": "入队时间",
+      "completedAt": "完成时间",
+      "lastSeenAt": "最近更新"
+    }
   }
 }

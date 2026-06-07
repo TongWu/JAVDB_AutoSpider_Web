@@ -41,6 +41,11 @@ const options = computed<MenuOption[]>(() => {
     },
   ]
 
+  // Library: gated by the closed_loop capability (ADR-034 D4)
+  if (!features || features.closed_loop) {
+    items.push({ label: t('nav.library'), key: 'library', icon: () => '📚' })
+  }
+
   // Operations group: always shown; individual children hidden by feature flags
   const opsChildren: MenuOption[] = [
     { label: t('nav.qbittorrent'), key: 'qbittorrent' },
@@ -124,6 +129,7 @@ const routeMap: Record<string, string> = {
   tasks: '/tasks',
   sessions: '/sessions',
   browse: '/browse',
+  library: '/library',
   settings: '/settings',
   config: '/settings/config',
   auth: '/settings/auth',
