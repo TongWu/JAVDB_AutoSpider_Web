@@ -1326,6 +1326,7 @@
       "ownership": "Ownership",
       "consumption": "Consumption"
     },
+    "loadError": "Failed to load acquisition data.",
     "comingSoon": "Coming soon",
     "funnel": "Acquisition funnel",
     "trend": "Acquisition trend",

@@ -1326,6 +1326,7 @@
       "ownership": "拥有",
       "consumption": "消费"
     },
+    "loadError": "加载获取数据失败。",
     "comingSoon": "敬请期待",
     "funnel": "获取漏斗",
     "trend": "获取趋势",
