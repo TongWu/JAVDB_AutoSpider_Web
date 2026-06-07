@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
+import { PARSE_CONTRACT } from "../services/parse-field-health";
 
 async function getToken(): Promise<string> {
   const res = await app.request(
@@ -84,6 +85,39 @@ async function seedOpsIncidentTables(db: D1Database) {
       '[]', '[]', '2026-05-27T00:00:00Z', '2026-05-27T00:00:00Z', NULL
     )
   `).run();
+}
+
+interface ParseFillSeed {
+  page_type: string;
+  field: string;
+  fill_rate: number;
+  sample_count: number;
+  observed_at: string;
+  committed?: number;
+}
+
+async function seedParseFieldFills(db: D1Database, rows: ParseFillSeed[]): Promise<void> {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS ParseRunFieldFill (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      page_type TEXT NOT NULL,
+      field TEXT NOT NULL,
+      fill_rate REAL NOT NULL,
+      sample_count INTEGER NOT NULL,
+      observed_at TEXT NOT NULL,
+      committed INTEGER NOT NULL DEFAULT 0
+    )
+  `).run();
+  await db.prepare("DELETE FROM ParseRunFieldFill").run();
+  for (const r of rows) {
+    await db
+      .prepare(
+        `INSERT INTO ParseRunFieldFill (page_type, field, fill_rate, sample_count, observed_at, committed)
+         VALUES (?, ?, ?, ?, ?, ?)`,
+      )
+      .bind(r.page_type, r.field, r.fill_rate, r.sample_count, r.observed_at, r.committed ?? 1)
+      .run();
+  }
 }
 
 describe("Diagnostics routes", () => {
@@ -262,5 +296,186 @@ describe("Diagnostics routes", () => {
     // Verify the other run's incident is excluded (not in this result)
     const otherIds = data.items.map((i) => i.incident_id);
     expect(otherIds).not.toContain("opsinc_other_run");
+  });
+
+  it("GET /api/diag/ops-incidents filters by incident_type", async () => {
+    await seedOpsIncidentTables(env.REPORTS_DB);
+    // Insert a second incident with a different incident_type
+    await env.REPORTS_DB.prepare(`
+      INSERT INTO OpsIncidents (
+        incident_id, trigger_source, run_id, run_attempt, session_id, incident_type, status,
+        persistence_status, model_version, detector_version, bundle_schema_version, confidence,
+        confirmed_findings_json, likely_causes_json, unknowns_json, recommended_next_actions_json,
+        unsafe_actions_json, evidence_refs_json, created_at, updated_at, resolved_at
+      )
+      VALUES (
+        'opsinc_other_type', 'workflow_failure', '101', 1, '20260529T000000.000000Z-0002-0002', 'proxy_exhaustion', 'open',
+        'd1_written', 'fallback-v1', 'detectors-v1', 'bundle-v1', 'low',
+        '[]', '[]', '[]', '[]',
+        '[]', '[]', '2026-05-29T00:00:00Z', '2026-05-29T00:00:00Z', NULL
+      )
+    `).run();
+
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents?incident_type=failed_ingestion", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: { incident_id: string; incident_type: string }[] };
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].incident_id).toBe("opsinc_test");
+    expect(data.items.every((i) => i.incident_type === "failed_ingestion")).toBe(true);
+  });
+
+  // -------------------------------------------------------------------------
+  // GET /api/diag/parse-field-health (ADR-035 Phase 3 drift surface)
+  // -------------------------------------------------------------------------
+  it("GET /api/diag/parse-field-health returns annotated health items (critical ok)", async () => {
+    await seedParseFieldFills(env.REPORTS_DB, [
+      { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 100, observed_at: "2026-06-01T00:00:00Z" },
+    ]);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: Record<string, unknown>[] };
+    const href = data.items.find((i) => i.page_type === "index" && i.field === "href")!;
+    expect(href).toBeTruthy();
+    // Full openapi item shape
+    expect(Object.keys(href).sort()).toEqual(
+      ["baseline", "field", "fill_rate", "observed_at", "page_type", "sample_count", "severity", "status", "threshold"],
+    );
+    expect(href.severity).toBe("critical");
+    expect(href.status).toBe("ok");
+    expect(href.fill_rate).toBe(1.0);
+    expect(href.sample_count).toBe(100);
+    expect(href.baseline).toBeNull();
+    expect(href.threshold).toBe(PARSE_CONTRACT.index.href.min_fill);
+  });
+
+  it("GET /api/diag/parse-field-health picks newest COMMITTED fill per (page_type, field)", async () => {
+    await seedParseFieldFills(env.REPORTS_DB, [
+      { page_type: "index", field: "href", fill_rate: 0.2, sample_count: 100, observed_at: "2026-01-01T00:00:00Z", committed: 1 },
+      { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 100, observed_at: "2026-02-01T00:00:00Z", committed: 1 },
+      // newer but UNcommitted — must be ignored
+      { page_type: "index", field: "href", fill_rate: 0.0, sample_count: 100, observed_at: "2026-03-01T00:00:00Z", committed: 0 },
+    ]);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: { page_type: string; field: string; fill_rate: number; status: string }[] };
+    const href = data.items.find((i) => i.field === "href")!;
+    expect(href.fill_rate).toBe(1.0);
+    expect(href.status).toBe("ok");
+  });
+
+  it("GET /api/diag/parse-field-health flags critical_drift below the floor", async () => {
+    await seedParseFieldFills(env.REPORTS_DB, [
+      { page_type: "index", field: "video_code", fill_rate: 0.1, sample_count: 100, observed_at: "2026-06-01T00:00:00Z" },
+    ]);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: { field: string; status: string }[] };
+    const vc = data.items.find((i) => i.field === "video_code")!;
+    expect(vc.status).toBe("critical_drift");
+  });
+
+  it("GET /api/diag/parse-field-health computes soft baselines (ok / soft_drift / no_baseline)", async () => {
+    await seedParseFieldFills(env.REPORTS_DB, [
+      // rate: history median 0.8 (threshold 0.4), latest 0.9 ⇒ ok
+      { page_type: "index", field: "rate", fill_rate: 0.8, sample_count: 100, observed_at: "2026-01-01T00:00:00Z" },
+      { page_type: "index", field: "rate", fill_rate: 0.8, sample_count: 100, observed_at: "2026-01-02T00:00:00Z" },
+      { page_type: "index", field: "rate", fill_rate: 0.8, sample_count: 100, observed_at: "2026-01-03T00:00:00Z" },
+      { page_type: "index", field: "rate", fill_rate: 0.9, sample_count: 100, observed_at: "2026-02-01T00:00:00Z" },
+      // comment_count: history median 0.8 (threshold 0.4), latest 0.1 ⇒ soft_drift
+      { page_type: "index", field: "comment_count", fill_rate: 0.8, sample_count: 100, observed_at: "2026-01-01T00:00:00Z" },
+      { page_type: "index", field: "comment_count", fill_rate: 0.1, sample_count: 100, observed_at: "2026-02-01T00:00:00Z" },
+      // release_date: single committed fill, no prior history ⇒ no_baseline
+      { page_type: "index", field: "release_date", fill_rate: 0.5, sample_count: 100, observed_at: "2026-02-01T00:00:00Z" },
+    ]);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as {
+      items: { field: string; severity: string; baseline: number | null; threshold: number | null; status: string }[];
+    };
+    const rate = data.items.find((i) => i.field === "rate")!;
+    expect(rate.severity).toBe("soft");
+    expect(rate.baseline).toBe(0.8);
+    expect(rate.threshold).toBeCloseTo(0.4, 10);
+    expect(rate.status).toBe("ok");
+
+    const comment = data.items.find((i) => i.field === "comment_count")!;
+    expect(comment.baseline).toBe(0.8);
+    expect(comment.status).toBe("soft_drift");
+
+    const release = data.items.find((i) => i.field === "release_date")!;
+    expect(release.baseline).toBeNull();
+    expect(release.threshold).toBeNull();
+    expect(release.status).toBe("no_baseline");
+  });
+
+  it("GET /api/diag/parse-field-health reports insufficient_sample below the sample floor", async () => {
+    await seedParseFieldFills(env.REPORTS_DB, [
+      { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 5, observed_at: "2026-06-01T00:00:00Z" },
+    ]);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: { field: string; status: string }[] };
+    const href = data.items.find((i) => i.field === "href")!;
+    expect(href.status).toBe("insufficient_sample");
+  });
+
+  it("GET /api/diag/parse-field-health returns an empty surface when there are no committed fills", async () => {
+    await seedParseFieldFills(env.REPORTS_DB, [
+      { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 100, observed_at: "2026-06-01T00:00:00Z", committed: 0 },
+    ]);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: unknown[] };
+    expect(data.items).toEqual([]);
+  });
+
+  it("GET /api/diag/parse-field-health returns an empty surface when the fills table is absent", async () => {
+    // Fresh deployment: the parse pipeline hasn't created ParseRunFieldFill yet.
+    // Only the missing-table error is swallowed; other D1 errors must propagate.
+    await env.REPORTS_DB.prepare("DROP TABLE IF EXISTS ParseRunFieldFill").run();
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/parse-field-health", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: unknown[] };
+    expect(data.items).toEqual([]);
   });
 });

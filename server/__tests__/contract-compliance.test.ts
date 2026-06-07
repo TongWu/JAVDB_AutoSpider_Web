@@ -305,6 +305,7 @@ describe("API Contract Compliance", () => {
         "javdb_login",
         "proxy_preview",
         "closed_loop",
+        "site_drift_sentinel",
       ];
       assertHasKeys(features, featureKeys, `${label}.features`);
       for (const fk of featureKeys) {
