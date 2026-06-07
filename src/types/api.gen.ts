@@ -665,6 +665,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/library/acquisition/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Acquisition Recent */
+        get: operations["acquisition_recent_api_library_acquisition_recent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/acquisition/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Acquisition Summary */
+        get: operations["acquisition_summary_api_library_acquisition_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/acquisition/trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Acquisition Trend */
+        get: operations["acquisition_trend_api_library_acquisition_trend_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/login/refresh": {
         parameters: {
             query?: never;
@@ -1486,6 +1537,60 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AcquisitionRecentItem
+         * @description One AcquisitionOutcome row for GET /api/library/acquisition/recent.
+         */
+        AcquisitionRecentItem: {
+            /** Category */
+            category?: string | null;
+            /** Completed At */
+            completed_at?: string | null;
+            /** Href */
+            href: string;
+            /** Last Seen At */
+            last_seen_at?: string | null;
+            /** Qb Hash */
+            qb_hash: string;
+            /** Queued At */
+            queued_at?: string | null;
+            /** State */
+            state: string;
+            /** Video Code */
+            video_code?: string | null;
+        };
+        /**
+         * AcquisitionSummary
+         * @description Funnel/KPI counts for GET /api/library/acquisition/summary.
+         */
+        AcquisitionSummary: {
+            /** Completed */
+            completed: number;
+            /** Downloading */
+            downloading: number;
+            /** Failed */
+            failed: number;
+            /** Queued */
+            queued: number;
+            /** Stalled */
+            stalled: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * AcquisitionTrendPoint
+         * @description One day in GET /api/library/acquisition/trend (ADR-027 trend shape).
+         */
+        AcquisitionTrendPoint: {
+            /** Completed */
+            completed: number;
+            /** Date */
+            date: string;
+            /** Failed */
+            failed: number;
+            /** Stalled */
+            stalled: number;
+        };
         /** AdhocTaskPayload */
         AdhocTaskPayload: {
             /**
@@ -1998,6 +2103,8 @@ export interface components {
         };
         /** Features */
         Features: {
+            /** Closed Loop */
+            closed_loop: boolean;
             /** Javdb Login */
             javdb_login: boolean;
             /** Pikpak */
@@ -4572,6 +4679,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SpiderJobStatusResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    acquisition_recent_api_library_acquisition_recent_get: {
+        parameters: {
+            query?: {
+                state?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcquisitionRecentItem"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    acquisition_summary_api_library_acquisition_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcquisitionSummary"];
+                };
+            };
+        };
+    };
+    acquisition_trend_api_library_acquisition_trend_get: {
+        parameters: {
+            query?: {
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AcquisitionTrendPoint"][];
                 };
             };
             /** @description Validation Error */
