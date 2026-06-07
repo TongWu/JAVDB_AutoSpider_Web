@@ -28,6 +28,7 @@
     "runs": "実行履歴",
     "workflows": "ワークフロー",
     "secrets": "シークレット",
+    "library": "ライブラリ",
     "migrations": "マイグレーション",
     "logs": "ログ",
     "stats": "統計",
@@ -1317,5 +1318,42 @@
     "statements": "{n} ステートメント",
     "applyDisabled": "リモート実行は未対応です。Wrangler CLI をご利用ください。",
     "unappliedCount": "{n} 件未適用"
+  },
+  "library": {
+    "subtitle": "取得済み、所有済み、視聴済みのコンテンツ。",
+    "tabs": {
+      "acquisition": "取得",
+      "ownership": "所有",
+      "consumption": "視聴"
+    },
+    "loadError": "取得データの読み込みに失敗しました。",
+    "comingSoon": "近日公開",
+    "funnel": "取得ファネル",
+    "trend": "取得トレンド",
+    "recent": "最近の取得",
+    "allStates": "全状態",
+    "kpi": {
+      "queued": "待機中",
+      "downloading": "ダウンロード中",
+      "completed": "完了",
+      "stalled": "停滞中",
+      "failed": "失敗"
+    },
+    "state": {
+      "queued": "待機中",
+      "downloading": "ダウンロード中",
+      "completed": "完了",
+      "in_library": "ライブラリ済み",
+      "stalled": "停滞中",
+      "failed": "失敗"
+    },
+    "col": {
+      "videoCode": "番号",
+      "category": "カテゴリ",
+      "state": "状態",
+      "queuedAt": "待機日時",
+      "completedAt": "完了日時",
+      "lastSeenAt": "最終確認日時"
+    }
   }
 }

@@ -133,16 +133,33 @@ onMounted(() => void fetchAll())
     </NAlert>
 
     <!-- KPI cards -->
-    <NGrid :cols="5" :x-gap="12" :y-gap="12" responsive="screen" :item-responsive="true">
-      <NGi v-for="k in KPI_KEYS" :key="k" span="5 s:5 m:1">
+    <NGrid
+      :cols="5"
+      :x-gap="12"
+      :y-gap="12"
+      responsive="screen"
+      :item-responsive="true"
+    >
+      <NGi
+        v-for="k in KPI_KEYS"
+        :key="k"
+        span="5 s:5 m:1"
+      >
         <NCard size="small">
-          <NStatistic :label="t(`library.kpi.${k}`)" :value="summary?.[k] ?? 0" />
+          <NStatistic
+            :label="t(`library.kpi.${k}`)"
+            :value="summary?.[k] ?? 0"
+          />
         </NCard>
       </NGi>
     </NGrid>
 
     <!-- Funnel -->
-    <NCard size="small" :title="t('library.funnel')" class="block">
+    <NCard
+      size="small"
+      :title="t('library.funnel')"
+      class="block"
+    >
       <div class="funnel">
         <div
           v-for="k in FUNNEL_KEYS"
@@ -150,22 +167,44 @@ onMounted(() => void fetchAll())
           class="funnel-stage"
           :style="{ flexGrow: (summary?.[k] ?? 0) / funnelMax + 0.15 }"
         >
-          <div class="funnel-bar" :class="`s-${k}`">{{ summary?.[k] ?? 0 }}</div>
-          <div class="funnel-label">{{ t(`library.state.${k}`, k) }}</div>
+          <div
+            class="funnel-bar"
+            :class="`s-${k}`"
+          >
+            {{ summary?.[k] ?? 0 }}
+          </div>
+          <div class="funnel-label">
+            {{ t(`library.state.${k}`, k) }}
+          </div>
         </div>
       </div>
     </NCard>
 
     <!-- Trend -->
-    <NCard size="small" :title="t('library.trend')" class="block">
+    <NCard
+      size="small"
+      :title="t('library.trend')"
+      class="block"
+    >
       <div class="chart-wrap">
-        <Bar v-if="trend.length" :data="trendChartData" :options="trendChartOptions" />
-        <NEmpty v-else :description="t('library.comingSoon')" />
+        <Bar
+          v-if="trend.length"
+          :data="trendChartData"
+          :options="trendChartOptions"
+        />
+        <NEmpty
+          v-else
+          :description="t('library.comingSoon')"
+        />
       </div>
     </NCard>
 
     <!-- Recent table -->
-    <NCard size="small" :title="t('library.recent')" class="block">
+    <NCard
+      size="small"
+      :title="t('library.recent')"
+      class="block"
+    >
       <NSelect
         v-model:value="stateFilter"
         :options="stateOptions"

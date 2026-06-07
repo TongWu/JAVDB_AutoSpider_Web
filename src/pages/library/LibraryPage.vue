@@ -12,15 +12,32 @@ const activeTab = ref('acquisition')
 <template>
   <div class="library-page">
     <h2>{{ t('nav.library') }}</h2>
-    <p class="subtitle">{{ t('library.subtitle') }}</p>
-    <NTabs v-model:value="activeTab" type="line" animated>
-      <NTabPane name="acquisition" :tab="t('library.tabs.acquisition')">
+    <p class="subtitle">
+      {{ t('library.subtitle') }}
+    </p>
+    <NTabs
+      v-model:value="activeTab"
+      type="line"
+      animated
+    >
+      <NTabPane
+        name="acquisition"
+        :tab="t('library.tabs.acquisition')"
+      >
         <AcquisitionView />
       </NTabPane>
-      <NTabPane name="ownership" :tab="t('library.tabs.ownership')" disabled>
+      <NTabPane
+        name="ownership"
+        :tab="t('library.tabs.ownership')"
+        disabled
+      >
         <NEmpty :description="t('library.comingSoon')" />
       </NTabPane>
-      <NTabPane name="consumption" :tab="t('library.tabs.consumption')" disabled>
+      <NTabPane
+        name="consumption"
+        :tab="t('library.tabs.consumption')"
+        disabled
+      >
         <NEmpty :description="t('library.comingSoon')" />
       </NTabPane>
     </NTabs>
