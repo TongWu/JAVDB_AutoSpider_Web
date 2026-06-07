@@ -29,6 +29,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/library',
+    name: 'library',
+    component: () => import('@/pages/library/LibraryPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/run',
     name: 'run',
     component: () => import('@/pages/RunPage.vue'),
