@@ -25,6 +25,8 @@ const trend = ref<AcquisitionTrendPoint[]>([])
 const loading = ref(false)
 const error = ref<string | null>(null)
 const stateFilter = ref<string | null>(null)
+// Monotonic token so out-of-order `recent` responses are dropped (newest filter wins).
+let recentSeq = 0
 
 const KPI_KEYS = ['queued', 'downloading', 'completed', 'stalled', 'failed'] as const
 const FUNNEL_KEYS = ['queued', 'downloading', 'completed'] as const
@@ -85,14 +87,18 @@ const trendChartOptions = {
 }
 
 async function fetchRecent() {
+  const seq = ++recentSeq
+  error.value = null // a fresh filter request clears any prior error
   try {
-    recent.value = await getAcquisitionRecent({ state: stateFilter.value, limit: 50 })
+    const rows = await getAcquisitionRecent({ state: stateFilter.value, limit: 50 })
+    if (seq === recentSeq) recent.value = rows // ignore stale out-of-order responses
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.loadError')
+    if (seq === recentSeq) error.value = err instanceof Error ? err.message : t('library.loadError')
   }
 }
 
 async function fetchAll() {
+  const seq = ++recentSeq
   loading.value = true
   error.value = null
   try {
@@ -102,7 +108,7 @@ async function fetchAll() {
       getAcquisitionTrend('30d'),
     ])
     summary.value = s
-    recent.value = r
+    if (seq === recentSeq) recent.value = r // a filter change during load wins
     trend.value = tr
   } catch (err) {
     error.value = err instanceof Error ? err.message : t('library.loadError')
