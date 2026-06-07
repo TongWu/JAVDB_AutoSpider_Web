@@ -3,7 +3,7 @@
 import { computed, h, onMounted, ref, watch } from 'vue'
 import {
   NAlert, NButton, NGrid, NGi, NCard, NStatistic, NDataTable, NSelect, NTag, NSpin, NEmpty,
-  type DataTableColumns,
+  type DataTableColumns, type SelectOption,
 } from 'naive-ui'
 import { Bar } from 'vue-chartjs'
 import {
@@ -31,13 +31,13 @@ let recentSeq = 0
 const KPI_KEYS = ['queued', 'downloading', 'completed', 'stalled', 'failed'] as const
 const FUNNEL_KEYS = ['queued', 'downloading', 'completed'] as const
 
-const stateOptions = computed(() => [
-  { label: t('library.allStates'), value: null },
-  ...['queued', 'downloading', 'completed', 'in_library', 'stalled', 'failed'].map((s) => ({
+// "All states" is the clearable placeholder (matches SessionFilters.vue); options are string-valued.
+const stateOptions = computed<SelectOption[]>(() =>
+  ['queued', 'downloading', 'completed', 'in_library', 'stalled', 'failed'].map((s) => ({
     label: t(`library.state.${s}`, s),
     value: s,
   })),
-])
+)
 
 const funnelMax = computed(() =>
   Math.max(1, ...FUNNEL_KEYS.map((k) => summary.value?.[k] ?? 0)),
@@ -214,6 +214,7 @@ onMounted(() => void fetchAll())
       <NSelect
         v-model:value="stateFilter"
         :options="stateOptions"
+        :placeholder="t('library.allStates')"
         clearable
         class="state-filter"
       />
