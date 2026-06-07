@@ -278,6 +278,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/parse-field-health": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Parse Field Health
+         * @description Latest committed per-field parse health (ADR-035 site-contract sentinel).
+         */
+        get: operations["get_parse_field_health_api_diag_parse_field_health_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/explore/download-magnet": {
         parameters: {
             query?: never;
@@ -2115,6 +2135,8 @@ export interface components {
             proxy_preview: boolean;
             /** Rclone */
             rclone: boolean;
+            /** Site Drift Sentinel */
+            site_drift_sentinel: boolean;
             /** Smtp */
             smtp: boolean;
         };
@@ -2628,6 +2650,38 @@ export interface components {
             incident_id: string;
             /** Items */
             items: components["schemas"]["SimilarIncidentSchema"][];
+        };
+        /**
+         * ParseFieldHealthItem
+         * @description Latest committed parse health for one contract field (ADR-035 Phase 3).
+         */
+        ParseFieldHealthItem: {
+            /** Baseline */
+            baseline?: number | null;
+            /** Field */
+            field: string;
+            /** Fill Rate */
+            fill_rate: number;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Page Type */
+            page_type: string;
+            /** Sample Count */
+            sample_count: number;
+            /** Severity */
+            severity: string;
+            /** Status */
+            status: string;
+            /** Threshold */
+            threshold?: number | null;
+        };
+        /**
+         * ParseFieldHealthResponse
+         * @description List response for per-field parse health.
+         */
+        ParseFieldHealthResponse: {
+            /** Items */
+            items: components["schemas"]["ParseFieldHealthItem"][];
         };
         /** PikPakQueueItem */
         PikPakQueueItem: {
@@ -3920,6 +3974,26 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_parse_field_health_api_diag_parse_field_health_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParseFieldHealthResponse"];
                 };
             };
         };
