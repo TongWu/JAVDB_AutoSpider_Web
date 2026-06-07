@@ -8,6 +8,11 @@ import {
 } from "../routes/history";
 import { buildSessionQuery } from "../routes/sessions";
 import { buildStatsTrendQuery } from "../routes/stats";
+import {
+  buildLibrarySummaryQuery,
+  buildLibraryRecentQuery,
+  buildLibraryTrendQuery,
+} from "../routes/library";
 import { cursorDecode } from "../services/cursor";
 
 // Query Contract Golden conformance (ADR-018 base, extended by ADR-047).
@@ -54,6 +59,10 @@ const RUN: Record<string, (p: any) => { sql: string; bindings: (string | number)
     // SQL params (mirrors the Python contract dump).
     return { sql: q.sql, bindings: [q.db, ...q.params] };
   },
+  library_summary_query: () => buildLibrarySummaryQuery(),
+  library_recent_query: (p) =>
+    buildLibraryRecentQuery({ state: p.state, limit: p.limit, offset: p.offset }),
+  library_trend_query: (p) => buildLibraryTrendQuery({ cutoff: p.cutoff }),
 };
 
 interface GoldenCase {
