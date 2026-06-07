@@ -303,6 +303,7 @@ describe("API Contract Compliance", () => {
         "proxy_pool",
         "javdb_login",
         "proxy_preview",
+        "site_drift_sentinel",
       ];
       assertHasKeys(features, featureKeys, `${label}.features`);
       for (const fk of featureKeys) {

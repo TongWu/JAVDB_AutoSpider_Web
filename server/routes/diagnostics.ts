@@ -4,6 +4,13 @@ import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { loadConfigStore, saveConfigKeys } from "../services/config-store";
+import {
+  PARSE_CONTRACT,
+  SENTINEL_BASELINE_WINDOW,
+  computeFieldHealth,
+  median,
+  type FieldFill,
+} from "../services/parse-field-health";
 
 type DiagEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -174,6 +181,79 @@ diagnosticsRoutes.get("/ops-incidents/:incident_id", async (c) => {
     .first<OpsIncidentRow>();
   if (!row) throw new HTTPException(404, { message: "Incident not found" });
   return c.json(mapOpsIncident(row));
+});
+
+// GET /parse-field-health — site-contract drift surface (ADR-035 Phase 3).
+// Read-only: newest committed fill per (page_type, field), annotated against the
+// PARSE_CONTRACT. Mirrors Python ParseRunFieldFillRepo.latest_committed_fills()
+// + compute_field_health().
+interface RankedFillRow {
+  page_type: string;
+  field: string;
+  fill_rate: number;
+}
+
+diagnosticsRoutes.get("/parse-field-health", async (c) => {
+  const db = c.env.REPORTS_DB;
+
+  // Newest committed fill per (page_type, field) — correlated subquery on
+  // MAX(observed_at) over committed rows (ParseRunFieldFillRepo.latest_committed_fills).
+  let fills: FieldFill[];
+  try {
+    const res = await db
+      .prepare(
+        `SELECT page_type, field, fill_rate, sample_count, observed_at
+           FROM ParseRunFieldFill p
+          WHERE committed = 1
+            AND observed_at = (
+              SELECT MAX(observed_at) FROM ParseRunFieldFill q
+               WHERE q.page_type = p.page_type AND q.field = p.field AND q.committed = 1
+            )
+          ORDER BY page_type, field`,
+      )
+      .all<FieldFill>();
+    fills = res.results;
+  } catch {
+    // ParseRunFieldFill is created by the parse pipeline; absent on a fresh
+    // deployment. Mirror the defensive ops reads and return an empty surface.
+    return c.json({ items: [] });
+  }
+
+  if (fills.length === 0) {
+    return c.json({ items: [] });
+  }
+
+  // Baseline (soft fields): median of recent committed fill_rates BEFORE the
+  // latest observation (rn >= 2), per (page_type, field), over the sentinel
+  // window. A field with no prior committed history ⇒ no baseline ⇒ no_baseline.
+  const baselines: Record<string, Record<string, number | null>> = {};
+  const historyByGroup = new Map<string, number[]>();
+  const ranked = await db
+    .prepare(
+      `WITH ranked AS (
+         SELECT page_type, field, fill_rate,
+                ROW_NUMBER() OVER (PARTITION BY page_type, field ORDER BY observed_at DESC) AS rn
+           FROM ParseRunFieldFill
+          WHERE committed = 1
+       )
+       SELECT page_type, field, fill_rate FROM ranked WHERE rn BETWEEN 2 AND ?`,
+    )
+    .bind(SENTINEL_BASELINE_WINDOW + 1)
+    .all<RankedFillRow>();
+  for (const row of ranked.results) {
+    const key = `${row.page_type} ${row.field}`;
+    const bucket = historyByGroup.get(key);
+    if (bucket) bucket.push(row.fill_rate);
+    else historyByGroup.set(key, [row.fill_rate]);
+  }
+  for (const fill of fills) {
+    const entry = PARSE_CONTRACT[fill.page_type]?.[fill.field];
+    if (!entry || entry.severity !== "soft") continue;
+    const history = historyByGroup.get(`${fill.page_type} ${fill.field}`) ?? [];
+    (baselines[fill.page_type] ??= {})[fill.field] = median(history);
+  }
+
+  return c.json({ items: computeFieldHealth(fills, { baselines }) });
 });
 
 diagnosticsRoutes.post("/javdb-session/refresh", requireRole("admin"), async (c) => {
