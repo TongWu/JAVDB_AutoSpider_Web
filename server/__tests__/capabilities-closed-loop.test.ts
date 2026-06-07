@@ -13,7 +13,10 @@ async function getToken(): Promise<string> {
     },
     env,
   );
-  return ((await res.json()) as { access_token: string }).access_token;
+  expect(res.status).toBe(200);
+  const body = (await res.json()) as { access_token?: string };
+  expect(typeof body.access_token).toBe("string");
+  return body.access_token as string;
 }
 
 describe("capabilities closed_loop", () => {

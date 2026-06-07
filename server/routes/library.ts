@@ -112,7 +112,8 @@ libraryRoutes.get("/acquisition/recent", async (c) => {
 
 libraryRoutes.get("/acquisition/trend", async (c) => {
   const period = c.req.query("period") ?? "30d";
-  if (!(period in PERIOD_DAYS)) {
+  // hasOwnProperty (not `in`) so inherited keys like `__proto__` can't slip a non-numeric value through.
+  if (!Object.prototype.hasOwnProperty.call(PERIOD_DAYS, period)) {
     throw badRequest("library.invalid_period", `Invalid period: ${period}`);
   }
   const cutoff = isoDateDaysAgo(PERIOD_DAYS[period]);

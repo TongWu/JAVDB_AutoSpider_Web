@@ -70,6 +70,7 @@ const columns = computed<DataTableColumns<AcquisitionRecentItem>>(() => [
   },
   { title: t('library.col.queuedAt'), key: 'queued_at', render: (row) => row.queued_at ?? '—' },
   { title: t('library.col.completedAt'), key: 'completed_at', render: (row) => row.completed_at ?? '—' },
+  { title: t('library.col.lastSeenAt'), key: 'last_seen_at', render: (row) => row.last_seen_at ?? '—' },
 ])
 
 const trendChartData = computed(() => ({

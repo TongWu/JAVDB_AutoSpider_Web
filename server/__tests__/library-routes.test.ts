@@ -13,8 +13,10 @@ async function getToken(): Promise<string> {
     },
     env,
   );
-  const data = (await res.json()) as { access_token: string };
-  return data.access_token;
+  expect(res.status).toBe(200);
+  const data = (await res.json()) as { access_token?: string };
+  expect(typeof data.access_token).toBe("string");
+  return data.access_token as string;
 }
 
 async function seedOutcomes(db: D1Database) {
@@ -81,6 +83,16 @@ describe("Library acquisition routes", () => {
     const token = await getToken();
     const res = await app.request(
       "/api/library/acquisition/trend?period=5h",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(400);
+  });
+
+  it("trend rejects a prototype-key period (no 500)", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/library/acquisition/trend?period=__proto__",
       { headers: { Authorization: `Bearer ${token}` } },
       env,
     );
