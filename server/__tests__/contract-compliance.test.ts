@@ -296,6 +296,7 @@ describe("API Contract Compliance", () => {
 
       // Nested: features — all boolean
       const features = data.features as Record<string, unknown>;
+      // closed_loop is probe-based: false here since AcquisitionOutcome isn't seeded; only its type is asserted.
       const featureKeys = [
         "pikpak",
         "rclone",
@@ -303,6 +304,7 @@ describe("API Contract Compliance", () => {
         "proxy_pool",
         "javdb_login",
         "proxy_preview",
+        "closed_loop",
       ];
       assertHasKeys(features, featureKeys, `${label}.features`);
       for (const fk of featureKeys) {
