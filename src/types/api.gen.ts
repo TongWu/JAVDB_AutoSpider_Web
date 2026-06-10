@@ -736,6 +736,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/library/consumption/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consumption Recent */
+        get: operations["consumption_recent_api_library_consumption_recent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/consumption/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consumption Summary */
+        get: operations["consumption_summary_api_library_consumption_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/consumption/trend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consumption Trend */
+        get: operations["consumption_trend_api_library_consumption_trend_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/consumption/unresolved": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Consumption Unresolved */
+        get: operations["consumption_unresolved_api_library_consumption_unresolved_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/ownership/recent": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ownership Recent */
+        get: operations["ownership_recent_api_library_ownership_recent_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/library/ownership/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Ownership Summary */
+        get: operations["ownership_summary_api_library_ownership_summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/login/refresh": {
         parameters: {
             query?: never;
@@ -1777,6 +1879,68 @@ export interface components {
         ConfigResponse: {
             [key: string]: unknown;
         };
+        /**
+         * ConsumptionRecentItem
+         * @description One ConsumptionSignal row for GET /api/library/consumption/recent.
+         */
+        ConsumptionRecentItem: {
+            /** Instance */
+            instance: string;
+            /** Library Id */
+            library_id: string;
+            /** Library Name */
+            library_name?: string | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Play Count */
+            play_count?: number | null;
+            /** Progress Pct */
+            progress_pct?: number | null;
+            /** Rating */
+            rating?: number | null;
+            /** Resolved Confidence */
+            resolved_confidence?: string | null;
+            /** Source Type */
+            source_type: string;
+            /** Video Code */
+            video_code: string;
+            /** Watched */
+            watched?: boolean | null;
+            /** Watched At */
+            watched_at?: string | null;
+        };
+        /**
+         * ConsumptionSummary
+         * @description KPI counts for GET /api/library/consumption/summary.
+         */
+        ConsumptionSummary: {
+            /** Avg Rating */
+            avg_rating: number | null;
+            /** Instance Count */
+            instance_count: number;
+            /** Total Signals */
+            total_signals: number;
+            /** Unique Titles */
+            unique_titles: number;
+            /** Unresolved Count */
+            unresolved_count: number;
+            /** Unwatched Count */
+            unwatched_count: number;
+            /** Watched Count */
+            watched_count: number;
+        };
+        /**
+         * ConsumptionTrendPoint
+         * @description One day in GET /api/library/consumption/trend.
+         */
+        ConsumptionTrendPoint: {
+            /** Date */
+            date: string;
+            /** Total Signals */
+            total_signals: number;
+            /** Watched */
+            watched: number;
+        };
         /** ContentPreferenceListResponse */
         ContentPreferenceListResponse: {
             /** Items */
@@ -2652,6 +2816,50 @@ export interface components {
             items: components["schemas"]["SimilarIncidentSchema"][];
         };
         /**
+         * OwnershipRecentItem
+         * @description One OwnershipLedger row for GET /api/library/ownership/recent.
+         */
+        OwnershipRecentItem: {
+            /** Category */
+            category: string;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Path */
+            path?: string | null;
+            /** Present */
+            present: number;
+            /** Size */
+            size?: number | null;
+            /** Source */
+            source: string;
+            /** Video Code */
+            video_code: string;
+        };
+        /**
+         * OwnershipSourceBreakdown
+         * @description Per-source counts for GET /api/library/ownership/summary.
+         */
+        OwnershipSourceBreakdown: {
+            /** Present Rows */
+            present_rows: number;
+            /** Source */
+            source: string;
+            /** Total Bytes */
+            total_bytes: number;
+            /** Unique Titles */
+            unique_titles: number;
+        };
+        /**
+         * OwnershipSummary
+         * @description KPI + per-source breakdown for GET /api/library/ownership/summary.
+         */
+        OwnershipSummary: {
+            /** By Source */
+            by_source: components["schemas"]["OwnershipSourceBreakdown"][];
+            /** Total Owned Titles */
+            total_owned_titles: number;
+        };
+        /**
          * ParseFieldHealthItem
          * @description Latest committed parse health for one contract field (ADR-035 Phase 3).
          */
@@ -3359,6 +3567,28 @@ export interface components {
             status: string;
         } & {
             [key: string]: unknown;
+        };
+        /**
+         * UnresolvedItem
+         * @description One UnresolvedMediaItem row for GET /api/library/consumption/unresolved.
+         */
+        UnresolvedItem: {
+            /** File Path */
+            file_path?: string | null;
+            /** Instance */
+            instance: string;
+            /** Item Id */
+            item_id: string;
+            /** Library Id */
+            library_id: string;
+            /** Library Name */
+            library_name?: string | null;
+            /** Observed At */
+            observed_at?: string | null;
+            /** Raw Title */
+            raw_title?: string | null;
+            /** Source Type */
+            source_type?: string | null;
         };
         /** UrlPayload */
         UrlPayload: {
@@ -5780,6 +6010,341 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    consumption_recent_api_library_consumption_recent_get: {
+        parameters: {
+            query?: {
+                instance?: string | null;
+                watched?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsumptionRecentItem"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    consumption_summary_api_library_consumption_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsumptionSummary"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+        };
+    };
+    consumption_trend_api_library_consumption_trend_get: {
+        parameters: {
+            query?: {
+                period?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConsumptionTrendPoint"][];
+                };
+            };
+            /** @description Invalid period (library.invalid_period) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: {
+                            error: {
+                                code: string;
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    consumption_unresolved_api_library_consumption_unresolved_get: {
+        parameters: {
+            query?: {
+                instance?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UnresolvedItem"][];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ownership_recent_api_library_ownership_recent_get: {
+        parameters: {
+            query?: {
+                source?: string | null;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipRecentItem"][];
+                };
+            };
+            /** @description Invalid source filter (library.invalid_source) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: {
+                            error: {
+                                code: string;
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ownership_summary_api_library_ownership_summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnershipSummary"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
                 };
             };
         };
