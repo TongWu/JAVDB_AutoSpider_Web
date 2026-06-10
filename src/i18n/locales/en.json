@@ -1354,6 +1354,66 @@
       "queuedAt": "Queued",
       "completedAt": "Completed",
       "lastSeenAt": "Last seen"
+    },
+    "ownership": {
+      "loadError": "Failed to load ownership data.",
+      "totalOwned": "Owned titles",
+      "breakdown": "By source",
+      "recent": "Recent ownership",
+      "allSources": "All sources",
+      "present": "Present",
+      "swept": "Swept",
+      "source": {
+        "qb": "qBittorrent",
+        "nas": "NAS",
+        "gdrive": "Google Drive",
+        "pikpak": "PikPak"
+      },
+      "col": {
+        "videoCode": "Code",
+        "source": "Source",
+        "category": "Category",
+        "path": "Path",
+        "size": "Size",
+        "present": "Present",
+        "observedAt": "Observed"
+      }
+    },
+    "consumption": {
+      "loadError": "Failed to load consumption data.",
+      "totalSignals": "Total signals",
+      "watched": "Watched",
+      "unwatched": "Unwatched",
+      "unresolved": "Unresolved",
+      "avgRating": "Avg rating",
+      "trend": "Watch trend",
+      "recent": "Recent signals",
+      "unresolvedSection": "Unresolved items",
+      "allInstances": "All instances",
+      "allWatched": "All",
+      "watchedTrue": "Watched",
+      "watchedFalse": "Unwatched",
+      "ratingNone": "—",
+      "col": {
+        "videoCode": "Code",
+        "sourceType": "Source type",
+        "instance": "Instance",
+        "library": "Library",
+        "watched": "Watched",
+        "rating": "Rating",
+        "watchedAt": "Watched at",
+        "confidence": "Confidence",
+        "observedAt": "Observed"
+      },
+      "unresolvedCol": {
+        "instance": "Instance",
+        "sourceType": "Source type",
+        "library": "Library",
+        "itemId": "Item ID",
+        "rawTitle": "Raw title",
+        "filePath": "File path",
+        "observedAt": "Observed"
+      }
     }
   }
 }
