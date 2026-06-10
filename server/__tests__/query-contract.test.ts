@@ -13,6 +13,18 @@ import {
   buildAcquisitionSummaryQuery,
   buildAcquisitionTrendQuery,
 } from "../routes/library";
+import {
+  buildOwnershipRecentQuery,
+  buildOwnershipSummaryBySourceQuery,
+  buildOwnershipSummaryDistinctQuery,
+} from "../routes/library_ownership";
+import {
+  buildConsumptionRecentQuery,
+  buildConsumptionSummaryQuery,
+  buildConsumptionSummaryUnresolvedCountQuery,
+  buildConsumptionTrendQuery,
+  buildConsumptionUnresolvedQuery,
+} from "../routes/library_consumption";
 import { cursorDecode } from "../services/cursor";
 
 // Query Contract Golden conformance (ADR-018 base, extended by ADR-047).
@@ -63,6 +75,22 @@ const RUN: Record<string, (p: any) => { sql: string; bindings: (string | number)
   library_recent_query: (p) =>
     buildAcquisitionRecentQuery({ state: p.state ?? null, limit: p.limit, offset: p.offset }),
   library_trend_query: (p) => buildAcquisitionTrendQuery({ cutoff: p.cutoff }),
+  ownership_summary_by_source_query: () => buildOwnershipSummaryBySourceQuery(),
+  ownership_summary_distinct_query: () => buildOwnershipSummaryDistinctQuery(),
+  ownership_recent_query: (p) =>
+    buildOwnershipRecentQuery({ source: p.source ?? null, limit: p.limit, offset: p.offset }),
+  consumption_summary_query: () => buildConsumptionSummaryQuery(),
+  consumption_summary_unresolved_count_query: () => buildConsumptionSummaryUnresolvedCountQuery(),
+  consumption_recent_query: (p) =>
+    buildConsumptionRecentQuery({
+      instance: p.instance ?? null,
+      watched: p.watched ?? null,
+      limit: p.limit,
+      offset: p.offset,
+    }),
+  consumption_trend_query: (p) => buildConsumptionTrendQuery({ cutoff: p.cutoff }),
+  consumption_unresolved_query: (p) =>
+    buildConsumptionUnresolvedQuery({ instance: p.instance ?? null, limit: p.limit, offset: p.offset }),
 };
 
 interface GoldenCase {
