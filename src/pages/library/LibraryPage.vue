@@ -1,9 +1,11 @@
 <!-- src/pages/library/LibraryPage.vue -->
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NTabs, NTabPane, NEmpty } from 'naive-ui'
+import { NTabs, NTabPane } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
 import AcquisitionView from './AcquisitionView.vue'
+import OwnershipView from './OwnershipView.vue'
+import ConsumptionView from './ConsumptionView.vue'
 
 const { t } = useI18n()
 const activeTab = ref('acquisition')
@@ -29,16 +31,14 @@ const activeTab = ref('acquisition')
       <NTabPane
         name="ownership"
         :tab="t('library.tabs.ownership')"
-        disabled
       >
-        <NEmpty :description="t('library.comingSoon')" />
+        <OwnershipView />
       </NTabPane>
       <NTabPane
         name="consumption"
         :tab="t('library.tabs.consumption')"
-        disabled
       >
-        <NEmpty :description="t('library.comingSoon')" />
+        <ConsumptionView />
       </NTabPane>
     </NTabs>
   </div>
