@@ -1,5 +1,5 @@
 // server/__tests__/library-consumption-routes.test.ts
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, vi } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
 
@@ -121,20 +121,30 @@ describe("Library consumption routes", () => {
   });
 
   it("trend maps the day field and excludes rows without watched_at", async () => {
-    const token = await getToken();
-    const res = await app.request(
-      "/api/library/consumption/trend?period=90d",
-      { headers: { Authorization: `Bearer ${token}` } },
-      env,
-    );
-    expect(res.status).toBe(200);
-    const points = (await res.json()) as Array<{ date: string; watched: number; total_signals: number }>;
-    // AAA-001 has watched_at 2026-06-01; BBB-002 has null → only one point
-    expect(points.length).toBe(1);
-    expect(points[0].date).toBe("2026-06-01");
-    expect(points[0].watched).toBe(1);
-    // No raw `d` key leaking
-    expect(points.every((p) => "date" in p && !("d" in p))).toBe(true);
+    // The endpoint applies a rolling 90-day cutoff from runtime `now`, while the
+    // seed pins watched_at to 2026-06-01. Freeze the clock so the seeded row stays
+    // inside the window regardless of when the suite runs. Fake only Date (not
+    // timers/microtasks) so the async D1/JWT calls below still resolve.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date("2026-06-10T00:00:00.000Z"));
+    try {
+      const token = await getToken();
+      const res = await app.request(
+        "/api/library/consumption/trend?period=90d",
+        { headers: { Authorization: `Bearer ${token}` } },
+        env,
+      );
+      expect(res.status).toBe(200);
+      const points = (await res.json()) as Array<{ date: string; watched: number; total_signals: number }>;
+      // AAA-001 has watched_at 2026-06-01; BBB-002 has null → only one point
+      expect(points.length).toBe(1);
+      expect(points[0].date).toBe("2026-06-01");
+      expect(points[0].watched).toBe(1);
+      // No raw `d` key leaking
+      expect(points.every((p) => "date" in p && !("d" in p))).toBe(true);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it("unresolved returns the seeded item", async () => {

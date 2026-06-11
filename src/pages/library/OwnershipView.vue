@@ -102,12 +102,15 @@ async function fetchAll() {
       getOwnershipSummary(),
       getOwnershipRecent({ source: sourceFilter.value, limit: 50 }),
     ])
+    // Drop stale responses: only the newest in-flight request may assign state.
+    if (seq !== recentSeq) return
     summary.value = s
-    if (seq === recentSeq) recent.value = r
+    recent.value = r
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.ownership.loadError')
+    if (seq === recentSeq)
+      error.value = err instanceof Error ? err.message : t('library.ownership.loadError')
   } finally {
-    loading.value = false
+    if (seq === recentSeq) loading.value = false
   }
 }
 
@@ -199,7 +202,8 @@ onMounted(() => void fetchAll())
         :data="recent"
         :bordered="false"
         size="small"
-        :row-key="(row: OwnershipRecentItem) => `${row.video_code}::${row.source}::${row.category}`"
+        :row-key="(row: OwnershipRecentItem) =>
+          `${row.video_code}::${row.source}::${row.category}::${row.observed_at ?? ''}::${row.path ?? ''}`"
       />
     </NCard>
   </NSpin>

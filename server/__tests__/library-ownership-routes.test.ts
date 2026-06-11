@@ -83,6 +83,11 @@ describe("Library ownership routes", () => {
     for (const k of ["video_code", "source", "category", "path", "size", "present", "observed_at"]) {
       expect(keys).toContain(k);
     }
+    // Newest-first: observed_at must be non-increasing across adjacent rows.
+    const observedAt = rows.map((r) => r.observed_at as string);
+    for (let i = 1; i < observedAt.length; i++) {
+      expect(observedAt[i - 1] >= observedAt[i]).toBe(true);
+    }
   });
 
   it("recent filters by source", async () => {

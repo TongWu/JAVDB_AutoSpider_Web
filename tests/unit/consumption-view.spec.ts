@@ -83,8 +83,20 @@ describe('ConsumptionView', () => {
   it('renders KPI cards and the recent table row', async () => {
     const wrapper = mount(ConsumptionView, { global: { plugins: [i18n] } })
     await flushPromises()
-    expect(wrapper.text()).toContain('10')      // total_signals
+
+    // Anchor each KPI to its own NStatistic so an unrelated "10"/"8.2"
+    // elsewhere in the DOM can't make a loose assertion pass.
+    const totalStat = wrapper
+      .findAll('.n-statistic')
+      .find((s) => s.find('.n-statistic__label').text() === 'Total signals')
+    expect(totalStat).toBeDefined()
+    expect(totalStat!.find('.n-statistic-value').text()).toContain('10') // total_signals
+
+    // avg_rating renders in its own labeled badge (".avg-rating").
+    const avg = wrapper.find('.avg-rating')
+    expect(avg.exists()).toBe(true)
+    expect(avg.text()).toMatch(/Avg rating:\s*8\.2/)
+
     expect(wrapper.text()).toContain('ABC-123') // recent row video_code
-    expect(wrapper.text()).toContain('8.2')     // avg_rating
   })
 })

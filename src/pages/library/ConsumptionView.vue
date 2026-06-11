@@ -37,6 +37,15 @@ const watchedOptions = computed<SelectOption[]>(() => [
   { label: t('library.consumption.watchedFalse'), value: 'false' },
 ])
 
+// Instance options derived from the fetched data (recent + unresolved rows),
+// since there is no dedicated instances endpoint. Distinct, sorted, self-labeled.
+const instanceOptions = computed<SelectOption[]>(() => {
+  const seen = new Set<string>()
+  for (const r of recent.value) if (r.instance) seen.add(r.instance)
+  for (const u of unresolved.value) if (u.instance) seen.add(u.instance)
+  return [...seen].sort().map((value) => ({ label: value, value }))
+})
+
 function watchedBool(): boolean | null {
   if (watchedFilterStr.value === 'true') return true
   if (watchedFilterStr.value === 'false') return false
@@ -52,7 +61,8 @@ const trendChartData = computed(() => ({
       backgroundColor: '#18a058',
     },
     {
-      label: t('library.consumption.totalSignals'),
+      // Stacked remainder: watched + unwatched = total_signals.
+      label: t('library.consumption.unwatched'),
       data: trend.value.map((p) => p.total_signals - p.watched),
       backgroundColor: '#909399',
     },
@@ -266,7 +276,7 @@ onMounted(() => void fetchAll())
       <div class="filter-row">
         <NSelect
           v-model:value="instanceFilter"
-          :options="[]"
+          :options="instanceOptions"
           :placeholder="t('library.consumption.allInstances')"
           clearable
           class="filter-select"
