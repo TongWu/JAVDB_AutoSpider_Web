@@ -6037,6 +6037,22 @@ export interface operations {
                     "application/json": components["schemas"]["ConsumptionRecentItem"][];
                 };
             };
+            /** @description Invalid watched filter (library.invalid_watched) */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: {
+                            error: {
+                                code: string;
+                                message: string;
+                            };
+                        };
+                    };
+                };
+            };
             /** @description Unauthorized */
             401: {
                 headers: {

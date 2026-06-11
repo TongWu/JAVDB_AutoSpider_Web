@@ -61,7 +61,7 @@ export function buildConsumptionRecentQuery(p: {
     "watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at " +
     "FROM ConsumptionSignal " +
     where +
-    "ORDER BY observed_at DESC " +
+    "ORDER BY observed_at DESC, video_code, instance, library_id " +
     "LIMIT ? OFFSET ?";
   bindings.push(p.limit, p.offset);
   return { sql, bindings };
@@ -96,7 +96,7 @@ export function buildConsumptionUnresolvedQuery(p: {
     "SELECT instance, source_type, library_id, library_name, item_id, raw_title, file_path, observed_at " +
     "FROM UnresolvedMediaItem " +
     where +
-    "ORDER BY observed_at DESC " +
+    "ORDER BY observed_at DESC, instance, library_id, item_id " +
     "LIMIT ? OFFSET ?";
   bindings.push(p.limit, p.offset);
   return { sql, bindings };

@@ -54,7 +54,7 @@ export function buildOwnershipRecentQuery(p: {
     "SELECT video_code, source, category, path, size, present, observed_at " +
     "FROM OwnershipLedger " +
     where +
-    "ORDER BY observed_at DESC " +
+    "ORDER BY observed_at DESC, video_code, source, category " +
     "LIMIT ? OFFSET ?";
   bindings.push(p.limit, p.offset);
   return { sql, bindings };

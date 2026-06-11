@@ -695,7 +695,7 @@
         "offset": 0,
         "source": null
       },
-      "sql": "SELECT video_code, source, category, path, size, present, observed_at FROM OwnershipLedger ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT video_code, source, category, path, size, present, observed_at FROM OwnershipLedger ORDER BY observed_at DESC, video_code, source, category LIMIT ? OFFSET ?"
     },
     {
       "bindings": [
@@ -710,7 +710,7 @@
         "offset": 10,
         "source": "qb"
       },
-      "sql": "SELECT video_code, source, category, path, size, present, observed_at FROM OwnershipLedger WHERE source = ? ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT video_code, source, category, path, size, present, observed_at FROM OwnershipLedger WHERE source = ? ORDER BY observed_at DESC, video_code, source, category LIMIT ? OFFSET ?"
     },
     {
       "bindings": [],
@@ -739,7 +739,7 @@
         "offset": 0,
         "watched": null
       },
-      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal ORDER BY observed_at DESC, video_code, instance, library_id LIMIT ? OFFSET ?"
     },
     {
       "bindings": [
@@ -754,7 +754,7 @@
         "offset": 0,
         "watched": true
       },
-      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal WHERE watched = 1 ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal WHERE watched = 1 ORDER BY observed_at DESC, video_code, instance, library_id LIMIT ? OFFSET ?"
     },
     {
       "bindings": [
@@ -769,7 +769,7 @@
         "offset": 0,
         "watched": false
       },
-      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal WHERE watched = 0 ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal WHERE watched = 0 ORDER BY observed_at DESC, video_code, instance, library_id LIMIT ? OFFSET ?"
     },
     {
       "bindings": [
@@ -785,7 +785,7 @@
         "offset": 10,
         "watched": true
       },
-      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal WHERE instance = ? AND watched = 1 ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT video_code, source_type, instance, library_id, library_name, watched, progress_pct, play_count, rating, watched_at, resolved_confidence, observed_at FROM ConsumptionSignal WHERE instance = ? AND watched = 1 ORDER BY observed_at DESC, video_code, instance, library_id LIMIT ? OFFSET ?"
     },
     {
       "bindings": [
@@ -810,7 +810,7 @@
         "limit": 50,
         "offset": 0
       },
-      "sql": "SELECT instance, source_type, library_id, library_name, item_id, raw_title, file_path, observed_at FROM UnresolvedMediaItem ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT instance, source_type, library_id, library_name, item_id, raw_title, file_path, observed_at FROM UnresolvedMediaItem ORDER BY observed_at DESC, instance, library_id, item_id LIMIT ? OFFSET ?"
     },
     {
       "bindings": [
@@ -825,9 +825,9 @@
         "limit": 25,
         "offset": 5
       },
-      "sql": "SELECT instance, source_type, library_id, library_name, item_id, raw_title, file_path, observed_at FROM UnresolvedMediaItem WHERE instance = ? ORDER BY observed_at DESC LIMIT ? OFFSET ?"
+      "sql": "SELECT instance, source_type, library_id, library_name, item_id, raw_title, file_path, observed_at FROM UnresolvedMediaItem WHERE instance = ? ORDER BY observed_at DESC, instance, library_id, item_id LIMIT ? OFFSET ?"
     }
   ],
   "normalization": "collapse-whitespace-runs-to-single-space-and-trim",
-  "version": "310e23d3b9f67982"
+  "version": "fe08ee6c2ccb71b6"
 }
