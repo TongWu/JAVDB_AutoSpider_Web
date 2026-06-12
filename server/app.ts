@@ -18,6 +18,8 @@ import { ghActionsRoutes } from "./routes/gh-actions";
 import { operationsRoutes } from "./routes/operations";
 import { statsRoutes } from "./routes/stats";
 import { libraryRoutes } from "./routes/library";
+import { libraryOwnershipRoutes } from "./routes/library_ownership";
+import { libraryConsumptionRoutes } from "./routes/library_consumption";
 import { preferencesRoutes } from "./routes/preferences";
 import { stubRoutes } from "./routes/stubs";
 import { initializeTables } from "./services/table-init";
@@ -79,6 +81,8 @@ app.route("/api/gh-actions", ghActionsRoutes);
 app.route("/api/ops", operationsRoutes);
 app.route("/api/stats", statsRoutes);
 app.route("/api/library", libraryRoutes);
+app.route("/api/library", libraryOwnershipRoutes);
+app.route("/api/library", libraryConsumptionRoutes);
 app.route("/api/preferences", preferencesRoutes);
 app.route("/api", stubRoutes);
 

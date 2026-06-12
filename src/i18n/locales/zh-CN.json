@@ -1354,6 +1354,66 @@
       "queuedAt": "入队时间",
       "completedAt": "完成时间",
       "lastSeenAt": "最近更新"
+    },
+    "ownership": {
+      "loadError": "加载拥有数据失败。",
+      "totalOwned": "已拥有番号",
+      "breakdown": "按来源",
+      "recent": "最近拥有",
+      "allSources": "全部来源",
+      "present": "存在",
+      "swept": "已清除",
+      "source": {
+        "qb": "qBittorrent",
+        "nas": "NAS",
+        "gdrive": "Google Drive",
+        "pikpak": "PikPak"
+      },
+      "col": {
+        "videoCode": "番号",
+        "source": "来源",
+        "category": "分类",
+        "path": "路径",
+        "size": "大小",
+        "present": "存在",
+        "observedAt": "观测时间"
+      }
+    },
+    "consumption": {
+      "loadError": "加载消费数据失败。",
+      "totalSignals": "信号总数",
+      "watched": "已观看",
+      "unwatched": "未观看",
+      "unresolved": "未解析",
+      "avgRating": "平均评分",
+      "trend": "观看趋势",
+      "recent": "最近信号",
+      "unresolvedSection": "未解析条目",
+      "allInstances": "全部实例",
+      "allWatched": "全部",
+      "watchedTrue": "已观看",
+      "watchedFalse": "未观看",
+      "ratingNone": "—",
+      "col": {
+        "videoCode": "番号",
+        "sourceType": "来源类型",
+        "instance": "实例",
+        "library": "媒体库",
+        "watched": "观看状态",
+        "rating": "评分",
+        "watchedAt": "观看时间",
+        "confidence": "置信度",
+        "observedAt": "观测时间"
+      },
+      "unresolvedCol": {
+        "instance": "实例",
+        "sourceType": "来源类型",
+        "library": "媒体库",
+        "itemId": "条目 ID",
+        "rawTitle": "原始标题",
+        "filePath": "文件路径",
+        "observedAt": "观测时间"
+      }
     }
   }
 }

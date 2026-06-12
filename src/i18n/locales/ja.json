@@ -1354,6 +1354,66 @@
       "queuedAt": "待機日時",
       "completedAt": "完了日時",
       "lastSeenAt": "最終確認日時"
+    },
+    "ownership": {
+      "loadError": "所有データの読み込みに失敗しました。",
+      "totalOwned": "所有済みタイトル",
+      "breakdown": "ソース別",
+      "recent": "最近の所有",
+      "allSources": "全ソース",
+      "present": "存在",
+      "swept": "削除済み",
+      "source": {
+        "qb": "qBittorrent",
+        "nas": "NAS",
+        "gdrive": "Google Drive",
+        "pikpak": "PikPak"
+      },
+      "col": {
+        "videoCode": "番号",
+        "source": "ソース",
+        "category": "カテゴリ",
+        "path": "パス",
+        "size": "サイズ",
+        "present": "存在",
+        "observedAt": "観測日時"
+      }
+    },
+    "consumption": {
+      "loadError": "視聴データの読み込みに失敗しました。",
+      "totalSignals": "シグナル総数",
+      "watched": "視聴済み",
+      "unwatched": "未視聴",
+      "unresolved": "未解決",
+      "avgRating": "平均評価",
+      "trend": "視聴トレンド",
+      "recent": "最近のシグナル",
+      "unresolvedSection": "未解決アイテム",
+      "allInstances": "全インスタンス",
+      "allWatched": "全て",
+      "watchedTrue": "視聴済み",
+      "watchedFalse": "未視聴",
+      "ratingNone": "—",
+      "col": {
+        "videoCode": "番号",
+        "sourceType": "ソースタイプ",
+        "instance": "インスタンス",
+        "library": "ライブラリ",
+        "watched": "視聴状態",
+        "rating": "評価",
+        "watchedAt": "視聴日時",
+        "confidence": "信頼度",
+        "observedAt": "観測日時"
+      },
+      "unresolvedCol": {
+        "instance": "インスタンス",
+        "sourceType": "ソースタイプ",
+        "library": "ライブラリ",
+        "itemId": "アイテム ID",
+        "rawTitle": "元タイトル",
+        "filePath": "ファイルパス",
+        "observedAt": "観測日時"
+      }
     }
   }
 }

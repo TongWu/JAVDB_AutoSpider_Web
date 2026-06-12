@@ -207,7 +207,9 @@ export async function mockCapabilitiesAdmin(page: Page): Promise<void> {
         ingestion_mode: 'local',
         gh_actions: { tier: 'admin', repo: 'tedwu/javdb-autospider', token_configured: true },
         storage_backend: 'sqlite',
-        features: {},
+        // Power-user mock: enable the library ownership/consumption tab gates
+        // (ADR-034) so flows that open those tabs keep working.
+        features: { library_ownership: true, library_consumption: true },
         deployment: 'colocated',
         build: { frontend_version: '0.1.0', backend_version: '2.0.0', git_sha: 'e2e' },
       }),
