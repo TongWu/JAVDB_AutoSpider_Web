@@ -1,14 +1,41 @@
 <!-- src/pages/library/LibraryPage.vue -->
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { NTabs, NTabPane } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
+import { useCapabilitiesStore } from '@/stores/capabilities'
 import AcquisitionView from './AcquisitionView.vue'
 import OwnershipView from './OwnershipView.vue'
 import ConsumptionView from './ConsumptionView.vue'
 
 const { t } = useI18n()
+const cap = useCapabilitiesStore()
 const activeTab = ref('acquisition')
+
+// Gate the ownership/consumption tabs on their backing-table capability flags
+// (ADR-034). Acquisition is always available. Match Sidebar's idiom of reading
+// cap.data?.features inside a computed; when features is absent (still loading)
+// the flags read undefined → falsy, so gated tabs stay hidden until known.
+const features = computed(() => cap.data?.features)
+const showOwnership = computed(() => !!features.value?.library_ownership)
+const showConsumption = computed(() => !!features.value?.library_consumption)
+
+const visibleTabs = computed(() => {
+  const tabs = ['acquisition']
+  if (showOwnership.value) tabs.push('ownership')
+  if (showConsumption.value) tabs.push('consumption')
+  return tabs
+})
+
+// Capabilities can resolve after mount, so a tab the user landed on may become
+// hidden. Whenever activeTab is not in the visible set, fall back to acquisition.
+watch(
+  visibleTabs,
+  (tabs) => {
+    if (!tabs.includes(activeTab.value)) activeTab.value = 'acquisition'
+  },
+  { immediate: true },
+)
 </script>
 
 <template>
@@ -29,12 +56,14 @@ const activeTab = ref('acquisition')
         <AcquisitionView />
       </NTabPane>
       <NTabPane
+        v-if="showOwnership"
         name="ownership"
         :tab="t('library.tabs.ownership')"
       >
         <OwnershipView />
       </NTabPane>
       <NTabPane
+        v-if="showConsumption"
         name="consumption"
         :tab="t('library.tabs.consumption')"
       >

@@ -110,6 +110,18 @@ describe("Library consumption routes", () => {
     expect(rows.every((r) => r.watched === false)).toBe(true);
   });
 
+  it("recent rejects an invalid watched value with 400 library.invalid_watched", async () => {
+    const token = await getToken();
+    const res = await app.request(
+      "/api/library/consumption/recent?watched=maybe",
+      { headers: { Authorization: `Bearer ${token}` } },
+      env,
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error?: { code?: string } };
+    expect(body.error?.code).toBe("library.invalid_watched");
+  });
+
   it("trend rejects bad period", async () => {
     const token = await getToken();
     const res = await app.request(

@@ -136,9 +136,15 @@ libraryConsumptionRoutes.get("/consumption/summary", async (c) => {
 libraryConsumptionRoutes.get("/consumption/recent", async (c) => {
   const instance = c.req.query("instance") ?? null;
   const watchedParam = c.req.query("watched") ?? null;
-  // Parse boolean string: "true" → true, "false" → false, absent → null
-  const watched: boolean | null =
-    watchedParam === "true" ? true : watchedParam === "false" ? false : null;
+  // Parse boolean string: "true" → true, "false" → false, absent/empty → null.
+  // A present-but-invalid value is rejected (400) rather than silently ignored,
+  // matching the Python backend (ADR-017 parity).
+  let watched: boolean | null = null;
+  if (watchedParam != null && watchedParam !== "") {
+    if (watchedParam === "true") watched = true;
+    else if (watchedParam === "false") watched = false;
+    else throw badRequest("library.invalid_watched", `Invalid watched: ${watchedParam}`);
+  }
   const limit = Math.max(1, Math.min(200, parseInt(c.req.query("limit") ?? "50", 10) || 50));
   const offset = Math.max(0, parseInt(c.req.query("offset") ?? "0", 10) || 0);
   const { sql, bindings } = buildConsumptionRecentQuery({ instance, watched, limit, offset });

@@ -20,9 +20,31 @@ async function closedLoopEnabled(env: Env): Promise<boolean> {
   }
 }
 
+/** True when the ADR-034 OwnershipLedger table is queryable in OPERATIONS_DB (capability honesty). */
+async function libraryOwnershipEnabled(env: Env): Promise<boolean> {
+  try {
+    await env.OPERATIONS_DB.prepare("SELECT 1 FROM OwnershipLedger LIMIT 1").first();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** True when the ADR-034 ConsumptionSignal table is queryable in OPERATIONS_DB (capability honesty). */
+async function libraryConsumptionEnabled(env: Env): Promise<boolean> {
+  try {
+    await env.OPERATIONS_DB.prepare("SELECT 1 FROM ConsumptionSignal LIMIT 1").first();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 capabilitiesRoutes.get("/", async (c) => {
   const env = c.env;
   const closed_loop = await closedLoopEnabled(env);
+  const library_ownership = await libraryOwnershipEnabled(env);
+  const library_consumption = await libraryConsumptionEnabled(env);
 
   return c.json({
     version: "2.0.0",
@@ -41,6 +63,8 @@ capabilitiesRoutes.get("/", async (c) => {
       javdb_login: !!env.JAVDB_USERNAME,
       proxy_preview: true,
       closed_loop,
+      library_ownership,
+      library_consumption,
       // ADR-035 Phase 3: gates the frontend site-drift sentinel panel.
       site_drift_sentinel: true,
     },

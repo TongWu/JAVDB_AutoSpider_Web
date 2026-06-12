@@ -2291,6 +2291,10 @@ export interface components {
             closed_loop: boolean;
             /** Javdb Login */
             javdb_login: boolean;
+            /** Library Consumption */
+            library_consumption: boolean;
+            /** Library Ownership */
+            library_ownership: boolean;
             /** Pikpak */
             pikpak: boolean;
             /** Proxy Pool */
