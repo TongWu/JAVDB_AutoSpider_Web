@@ -332,6 +332,93 @@ describe("Diagnostics routes", () => {
   // -------------------------------------------------------------------------
   // GET /api/diag/parse-field-health (ADR-035 Phase 3 drift surface)
   // -------------------------------------------------------------------------
+  // -------------------------------------------------------------------------
+  // GET /api/diag/ops-incidents/:id/remediation-proposals  (ADR-026 P3)
+  // POST /api/diag/remediation-proposals/:id/decision       (ADR-026 P3)
+  // -------------------------------------------------------------------------
+  async function seedRemediationProposalTable(db: D1Database) {
+    await db.prepare(`
+      CREATE TABLE IF NOT EXISTS OpsRemediationProposals (
+        proposal_id TEXT PRIMARY KEY,
+        incident_id TEXT NOT NULL,
+        action_type TEXT NOT NULL,
+        status TEXT NOT NULL,
+        safety_level TEXT NOT NULL,
+        title TEXT NOT NULL,
+        rationale TEXT NOT NULL,
+        command_preview TEXT,
+        runbook_ref TEXT,
+        evidence_refs_json TEXT NOT NULL,
+        required_checks_json TEXT NOT NULL,
+        blocked_reasons_json TEXT NOT NULL,
+        proposed_by TEXT NOT NULL,
+        decided_by TEXT,
+        decision_note TEXT,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL,
+        decided_at TEXT
+      )
+    `).run();
+    await db.prepare("DELETE FROM OpsRemediationProposals").run();
+    await db.prepare(`
+      INSERT INTO OpsRemediationProposals (
+        proposal_id, incident_id, action_type, status, safety_level, title, rationale,
+        command_preview, runbook_ref, evidence_refs_json, required_checks_json,
+        blocked_reasons_json, proposed_by, decided_by, decision_note, created_at, updated_at, decided_at
+      )
+      VALUES (
+        'opsprop_test', 'opsinc_test', 'open_runbook', 'proposed', 'safe_to_prepare',
+        'Open runbook', 'Review runbook.', NULL, 'docs/handbook/en/ops/troubleshooting.md',
+        '[]', '["Review confirmed findings."]', '[]', 'adr026-policy-v1',
+        NULL, NULL, '2026-05-27T00:00:00Z', '2026-05-27T00:00:00Z', NULL
+      )
+    `).run();
+  }
+
+  it("GET /api/diag/ops-incidents/:id/remediation-proposals returns proposals", async () => {
+    await seedRemediationProposalTable(env.REPORTS_DB);
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents/opsinc_test/remediation-proposals", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.items).toHaveLength(1);
+    expect(data.items[0].proposal_id).toBe("opsprop_test");
+    expect(data.items[0].required_checks).toEqual(["Review confirmed findings."]);
+    expect(data.items[0].evidence_refs).toEqual([]);
+    expect(data.items[0].blocked_reasons).toEqual([]);
+  });
+
+  it("POST /api/diag/remediation-proposals/:id/decision records an admin decision", async () => {
+    await seedRemediationProposalTable(env.REPORTS_DB);
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+
+    const res = await app.request(
+      "/api/diag/remediation-proposals/opsprop_test/decision",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Cookie: csrfCookie,
+        },
+        body: JSON.stringify({ status: "approved", decision_note: "Reviewed." }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as any;
+    expect(data.status).toBe("approved");
+    expect(data.decided_by).toBe("admin");
+    expect(data.decision_note).toBe("Reviewed.");
+    expect(data.decided_at).not.toBeNull();
+  });
+
   it("GET /api/diag/parse-field-health returns annotated health items (critical ok)", async () => {
     await seedParseFieldFills(env.REPORTS_DB, [
       { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 100, observed_at: "2026-06-01T00:00:00Z" },
