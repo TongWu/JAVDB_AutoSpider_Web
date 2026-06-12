@@ -1106,6 +1106,44 @@
         "runId": "実行 ID",
         "sessionId": "セッション ID",
         "topFinding": "主要検出事項"
+      },
+      "proposals": {
+        "title": "修復提案",
+        "empty": "このインシデントに対する提案はありません。",
+        "loadError": "提案の読み込みに失敗しました。",
+        "safetyLevel": "安全レベル",
+        "actionType": "アクションタイプ",
+        "rationale": "根拠",
+        "requiredChecks": "必要なチェック",
+        "blockedReasons": "ブロック理由",
+        "runbookRef": "ランブック",
+        "commandPreview": "コマンドプレビュー（読み取り専用）",
+        "copyCommand": "コピー",
+        "copiedCommand": "コピーしました！",
+        "proposedBy": "提案者",
+        "decidedBy": "決定者",
+        "decisionNote": "決定メモ",
+        "decidedAt": "決定日時",
+        "approve": "承認",
+        "reject": "拒否",
+        "approveDisabledBlocked": "承認できません：提案がブロックされています",
+        "confirmApproveTitle": "提案を承認しますか？",
+        "confirmRejectTitle": "提案を拒否しますか？",
+        "confirmBody": "提案：{title}",
+        "decisionNotePlaceholder": "決定メモを入力（任意）...",
+        "decisionSuccess": "決定を記録しました。",
+        "decisionError": "決定の記録に失敗しました。",
+        "status": {
+          "proposed": "提案済み",
+          "approved": "承認済み",
+          "rejected": "拒否済み",
+          "superseded": "廃止済み"
+        },
+        "safety": {
+          "safe": "安全",
+          "requires_review": "要レビュー",
+          "blocked": "ブロック済み"
+        }
       }
     },
     "javdb": {

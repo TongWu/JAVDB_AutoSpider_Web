@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   NAlert,
@@ -10,21 +10,30 @@ import {
   NDescriptionsItem,
   NDrawer,
   NDrawerContent,
+  NInput,
+  NModal,
   NSelect,
   NSpace,
   NSpin,
   NTag,
+  useMessage,
 } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import {
+  decideRemediationProposal,
   getOpsIncidentAnalytics,
   listOpsIncidents,
+  listRemediationProposals,
   type ListOpsIncidentParams,
   type OpsIncident,
   type OpsIncidentAnalytics,
+  type OpsRemediationProposal,
+  type RemediationDecisionRequest,
 } from '@/api/diagnostics'
+import { extractErrorMessage } from '@/api/errors'
 
 const { t } = useI18n()
+const message = useMessage()
 
 // ── Filter state ────────────────────────────────────────────────────
 const filterStatus = ref<string | null>(null)
@@ -203,6 +212,96 @@ const analyticsByStatus = computed(() =>
 const analyticsByConfidence = computed(() =>
   analytics.value ? Object.entries(analytics.value.by_confidence) : [],
 )
+
+// ── Remediation proposals state ──────────────────────────────────────
+const proposals = ref<OpsRemediationProposal[]>([])
+const proposalsLoading = ref(false)
+const proposalsError = ref<string | null>(null)
+const copiedCommand = ref<string | null>(null)
+
+async function fetchProposals(incidentId: string) {
+  proposalsLoading.value = true
+  proposalsError.value = null
+  proposals.value = []
+  try {
+    const res = await listRemediationProposals(incidentId)
+    proposals.value = res.items
+  } catch (e) {
+    proposalsError.value = extractErrorMessage(e)
+  } finally {
+    proposalsLoading.value = false
+  }
+}
+
+watch(selected, (inc) => {
+  if (inc) {
+    void fetchProposals(inc.incident_id)
+  } else {
+    proposals.value = []
+    proposalsError.value = null
+  }
+})
+
+function copyCommand(cmd: string, proposalId: string) {
+  if (!navigator.clipboard) return
+  void navigator.clipboard.writeText(cmd).then(() => {
+    copiedCommand.value = proposalId
+    setTimeout(() => { copiedCommand.value = null }, 1500)
+  }).catch(() => { copiedCommand.value = null })
+}
+
+function proposalStatusTagType(s: string): 'default' | 'success' | 'error' | 'warning' {
+  if (s === 'approved') return 'success'
+  if (s === 'rejected') return 'error'
+  if (s === 'superseded') return 'warning'
+  return 'default'
+}
+
+function safetyLevelTagType(level: string): 'default' | 'success' | 'warning' | 'error' {
+  if (level === 'safe') return 'success'
+  if (level === 'requires_review') return 'warning'
+  if (level === 'blocked') return 'error'
+  return 'default'
+}
+
+// ── Decision modal state ─────────────────────────────────────────────
+const decisionModalVisible = ref(false)
+const decisionTarget = ref<OpsRemediationProposal | null>(null)
+const decisionAction = ref<'approved' | 'rejected'>('approved')
+const decisionNote = ref('')
+const decisionLoading = ref(false)
+
+function openDecisionModal(proposal: OpsRemediationProposal, action: 'approved' | 'rejected') {
+  decisionTarget.value = proposal
+  decisionAction.value = action
+  decisionNote.value = ''
+  decisionModalVisible.value = true
+}
+
+function closeDecisionModal() {
+  decisionModalVisible.value = false
+}
+
+async function submitDecision() {
+  if (!decisionTarget.value) return
+  decisionLoading.value = true
+  try {
+    const body: RemediationDecisionRequest = {
+      status: decisionAction.value,
+      decision_note: decisionNote.value.trim() || null,
+    }
+    await decideRemediationProposal(decisionTarget.value.proposal_id, body)
+    message.success(t('diag.opsIncidents.proposals.decisionSuccess'))
+    decisionModalVisible.value = false
+    if (selected.value) {
+      void fetchProposals(selected.value.incident_id)
+    }
+  } catch (e) {
+    message.error(`${t('diag.opsIncidents.proposals.decisionError')} ${extractErrorMessage(e)}`)
+  } finally {
+    decisionLoading.value = false
+  }
+}
 </script>
 
 <template>
@@ -392,7 +491,7 @@ const analyticsByConfidence = computed(() =>
     <!-- Detail drawer -->
     <NDrawer
       v-model:show="drawerOpen"
-      :width="520"
+      :width="560"
       placement="right"
     >
       <NDrawerContent
@@ -577,8 +676,242 @@ const analyticsByConfidence = computed(() =>
             <span class="evidence-ref">{{ evRef.label ?? evRef.ref }}</span>
           </div>
         </div>
+
+        <!-- Remediation proposals -->
+        <div class="detail-section proposals-section">
+          <div class="detail-section-title">
+            {{ t('diag.opsIncidents.proposals.title') }}
+          </div>
+
+          <NAlert
+            v-if="proposalsError"
+            type="error"
+            size="small"
+            style="margin-bottom: 8px"
+          >
+            {{ proposalsError }}
+          </NAlert>
+
+          <NSpin :show="proposalsLoading">
+            <div
+              v-if="!proposalsLoading && proposals.length === 0 && !proposalsError"
+              class="empty-hint"
+              style="padding: 12px 0"
+            >
+              {{ t('diag.opsIncidents.proposals.empty') }}
+            </div>
+
+            <div
+              v-for="proposal in proposals"
+              :key="proposal.proposal_id"
+              class="proposal-card"
+            >
+              <!-- Proposal header row -->
+              <div class="proposal-header">
+                <span class="proposal-title">{{ proposal.title }}</span>
+                <NSpace :size="4">
+                  <NTag
+                    size="small"
+                    :type="safetyLevelTagType(proposal.safety_level)"
+                  >
+                    {{ t(`diag.opsIncidents.proposals.safety.${proposal.safety_level}`, proposal.safety_level) }}
+                  </NTag>
+                  <NTag
+                    size="small"
+                    :type="proposalStatusTagType(proposal.status)"
+                  >
+                    {{ t(`diag.opsIncidents.proposals.status.${proposal.status}`, proposal.status) }}
+                  </NTag>
+                </NSpace>
+              </div>
+
+              <!-- Proposal details -->
+              <NDescriptions
+                bordered
+                :column="1"
+                label-placement="left"
+                size="small"
+                style="margin: 8px 0"
+              >
+                <NDescriptionsItem :label="t('diag.opsIncidents.proposals.actionType')">
+                  {{ proposal.action_type }}
+                </NDescriptionsItem>
+                <NDescriptionsItem :label="t('diag.opsIncidents.proposals.rationale')">
+                  {{ proposal.rationale }}
+                </NDescriptionsItem>
+                <NDescriptionsItem
+                  v-if="proposal.runbook_ref"
+                  :label="t('diag.opsIncidents.proposals.runbookRef')"
+                >
+                  <code class="proposal-code-inline">{{ proposal.runbook_ref }}</code>
+                </NDescriptionsItem>
+                <NDescriptionsItem :label="t('diag.opsIncidents.proposals.proposedBy')">
+                  {{ proposal.proposed_by }}
+                </NDescriptionsItem>
+                <NDescriptionsItem
+                  v-if="proposal.decided_by"
+                  :label="t('diag.opsIncidents.proposals.decidedBy')"
+                >
+                  {{ proposal.decided_by }}
+                </NDescriptionsItem>
+                <NDescriptionsItem
+                  v-if="proposal.decision_note"
+                  :label="t('diag.opsIncidents.proposals.decisionNote')"
+                >
+                  {{ proposal.decision_note }}
+                </NDescriptionsItem>
+                <NDescriptionsItem
+                  v-if="proposal.decided_at"
+                  :label="t('diag.opsIncidents.proposals.decidedAt')"
+                >
+                  {{ proposal.decided_at }}
+                </NDescriptionsItem>
+              </NDescriptions>
+
+              <!-- Required checks -->
+              <div
+                v-if="proposal.required_checks.length"
+                class="proposal-list-block"
+              >
+                <div class="proposal-list-label">
+                  {{ t('diag.opsIncidents.proposals.requiredChecks') }}
+                </div>
+                <ul class="dense-list">
+                  <li
+                    v-for="(check, ci) in proposal.required_checks"
+                    :key="ci"
+                  >
+                    {{ check }}
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Blocked reasons -->
+              <div
+                v-if="proposal.blocked_reasons.length"
+                class="proposal-list-block proposal-list-block--blocked"
+              >
+                <div class="proposal-list-label proposal-list-label--blocked">
+                  {{ t('diag.opsIncidents.proposals.blockedReasons') }}
+                </div>
+                <ul class="dense-list">
+                  <li
+                    v-for="(reason, ri) in proposal.blocked_reasons"
+                    :key="ri"
+                  >
+                    {{ reason }}
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Command preview — read-only, copyable code block -->
+              <div
+                v-if="proposal.command_preview"
+                class="proposal-command-block"
+              >
+                <div class="proposal-command-label">
+                  {{ t('diag.opsIncidents.proposals.commandPreview') }}
+                </div>
+                <div class="proposal-command-row">
+                  <pre class="proposal-command-pre">{{ proposal.command_preview }}</pre>
+                  <NButton
+                    size="tiny"
+                    style="flex-shrink: 0; align-self: flex-start"
+                    @click="copyCommand(proposal.command_preview!, proposal.proposal_id)"
+                  >
+                    {{ copiedCommand === proposal.proposal_id
+                      ? t('diag.opsIncidents.proposals.copiedCommand')
+                      : t('diag.opsIncidents.proposals.copyCommand') }}
+                  </NButton>
+                </div>
+              </div>
+
+              <!-- Approve / Reject actions — only for proposals in 'proposed' status -->
+              <NSpace
+                v-if="proposal.status === 'proposed'"
+                :size="8"
+                style="margin-top: 10px"
+              >
+                <NButton
+                  size="small"
+                  type="success"
+                  :disabled="proposal.safety_level === 'blocked'"
+                  :title="proposal.safety_level === 'blocked' ? t('diag.opsIncidents.proposals.approveDisabledBlocked') : undefined"
+                  @click="openDecisionModal(proposal, 'approved')"
+                >
+                  {{ t('diag.opsIncidents.proposals.approve') }}
+                </NButton>
+                <NButton
+                  size="small"
+                  type="error"
+                  @click="openDecisionModal(proposal, 'rejected')"
+                >
+                  {{ t('diag.opsIncidents.proposals.reject') }}
+                </NButton>
+              </NSpace>
+            </div>
+          </NSpin>
+        </div>
       </NDrawerContent>
     </NDrawer>
+
+    <!-- Decision confirmation modal -->
+    <NModal
+      v-model:show="decisionModalVisible"
+      :mask-closable="!decisionLoading"
+    >
+      <NCard
+        style="max-width: 480px"
+        :title="decisionAction === 'approved'
+          ? t('diag.opsIncidents.proposals.confirmApproveTitle')
+          : t('diag.opsIncidents.proposals.confirmRejectTitle')"
+        :bordered="false"
+        role="dialog"
+        aria-modal="true"
+      >
+        <NSpace
+          vertical
+          :size="12"
+        >
+          <p
+            v-if="decisionTarget"
+            style="margin: 0; font-size: 13px"
+          >
+            {{ t('diag.opsIncidents.proposals.confirmBody', { title: decisionTarget.title }) }}
+          </p>
+          <NInput
+            v-model:value="decisionNote"
+            type="textarea"
+            :placeholder="t('diag.opsIncidents.proposals.decisionNotePlaceholder')"
+            :autosize="{ minRows: 2, maxRows: 5 }"
+            :disabled="decisionLoading"
+          />
+        </NSpace>
+
+        <template #footer>
+          <NSpace
+            justify="end"
+            :size="8"
+          >
+            <NButton
+              :disabled="decisionLoading"
+              @click="closeDecisionModal"
+            >
+              {{ t('common.cancel') }}
+            </NButton>
+            <NButton
+              :type="decisionAction === 'approved' ? 'success' : 'error'"
+              :loading="decisionLoading"
+              @click="submitDecision"
+            >
+              {{ decisionAction === 'approved'
+                ? t('diag.opsIncidents.proposals.approve')
+                : t('diag.opsIncidents.proposals.reject') }}
+            </NButton>
+          </NSpace>
+        </template>
+      </NCard>
+    </NModal>
   </div>
 </template>
 
@@ -677,5 +1010,97 @@ const analyticsByConfidence = computed(() =>
 .evidence-ref {
   word-break: break-all;
   color: var(--n-text-color-2);
+}
+
+/* Proposals section */
+.proposals-section {
+  border-top: 1px solid var(--n-border-color);
+  padding-top: 16px;
+}
+
+.proposal-card {
+  border: 1px solid var(--n-border-color);
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  background: var(--n-card-color);
+}
+
+.proposal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.proposal-title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.proposal-code-inline {
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.proposal-list-block {
+  margin: 8px 0 4px;
+}
+
+.proposal-list-block--blocked {
+  background: rgba(var(--n-error-color-rgb, 255, 0, 0), 0.04);
+  border-left: 3px solid var(--n-error-color);
+  padding-left: 8px;
+  border-radius: 0 4px 4px 0;
+}
+
+.proposal-list-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--n-text-color-3);
+  margin-bottom: 4px;
+}
+
+.proposal-list-label--blocked {
+  color: var(--n-error-color);
+}
+
+.proposal-command-block {
+  margin: 8px 0 4px;
+}
+
+.proposal-command-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--n-text-color-3);
+  margin-bottom: 4px;
+}
+
+.proposal-command-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.proposal-command-pre {
+  flex: 1;
+  margin: 0;
+  padding: 8px 10px;
+  font-size: 12px;
+  font-family: var(--n-font-family-mono, monospace);
+  background: var(--n-code-color, rgba(0, 0, 0, 0.06));
+  border-radius: 4px;
+  border: 1px solid var(--n-border-color);
+  white-space: pre-wrap;
+  word-break: break-all;
+  user-select: text;
+  pointer-events: text;
+  /* Explicitly not a control — text only */
+  cursor: text;
 }
 </style>
