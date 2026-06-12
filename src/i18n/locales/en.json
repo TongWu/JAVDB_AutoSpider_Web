@@ -1137,10 +1137,10 @@
           "proposed": "Proposed",
           "approved": "Approved",
           "rejected": "Rejected",
-          "superseded": "Superseded"
+          "expired": "Expired"
         },
         "safety": {
-          "safe": "Safe",
+          "safe_to_prepare": "Safe",
           "requires_review": "Requires Review",
           "blocked": "Blocked"
         }

@@ -1137,10 +1137,10 @@
           "proposed": "待处理",
           "approved": "已批准",
           "rejected": "已拒绝",
-          "superseded": "已废弃"
+          "expired": "已过期"
         },
         "safety": {
-          "safe": "安全",
+          "safe_to_prepare": "安全",
           "requires_review": "需审查",
           "blocked": "已阻塞"
         }

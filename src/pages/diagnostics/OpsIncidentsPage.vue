@@ -253,12 +253,12 @@ function copyCommand(cmd: string, proposalId: string) {
 function proposalStatusTagType(s: string): 'default' | 'success' | 'error' | 'warning' {
   if (s === 'approved') return 'success'
   if (s === 'rejected') return 'error'
-  if (s === 'superseded') return 'warning'
+  if (s === 'expired') return 'warning'
   return 'default'
 }
 
 function safetyLevelTagType(level: string): 'default' | 'success' | 'warning' | 'error' {
-  if (level === 'safe') return 'success'
+  if (level === 'safe_to_prepare') return 'success'
   if (level === 'requires_review') return 'warning'
   if (level === 'blocked') return 'error'
   return 'default'

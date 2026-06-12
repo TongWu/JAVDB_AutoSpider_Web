@@ -1137,10 +1137,10 @@
           "proposed": "提案済み",
           "approved": "承認済み",
           "rejected": "拒否済み",
-          "superseded": "廃止済み"
+          "expired": "期限切れ"
         },
         "safety": {
-          "safe": "安全",
+          "safe_to_prepare": "安全",
           "requires_review": "要レビュー",
           "blocked": "ブロック済み"
         }
