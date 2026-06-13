@@ -102,4 +102,30 @@ describe("Watchlist routes", () => {
     );
     expect(res.status).toBe(422);
   });
+
+  it("preserves existing notes when a status-only update omits notes", async () => {
+    const { accessToken, csrfToken } = await login();
+    await app.request(
+      "/api/watchlist/NOTE-1",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ href: "/v/note1", status: "want", notes: "keep me" }),
+      },
+      env,
+    );
+    const put = await app.request(
+      "/api/watchlist/NOTE-1",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ href: "/v/note1", status: "viewed" }),
+      },
+      env,
+    );
+    expect(put.status).toBe(200);
+    const body = (await put.json()) as Record<string, unknown>;
+    expect(body.status).toBe("viewed");
+    expect(body.notes).toBe("keep me");
+  });
 });

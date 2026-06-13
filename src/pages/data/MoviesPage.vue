@@ -78,9 +78,16 @@ const watchIntents = ref<Map<string, WatchStatus>>(new Map())
 async function loadWatchIntents(): Promise<void> {
   if (!cap.data?.features?.watch_intent) return
   try {
-    const { items } = await listWatchIntents({ limit: 200 })
+    // Page through the full intent set: the Movies search can show any
+    // historical movie, so a single capped fetch would render older tracked
+    // movies as "Untracked". Loop until a short page signals the end.
+    const PAGE = 200
     const next = new Map<string, WatchStatus>()
-    for (const it of items) next.set(it.video_code, it.status)
+    for (let offset = 0; ; offset += PAGE) {
+      const { items } = await listWatchIntents({ limit: PAGE, offset })
+      for (const it of items) next.set(it.video_code, it.status)
+      if (items.length < PAGE) break
+    }
     watchIntents.value = next
   } catch {
     // non-fatal: the column simply shows "untracked" for every row

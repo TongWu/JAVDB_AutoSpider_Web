@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
+import { requireRole } from "../middleware/auth";
 import {
   upsertWatchIntent,
   getWatchIntent,
@@ -29,8 +30,9 @@ watchlistRoutes.get("/", async (c) => {
   return c.json({ items, total });
 });
 
-// PUT /:videoCode — upsert a watch intent.
-watchlistRoutes.put("/:videoCode", async (c) => {
+// PUT /:videoCode — upsert a watch intent. Mutations are admin-only (a
+// readonly account must not modify shared watch-intent data).
+watchlistRoutes.put("/:videoCode", requireRole("admin"), async (c) => {
   const videoCode = c.req.param("videoCode");
   let body: { href?: string; status?: string; notes?: string | null };
   try {
@@ -57,8 +59,8 @@ watchlistRoutes.get("/:videoCode", async (c) => {
   return c.json(row);
 });
 
-// DELETE /:videoCode — un-track.
-watchlistRoutes.delete("/:videoCode", async (c) => {
+// DELETE /:videoCode — un-track. Admin-only (see PUT).
+watchlistRoutes.delete("/:videoCode", requireRole("admin"), async (c) => {
   const deleted = await deleteWatchIntent(c.env.HISTORY_DB, c.req.param("videoCode"));
   return c.json({ deleted });
 });

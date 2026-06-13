@@ -15,6 +15,10 @@ const total = ref(0)
 const loading = ref(false)
 const error = ref<string | null>(null)
 const statusFilter = ref<WatchStatus | null>(null)
+// Monotonic token: when list requests overlap (rapid filter changes or an
+// update-triggered reload), only the newest response may write state — mirrors
+// ConsumptionView's recentSeq guard.
+let listSeq = 0
 
 const statusOptions = computed(() => [
   { label: t('library.watchlist.status.want'), value: 'want' },
@@ -22,16 +26,19 @@ const statusOptions = computed(() => [
 ])
 
 async function fetchList(): Promise<void> {
+  const seq = ++listSeq
   loading.value = true
   error.value = null
   try {
     const res = await listWatchIntents({ status: statusFilter.value, limit: 200 })
+    if (seq !== listSeq) return
     items.value = res.items
     total.value = res.total
   } catch (err) {
+    if (seq !== listSeq) return
     error.value = err instanceof Error ? err.message : t('library.watchlist.loadError')
   } finally {
-    loading.value = false
+    if (seq === listSeq) loading.value = false
   }
 }
 
