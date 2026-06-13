@@ -459,6 +459,39 @@ describe("Diagnostics routes", () => {
     expect(row?.status).toBe("proposed");
   });
 
+  it("POST /api/diag/remediation-proposals/:id/decision is single-transition (re-decide → 409)", async () => {
+    await seedRemediationProposalTable(env.REPORTS_DB);
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const headers = {
+      Authorization: `Bearer ${token}`,
+      "Content-Type": "application/json",
+      "X-CSRF-Token": csrfToken,
+      Cookie: csrfCookie,
+    };
+
+    const first = await app.request(
+      "/api/diag/remediation-proposals/opsprop_test/decision",
+      { method: "POST", headers, body: JSON.stringify({ status: "approved", decision_note: "ok" }) },
+      env,
+    );
+    expect(first.status).toBe(200);
+
+    // A second decision must not overwrite the recorded one.
+    const second = await app.request(
+      "/api/diag/remediation-proposals/opsprop_test/decision",
+      { method: "POST", headers, body: JSON.stringify({ status: "rejected", decision_note: "oops" }) },
+      env,
+    );
+    expect(second.status).toBe(409);
+
+    const row = await env.REPORTS_DB
+      .prepare("SELECT status, decided_by, decision_note FROM OpsRemediationProposals WHERE proposal_id = ?")
+      .bind("opsprop_test")
+      .first<{ status: string; decided_by: string; decision_note: string }>();
+    expect(row?.status).toBe("approved");
+    expect(row?.decision_note).toBe("ok");
+  });
+
   it("GET /api/diag/parse-field-health returns annotated health items (critical ok)", async () => {
     await seedParseFieldFills(env.REPORTS_DB, [
       { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 100, observed_at: "2026-06-01T00:00:00Z" },

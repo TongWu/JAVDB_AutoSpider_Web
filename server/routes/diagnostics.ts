@@ -238,32 +238,37 @@ diagnosticsRoutes.post("/remediation-proposals/:proposal_id/decision", requireRo
   const decidedBy = c.get("user").sub;
   const now = new Date().toISOString();
 
-  // A proposal the safety policy has blocked must never become 'approved' —
-  // mirrors the Python API (HTTP 409). Rejecting a blocked proposal stays allowed.
-  if (body.status === "approved") {
-    const existing = await c.env.REPORTS_DB
-      .prepare("SELECT safety_level FROM OpsRemediationProposals WHERE proposal_id = ?")
-      .bind(proposalId)
-      .first<{ safety_level: string }>();
-    if (existing?.safety_level === "blocked") {
-      throw new HTTPException(409, {
-        message: "Cannot approve a proposal blocked by the safety policy",
-      });
-    }
+  const existing = await c.env.REPORTS_DB
+    .prepare("SELECT status, safety_level FROM OpsRemediationProposals WHERE proposal_id = ?")
+    .bind(proposalId)
+    .first<{ status: string; safety_level: string }>();
+  if (!existing) {
+    throw new HTTPException(404, { message: "Remediation proposal not found" });
+  }
+  // Decisions are single-transition (mirrors the Python API): a proposal may be
+  // decided only while still 'proposed'. Re-deciding would overwrite the
+  // actor/note/timestamp audit trail, so a duplicate/stale request gets 409.
+  if (existing.status !== "proposed") {
+    throw new HTTPException(409, {
+      message: `Proposal already decided (${existing.status}); decisions are single-transition`,
+    });
+  }
+  // A proposal the safety policy has blocked must never become 'approved'.
+  // Rejecting a blocked proposal stays allowed.
+  if (body.status === "approved" && existing.safety_level === "blocked") {
+    throw new HTTPException(409, {
+      message: "Cannot approve a proposal blocked by the safety policy",
+    });
   }
 
-  const updateResult = await c.env.REPORTS_DB
+  await c.env.REPORTS_DB
     .prepare(
       `UPDATE OpsRemediationProposals
           SET status = ?, decided_by = ?, decision_note = ?, decided_at = ?, updated_at = ?
-        WHERE proposal_id = ?`,
+        WHERE proposal_id = ? AND status = 'proposed'`,
     )
     .bind(body.status, decidedBy, body.decision_note ?? null, now, now, proposalId)
     .run();
-
-  if (updateResult.meta.changes === 0) {
-    throw new HTTPException(404, { message: "Remediation proposal not found" });
-  }
 
   const row = await c.env.REPORTS_DB
     .prepare("SELECT * FROM OpsRemediationProposals WHERE proposal_id = ?")

@@ -31,9 +31,14 @@ import {
   type RemediationDecisionRequest,
 } from '@/api/diagnostics'
 import { extractErrorMessage } from '@/api/errors'
+import { useAuthStore } from '@/stores/auth'
 
 const { t } = useI18n()
 const message = useMessage()
+const auth = useAuthStore()
+// The decision POST requires the 'admin' role; only admins see the controls so
+// read-only users aren't invited into a confirmation flow that would 403.
+const isAdmin = computed(() => auth.role === 'admin')
 
 // ── Filter state ────────────────────────────────────────────────────
 const filterStatus = ref<string | null>(null)
@@ -219,17 +224,29 @@ const proposalsLoading = ref(false)
 const proposalsError = ref<string | null>(null)
 const copiedCommand = ref<string | null>(null)
 
+let proposalsReqSeq = 0
+
 async function fetchProposals(incidentId: string) {
+  // Guard against out-of-order responses when the user switches incidents
+  // quickly — a slower earlier request must not overwrite a newer selection
+  // (mirrors fetchIncidents' listReqSeq pattern).
+  const reqSeq = ++proposalsReqSeq
   proposalsLoading.value = true
   proposalsError.value = null
   proposals.value = []
   try {
     const res = await listRemediationProposals(incidentId)
-    proposals.value = res.items
+    if (reqSeq === proposalsReqSeq) {
+      proposals.value = res.items
+    }
   } catch (e) {
-    proposalsError.value = extractErrorMessage(e)
+    if (reqSeq === proposalsReqSeq) {
+      proposalsError.value = extractErrorMessage(e)
+    }
   } finally {
-    proposalsLoading.value = false
+    if (reqSeq === proposalsReqSeq) {
+      proposalsLoading.value = false
+    }
   }
 }
 
@@ -826,9 +843,10 @@ async function submitDecision() {
                 </div>
               </div>
 
-              <!-- Approve / Reject actions — only for proposals in 'proposed' status -->
+              <!-- Approve / Reject actions — admins only, and only for proposals
+                   still in 'proposed' status (the decision POST requires admin). -->
               <NSpace
-                v-if="proposal.status === 'proposed'"
+                v-if="isAdmin && proposal.status === 'proposed'"
                 :size="8"
                 style="margin-top: 10px"
               >
