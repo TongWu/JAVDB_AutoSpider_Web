@@ -419,6 +419,46 @@ describe("Diagnostics routes", () => {
     expect(data.decided_at).not.toBeNull();
   });
 
+  it("POST /api/diag/remediation-proposals/:id/decision rejects approving a blocked proposal (409)", async () => {
+    await seedRemediationProposalTable(env.REPORTS_DB);
+    // A safety-blocked proposal must never be approvable (parity with Python API).
+    await env.REPORTS_DB.prepare(
+      `INSERT INTO OpsRemediationProposals (
+         proposal_id, incident_id, action_type, status, safety_level, title, rationale,
+         command_preview, runbook_ref, evidence_refs_json, required_checks_json,
+         blocked_reasons_json, proposed_by, decided_by, decision_note, created_at, updated_at, decided_at
+       ) VALUES (
+         'opsprop_blocked', 'opsinc_test', 'prepare_rollback_workflow', 'proposed', 'blocked',
+         'Prepare rollback workflow', 'Rollback blocked.', NULL, 'docs/handbook/en/ops/d1-rollback.md',
+         '[]', '[]', '["Session id is missing."]', 'adr026-policy-v1',
+         NULL, NULL, '2026-05-27T00:00:00Z', '2026-05-27T00:00:00Z', NULL
+       )`,
+    ).run();
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+
+    const res = await app.request(
+      "/api/diag/remediation-proposals/opsprop_blocked/decision",
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Cookie: csrfCookie,
+        },
+        body: JSON.stringify({ status: "approved" }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(409);
+    const row = await env.REPORTS_DB
+      .prepare("SELECT status FROM OpsRemediationProposals WHERE proposal_id = ?")
+      .bind("opsprop_blocked")
+      .first<{ status: string }>();
+    expect(row?.status).toBe("proposed");
+  });
+
   it("GET /api/diag/parse-field-health returns annotated health items (critical ok)", async () => {
     await seedParseFieldFills(env.REPORTS_DB, [
       { page_type: "index", field: "href", fill_rate: 1.0, sample_count: 100, observed_at: "2026-06-01T00:00:00Z" },

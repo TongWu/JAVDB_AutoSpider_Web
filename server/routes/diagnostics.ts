@@ -238,6 +238,20 @@ diagnosticsRoutes.post("/remediation-proposals/:proposal_id/decision", requireRo
   const decidedBy = c.get("user").sub;
   const now = new Date().toISOString();
 
+  // A proposal the safety policy has blocked must never become 'approved' —
+  // mirrors the Python API (HTTP 409). Rejecting a blocked proposal stays allowed.
+  if (body.status === "approved") {
+    const existing = await c.env.REPORTS_DB
+      .prepare("SELECT safety_level FROM OpsRemediationProposals WHERE proposal_id = ?")
+      .bind(proposalId)
+      .first<{ safety_level: string }>();
+    if (existing?.safety_level === "blocked") {
+      throw new HTTPException(409, {
+        message: "Cannot approve a proposal blocked by the safety policy",
+      });
+    }
+  }
+
   const updateResult = await c.env.REPORTS_DB
     .prepare(
       `UPDATE OpsRemediationProposals
