@@ -34,9 +34,12 @@ test.describe('Ops remediation proposal review', () => {
   test('shows blocked proposal without execution controls', async ({ page }) => {
     await loginViaUi(page)
     await page.goto('/diag/ops-incidents')
-    await page.getByText('opsinc_test').click()
-    await expect(page.getByText('Prepare rollback workflow')).toBeVisible()
-    await expect(page.getByText('Session id is missing.')).toBeVisible()
+    // incident_id is not a table column; open the detail drawer by clicking the
+    // incident row via its top-finding cell (mirrors ops-incidents.spec.ts).
+    await expect(page.getByText('Workflow result is failure.').first()).toBeVisible({ timeout: 5_000 })
+    await page.getByText('Workflow result is failure.').first().click()
+    await expect(page.getByText('Prepare rollback workflow').first()).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText('Session id is missing.').first()).toBeVisible()
     await expect(page.getByRole('button', { name: /execute|rollback|rerun|apply/i })).toHaveCount(0)
   })
 })
