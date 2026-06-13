@@ -24,6 +24,16 @@ export interface SessionRow {
   FailureReason: string | null;
 }
 
+// Canonical ReportSessions projection shared by the two full-row reads — the
+// buildSessionQuery list builder and the GET /:session_id handler — so the
+// column set lives in one place and both stay aligned with `mapSession` (which
+// reads each field by name). The buildSessionQuery output is pinned byte-for-
+// byte by the ADR-018 query Contract Golden, so the column order/spelling here
+// MUST NOT change. The narrower commit/rollback probes ("SELECT Id, Status" /
+// "SELECT Id") intentionally project fewer columns and do not use this.
+export const REPORT_SESSION_COLUMNS =
+  "Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated, ReportType, ReportDate, FailureReason";
+
 export function mapSession(row: SessionRow) {
   return {
     session_id: row.Id,
@@ -66,9 +76,9 @@ export function buildSessionQuery(input: SessionQueryInput): { sql: string; bind
 
   const where = clauses.length > 0 ? ` WHERE ${clauses.join(" AND ")}` : "";
   const sql =
-    "SELECT Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated, " +
-    "ReportType, ReportDate, FailureReason " +
-    "FROM ReportSessions" +
+    "SELECT " +
+    REPORT_SESSION_COLUMNS +
+    " FROM ReportSessions" +
     where +
     " ORDER BY Id DESC LIMIT ?";
   bindings.push(input.limit + 1);
@@ -104,11 +114,7 @@ sessionsRoutes.get("/:session_id", async (c) => {
   const sessionId = c.req.param("session_id");
 
   const session = await c.env.REPORTS_DB
-    .prepare(
-      `SELECT Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated,
-              ReportType, ReportDate, FailureReason
-       FROM ReportSessions WHERE Id = ?`
-    )
+    .prepare(`SELECT ${REPORT_SESSION_COLUMNS} FROM ReportSessions WHERE Id = ?`)
     .bind(sessionId)
     .first<SessionRow>();
 

@@ -6,6 +6,7 @@ import { requireRole } from "../middleware/auth";
 import { loadConfigStore } from "../services/config-store";
 import { createGhClient } from "../services/gh-client";
 import { createJobRunsRepo } from "../services/job-runs";
+import { upsertSystemState } from "../services/system-state-store";
 
 type OnbEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -128,12 +129,7 @@ onboardingRoutes.post("/test", async (c) => {
 });
 
 onboardingRoutes.post("/complete", requireRole("admin"), async (c) => {
-  await c.env.OPERATIONS_DB
-    .prepare(
-      `INSERT INTO system_state (key, value, updated_at) VALUES ('onboarded', 'true', datetime('now'))
-       ON CONFLICT(key) DO UPDATE SET value = 'true', updated_at = datetime('now')`,
-    )
-    .run();
+  await upsertSystemState(c.env.OPERATIONS_DB, "onboarded", "true");
   return c.json(await buildStatus(c.env));
 });
 
@@ -156,13 +152,7 @@ onboardingRoutes.post("/dismiss-hint", requireRole("admin"), async (c) => {
 
   if (!hints.includes(body.hint_id)) {
     hints.push(body.hint_id);
-    await db
-      .prepare(
-        `INSERT INTO system_state (key, value, updated_at) VALUES ('dismissed_hints', ?, datetime('now'))
-         ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')`,
-      )
-      .bind(JSON.stringify(hints))
-      .run();
+    await upsertSystemState(db, "dismissed_hints", JSON.stringify(hints));
   }
 
   return c.json({ dismissed_hints: hints });

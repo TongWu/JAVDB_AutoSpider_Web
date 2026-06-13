@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
+import { buildSessionQuery, REPORT_SESSION_COLUMNS } from "../routes/sessions";
 
 async function getToken(): Promise<string> {
   const res = await app.request("/api/auth/login", {
@@ -32,6 +33,26 @@ async function seedSessions(db: D1Database) {
   await db.prepare("INSERT INTO ReportMovies (SessionId, Href, VideoCode, Page, Actor) VALUES (?, ?, ?, ?, ?)").bind("sess-001", "/v/abc", "ABC-001", 1, "Actor A").run();
   await db.prepare("INSERT INTO ReportTorrents (ReportMovieId, VideoCode, MagnetUri) VALUES (?, ?, ?)").bind(1, "ABC-001", "magnet:?xt=urn:btih:xxx").run();
 }
+
+// Pins the shared ReportSessions projection extracted from buildSessionQuery
+// and the GET /:session_id handler. The exact column order/spelling is also
+// pinned transitively by the ADR-018 query Contract Golden (via the assembled
+// buildSessionQuery SQL); this guards the constant directly and verifies the
+// builder reuses it verbatim so the two stay in lock-step.
+describe("REPORT_SESSION_COLUMNS shared projection", () => {
+  it("matches the canonical ReportSessions column list", () => {
+    expect(REPORT_SESSION_COLUMNS).toBe(
+      "Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated, ReportType, ReportDate, FailureReason",
+    );
+  });
+
+  it("is reused verbatim by buildSessionQuery", () => {
+    const { sql } = buildSessionQuery({ limit: 50 });
+    expect(sql).toBe(
+      `SELECT ${REPORT_SESSION_COLUMNS} FROM ReportSessions ORDER BY Id DESC LIMIT ?`,
+    );
+  });
+});
 
 describe("Sessions routes", () => {
   beforeAll(async () => {
