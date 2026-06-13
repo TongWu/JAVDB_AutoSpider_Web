@@ -1,4 +1,4 @@
-// Watch-intent (watchlist) D1 queries (ADR-048 WS1).
+// Watch-intent (watchlist) D1 queries (ADR-054 WS1).
 // Keep this module free of Hono / c.env references; callers pass the binding.
 
 export interface WatchIntentRow {

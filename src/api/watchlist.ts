@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { http } from './client'
 
-// Hand-typed until src/types/api.gen.ts is regenerated to include the ADR-048
+// Hand-typed until src/types/api.gen.ts is regenerated to include the ADR-054
 // WS1 watchlist endpoints. Shapes mirror server/routes/watchlist.ts.
 
 export type WatchStatus = 'want' | 'viewed'

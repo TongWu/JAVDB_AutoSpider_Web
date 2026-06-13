@@ -40,7 +40,7 @@ async function libraryConsumptionEnabled(env: Env): Promise<boolean> {
   }
 }
 
-/** True when the ADR-048 WatchIntent table is queryable in HISTORY_DB (capability honesty). */
+/** True when the ADR-054 WatchIntent table is queryable in HISTORY_DB (capability honesty). */
 async function watchIntentEnabled(env: Env): Promise<boolean> {
   try {
     await env.HISTORY_DB.prepare("SELECT 1 FROM WatchIntent LIMIT 1").first();

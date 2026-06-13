@@ -72,7 +72,7 @@ const actorHearted = ref<Map<string, boolean>>(new Map())
 // from losing typed text when a sibling control reassigns `ratings`.
 const notesDraft = ref<Map<string, string>>(new Map())
 
-// Watch intents (ADR-048 WS1), keyed by video_code
+// Watch intents (ADR-054 WS1), keyed by video_code
 const watchIntents = ref<Map<string, WatchStatus>>(new Map())
 
 async function loadWatchIntents(): Promise<void> {
