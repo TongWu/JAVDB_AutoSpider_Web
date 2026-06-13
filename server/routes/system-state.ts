@@ -3,6 +3,7 @@ import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
+import { upsertSystemState } from "../services/system-state-store";
 
 type StateEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -28,15 +29,7 @@ systemStateRoutes.put("/state", requireRole("admin"), async (c) => {
     throw new HTTPException(400, { message: "key and value required" });
   }
 
-  await c.env.OPERATIONS_DB
-    .prepare(
-      `INSERT INTO system_state (key, value, updated_at)
-       VALUES (?, ?, datetime('now'))
-       ON CONFLICT(key) DO UPDATE SET value = excluded.value,
-                                       updated_at = datetime('now')`
-    )
-    .bind(body.key, body.value)
-    .run();
+  await upsertSystemState(c.env.OPERATIONS_DB, body.key, body.value);
 
   return c.json({ key: body.key, value: body.value });
 });
