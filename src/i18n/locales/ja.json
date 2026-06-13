@@ -870,7 +870,8 @@
       "torrents": "トレント",
       "sessionId": "セッション",
       "rating": "評価",
-      "score": "スコア"
+      "score": "スコア",
+      "watchStatus": "視聴ステータス"
     },
     "exportCsv": "CSV エクスポート",
     "loadMore": "さらに読み込む",
@@ -1324,7 +1325,8 @@
     "tabs": {
       "acquisition": "取得",
       "ownership": "所有",
-      "consumption": "視聴"
+      "consumption": "視聴",
+      "watchlist": "ウォッチリスト"
     },
     "loadError": "取得データの読み込みに失敗しました。",
     "comingSoon": "近日公開",
@@ -1377,6 +1379,23 @@
         "size": "サイズ",
         "present": "存在",
         "observedAt": "観測日時"
+      }
+    },
+    "watchlist": {
+      "loadError": "ウォッチリストの読み込みに失敗しました。",
+      "saveError": "ステータスの更新に失敗しました。",
+      "total": "追跡中",
+      "recent": "ウォッチリスト",
+      "untracked": "未追跡",
+      "allStatuses": "全て",
+      "status": {
+        "want": "観たい",
+        "viewed": "視聴済み"
+      },
+      "col": {
+        "videoCode": "コード",
+        "status": "ステータス",
+        "updatedAt": "更新日時"
       }
     },
     "consumption": {

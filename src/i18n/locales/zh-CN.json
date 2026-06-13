@@ -870,7 +870,8 @@
       "torrents": "种子数",
       "sessionId": "会话",
       "rating": "评分",
-      "score": "偏好分"
+      "score": "偏好分",
+      "watchStatus": "观看状态"
     },
     "exportCsv": "导出 CSV",
     "loadMore": "加载更多",
@@ -1324,7 +1325,8 @@
     "tabs": {
       "acquisition": "获取",
       "ownership": "拥有",
-      "consumption": "消费"
+      "consumption": "消费",
+      "watchlist": "想看清单"
     },
     "loadError": "加载获取数据失败。",
     "comingSoon": "敬请期待",
@@ -1377,6 +1379,23 @@
         "size": "大小",
         "present": "存在",
         "observedAt": "观测时间"
+      }
+    },
+    "watchlist": {
+      "loadError": "加载想看清单失败。",
+      "saveError": "更新状态失败。",
+      "total": "已追踪",
+      "recent": "想看清单",
+      "untracked": "未追踪",
+      "allStatuses": "全部",
+      "status": {
+        "want": "想看",
+        "viewed": "已看"
+      },
+      "col": {
+        "videoCode": "番号",
+        "status": "状态",
+        "updatedAt": "更新时间"
       }
     },
     "consumption": {

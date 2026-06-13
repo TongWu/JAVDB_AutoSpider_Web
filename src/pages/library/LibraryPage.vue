@@ -7,6 +7,7 @@ import { useCapabilitiesStore } from '@/stores/capabilities'
 import AcquisitionView from './AcquisitionView.vue'
 import OwnershipView from './OwnershipView.vue'
 import ConsumptionView from './ConsumptionView.vue'
+import WatchlistView from './WatchlistView.vue'
 
 const { t } = useI18n()
 const cap = useCapabilitiesStore()
@@ -19,11 +20,13 @@ const activeTab = ref('acquisition')
 const features = computed(() => cap.data?.features)
 const showOwnership = computed(() => !!features.value?.library_ownership)
 const showConsumption = computed(() => !!features.value?.library_consumption)
+const showWatchlist = computed(() => !!features.value?.watch_intent)
 
 const visibleTabs = computed(() => {
   const tabs = ['acquisition']
   if (showOwnership.value) tabs.push('ownership')
   if (showConsumption.value) tabs.push('consumption')
+  if (showWatchlist.value) tabs.push('watchlist')
   return tabs
 })
 
@@ -68,6 +71,13 @@ watch(
         :tab="t('library.tabs.consumption')"
       >
         <ConsumptionView />
+      </NTabPane>
+      <NTabPane
+        v-if="showWatchlist"
+        name="watchlist"
+        :tab="t('library.tabs.watchlist')"
+      >
+        <WatchlistView />
       </NTabPane>
     </NTabs>
   </div>

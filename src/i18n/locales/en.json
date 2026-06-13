@@ -870,7 +870,8 @@
       "torrents": "Torrents",
       "sessionId": "Session",
       "rating": "Rating",
-      "score": "Score"
+      "score": "Score",
+      "watchStatus": "Status"
     },
     "exportCsv": "Export CSV",
     "loadMore": "Load more",
@@ -1324,7 +1325,8 @@
     "tabs": {
       "acquisition": "Acquisition",
       "ownership": "Ownership",
-      "consumption": "Consumption"
+      "consumption": "Consumption",
+      "watchlist": "Watchlist"
     },
     "loadError": "Failed to load acquisition data.",
     "comingSoon": "Coming soon",
@@ -1377,6 +1379,23 @@
         "size": "Size",
         "present": "Present",
         "observedAt": "Observed"
+      }
+    },
+    "watchlist": {
+      "loadError": "Failed to load watchlist.",
+      "saveError": "Failed to update status.",
+      "total": "Tracked",
+      "recent": "Watchlist",
+      "untracked": "Untracked",
+      "allStatuses": "All",
+      "status": {
+        "want": "Want",
+        "viewed": "Viewed"
+      },
+      "col": {
+        "videoCode": "Code",
+        "status": "Status",
+        "updatedAt": "Updated"
       }
     },
     "consumption": {
