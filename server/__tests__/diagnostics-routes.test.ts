@@ -337,6 +337,9 @@ describe("Diagnostics routes", () => {
   // POST /api/diag/remediation-proposals/:id/decision       (ADR-026 P3)
   // -------------------------------------------------------------------------
   async function seedRemediationProposalTable(db: D1Database) {
+    // Ensure the referenced incident exists so the helper is self-contained and
+    // order-independent (proposals FK to OpsIncidents.incident_id='opsinc_test').
+    await seedOpsIncidentTables(db);
     await db.prepare(`
       CREATE TABLE IF NOT EXISTS OpsRemediationProposals (
         proposal_id TEXT PRIMARY KEY,

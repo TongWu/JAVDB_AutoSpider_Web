@@ -132,12 +132,18 @@ export async function getOpsIncidentAnalytics(): Promise<OpsIncidentAnalytics> {
 }
 
 // ── Ops Remediation Proposals ─────────────────────────────────────────
+// Narrow the two most drift-prone fields to the exact backend literals so the
+// compiler catches enum typos (the safe_to_prepare/expired mismatch slipped
+// through precisely because these were plain `string`).
+export type OpsRemediationStatus = 'proposed' | 'approved' | 'rejected' | 'expired'
+export type OpsRemediationSafetyLevel = 'safe_to_prepare' | 'requires_review' | 'blocked'
+
 export interface OpsRemediationProposal {
   proposal_id: string
   incident_id: string
   action_type: string
-  status: string
-  safety_level: string
+  status: OpsRemediationStatus
+  safety_level: OpsRemediationSafetyLevel
   title: string
   rationale: string
   command_preview?: string | null
