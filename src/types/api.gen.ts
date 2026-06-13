@@ -258,6 +258,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/ops-incidents/{incident_id}/remediation-proposals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Ops Remediation Proposals */
+        get: operations["list_ops_remediation_proposals_api_diag_ops_incidents__incident_id__remediation_proposals_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diag/ops-incidents/{incident_id}/similar": {
         parameters: {
             query?: never;
@@ -292,6 +309,23 @@ export interface paths {
         get: operations["get_parse_field_health_api_diag_parse_field_health_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/remediation-proposals/{proposal_id}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Decide Ops Remediation Proposal */
+        post: operations["decide_ops_remediation_proposal_api_diag_remediation_proposals__proposal_id__decision_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2857,6 +2891,60 @@ export interface components {
             /** Items */
             items: components["schemas"]["SimilarIncidentSchema"][];
         };
+        /** OpsRemediationDecisionRequest */
+        OpsRemediationDecisionRequest: {
+            /** Decision Note */
+            decision_note?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "approved" | "rejected";
+        };
+        /** OpsRemediationProposalListResponse */
+        OpsRemediationProposalListResponse: {
+            /** Items */
+            items: components["schemas"]["OpsRemediationProposalSchema"][];
+        };
+        /** OpsRemediationProposalSchema */
+        OpsRemediationProposalSchema: {
+            /** Action Type */
+            action_type: string;
+            /** Blocked Reasons */
+            blocked_reasons: string[];
+            /** Command Preview */
+            command_preview?: string | null;
+            /** Created At */
+            created_at: string;
+            /** Decided At */
+            decided_at?: string | null;
+            /** Decided By */
+            decided_by?: string | null;
+            /** Decision Note */
+            decision_note?: string | null;
+            /** Evidence Refs */
+            evidence_refs: components["schemas"]["EvidenceRefSchema"][];
+            /** Incident Id */
+            incident_id: string;
+            /** Proposal Id */
+            proposal_id: string;
+            /** Proposed By */
+            proposed_by: string;
+            /** Rationale */
+            rationale: string;
+            /** Required Checks */
+            required_checks: string[];
+            /** Runbook Ref */
+            runbook_ref?: string | null;
+            /** Safety Level */
+            safety_level: string;
+            /** Status */
+            status: string;
+            /** Title */
+            title: string;
+            /** Updated At */
+            updated_at: string;
+        };
         /**
          * OwnershipRecentItem
          * @description One OwnershipLedger row for GET /api/library/ownership/recent.
@@ -4515,6 +4603,59 @@ export interface operations {
             };
         };
     };
+    list_ops_remediation_proposals_api_diag_ops_incidents__incident_id__remediation_proposals_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsRemediationProposalListResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_similar_ops_incidents_api_diag_ops_incidents__incident_id__similar_get: {
         parameters: {
             query?: {
@@ -4630,6 +4771,63 @@ export interface operations {
                     "application/json": {
                         detail: string;
                     };
+                };
+            };
+        };
+    };
+    decide_ops_remediation_proposal_api_diag_remediation_proposals__proposal_id__decision_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                proposal_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpsRemediationDecisionRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsRemediationProposalSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
