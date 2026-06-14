@@ -149,6 +149,20 @@ describe("Watchlist routes", () => {
     expect(body.notes).toBe("keep me");
   });
 
+  it("rejects non-string notes with 422", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/watchlist/BAD-NOTE-1",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ href: "/v/bad-note", status: "want", notes: 123 }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
+
   it("rejects malformed pagination with 422", async () => {
     const { accessToken } = await login();
     const badLimit = await app.request(
