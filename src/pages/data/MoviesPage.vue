@@ -23,6 +23,7 @@ import {
   type MovieSearchParams,
 } from '@/api/history'
 import HeartButton from '@/components/HeartButton.vue'
+import StatusControl from '@/components/StatusControl.vue'
 import {
   listMovieRatings,
   getMovieRating,
@@ -30,11 +31,14 @@ import {
   listContentPreferences,
   type MovieRating,
 } from '@/api/preferences'
+import { listWatchIntents, type WatchStatus } from '@/api/watchlist'
+import { useCapabilitiesStore } from '@/stores/capabilities'
 import { computePreferenceScore } from './preference-score'
 import { reduceBatchKey } from './batch-annotation'
 import { createRatingSaver } from './rating-saver'
 
 const { t } = useI18n()
+const cap = useCapabilitiesStore()
 
 // Valid tag slugs mirror the backend VALID_TAGS (ADR-022 C1); labels are i18n'd.
 const VALID_TAGS = [
@@ -67,6 +71,28 @@ const actorHearted = ref<Map<string, boolean>>(new Map())
 // In-progress notes text, keyed by href. Keeps the (controlled) notes input
 // from losing typed text when a sibling control reassigns `ratings`.
 const notesDraft = ref<Map<string, string>>(new Map())
+
+// Watch intents (ADR-054 WS1), keyed by video_code
+const watchIntents = ref<Map<string, WatchStatus>>(new Map())
+
+async function loadWatchIntents(): Promise<void> {
+  if (!cap.data?.features?.watch_intent) return
+  try {
+    // Page through the full intent set: the Movies search can show any
+    // historical movie, so a single capped fetch would render older tracked
+    // movies as "Untracked". Loop until a short page signals the end.
+    const PAGE = 200
+    const next = new Map<string, WatchStatus>()
+    for (let offset = 0; ; offset += PAGE) {
+      const { items } = await listWatchIntents({ limit: PAGE, offset })
+      for (const it of items) next.set(it.video_code, it.status)
+      if (items.length < PAGE) break
+    }
+    watchIntents.value = next
+  } catch {
+    // non-fatal: the column simply shows "untracked" for every row
+  }
+}
 
 // Filters
 const searchQuery = ref('')
@@ -268,6 +294,17 @@ onMounted(() => {
     await Promise.all([loadRatings(), loadActorHearted()])
   })()
 })
+
+// Load watch-intents when the capability resolves (it can arrive after mount),
+// and re-load if it flips; clear the map if the feature is disabled.
+watch(
+  () => cap.data?.features?.watch_intent,
+  (enabled) => {
+    if (enabled) void loadWatchIntents()
+    else watchIntents.value = new Map()
+  },
+  { immediate: true },
+)
 onUnmounted(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
   window.removeEventListener('keydown', handleKeydown)
@@ -412,6 +449,27 @@ const columns = computed<DataTableColumns<MovieSearchItem>>(() => [
       })
     },
   },
+  ...(cap.data?.features?.watch_intent
+    ? [
+        {
+          title: t('movies.col.watchStatus'),
+          key: 'watch_status',
+          width: 132,
+          render: (row: MovieSearchItem) =>
+            h(StatusControl, {
+              videoCode: row.video_code,
+              href: row.href,
+              initialStatus: watchIntents.value.get(row.video_code) ?? null,
+              onChange: (val: WatchStatus | null) => {
+                const next = new Map(watchIntents.value)
+                if (val === null) next.delete(row.video_code)
+                else next.set(row.video_code, val)
+                watchIntents.value = next
+              },
+            }),
+        },
+      ]
+    : []),
   {
     title: t('movies.col.score'),
     key: 'score',
