@@ -109,6 +109,20 @@ describe("Watchlist routes", () => {
     expect(res.status).toBe(422);
   });
 
+  it("rejects an empty href with 422", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/watchlist/X-2",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ href: "", status: "want" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
+
   it("preserves existing notes when a status-only update omits notes", async () => {
     const { accessToken, csrfToken } = await login();
     await app.request(
