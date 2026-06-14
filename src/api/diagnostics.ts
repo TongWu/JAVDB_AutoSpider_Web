@@ -130,3 +130,50 @@ export async function getOpsIncidentAnalytics(): Promise<OpsIncidentAnalytics> {
   const { data } = await http.get<OpsIncidentAnalytics>('/api/diag/ops-incidents/analytics')
   return data
 }
+
+// ── Ops Remediation Proposals ─────────────────────────────────────────
+// Narrow the two most drift-prone fields to the exact backend literals so the
+// compiler catches enum typos (the safe_to_prepare/expired mismatch slipped
+// through precisely because these were plain `string`).
+export type OpsRemediationStatus = 'proposed' | 'approved' | 'rejected' | 'expired'
+export type OpsRemediationSafetyLevel = 'safe_to_prepare' | 'requires_review' | 'blocked'
+
+export interface OpsRemediationProposal {
+  proposal_id: string
+  incident_id: string
+  action_type: string
+  status: OpsRemediationStatus
+  safety_level: OpsRemediationSafetyLevel
+  title: string
+  rationale: string
+  command_preview?: string | null
+  runbook_ref?: string | null
+  evidence_refs: EvidenceRef[]
+  required_checks: string[]
+  blocked_reasons: string[]
+  proposed_by: string
+  decided_by?: string | null
+  decision_note?: string | null
+  created_at: string
+  updated_at: string
+  decided_at?: string | null
+}
+
+export interface OpsRemediationProposalListResponse {
+  items: OpsRemediationProposal[]
+}
+
+export interface RemediationDecisionRequest {
+  status: 'approved' | 'rejected'
+  decision_note?: string | null
+}
+
+export async function listRemediationProposals(incidentId: string): Promise<OpsRemediationProposalListResponse> {
+  const { data } = await http.get<OpsRemediationProposalListResponse>(`/api/diag/ops-incidents/${incidentId}/remediation-proposals`)
+  return data
+}
+
+export async function decideRemediationProposal(proposalId: string, body: RemediationDecisionRequest): Promise<OpsRemediationProposal> {
+  const { data } = await http.post<OpsRemediationProposal>(`/api/diag/remediation-proposals/${proposalId}/decision`, body)
+  return data
+}

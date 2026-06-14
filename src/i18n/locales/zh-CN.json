@@ -1106,6 +1106,44 @@
         "runId": "运行 ID",
         "sessionId": "会话 ID",
         "topFinding": "首要发现"
+      },
+      "proposals": {
+        "title": "修复建议",
+        "empty": "该事件暂无修复建议。",
+        "loadError": "加载修复建议失败。",
+        "safetyLevel": "安全级别",
+        "actionType": "操作类型",
+        "rationale": "理由",
+        "requiredChecks": "必要检查项",
+        "blockedReasons": "阻塞原因",
+        "runbookRef": "操作手册",
+        "commandPreview": "命令预览（只读）",
+        "copyCommand": "复制",
+        "copiedCommand": "已复制！",
+        "proposedBy": "提案人",
+        "decidedBy": "决策人",
+        "decisionNote": "决策备注",
+        "decidedAt": "决策时间",
+        "approve": "批准",
+        "reject": "拒绝",
+        "approveDisabledBlocked": "无法批准：该建议已被阻塞",
+        "confirmApproveTitle": "确认批准该建议？",
+        "confirmRejectTitle": "确认拒绝该建议？",
+        "confirmBody": "建议：{title}",
+        "decisionNotePlaceholder": "可选填决策备注...",
+        "decisionSuccess": "决策已记录。",
+        "decisionError": "记录决策失败。",
+        "status": {
+          "proposed": "待处理",
+          "approved": "已批准",
+          "rejected": "已拒绝",
+          "expired": "已过期"
+        },
+        "safety": {
+          "safe_to_prepare": "安全",
+          "requires_review": "需审查",
+          "blocked": "已阻塞"
+        }
       }
     },
     "javdb": {

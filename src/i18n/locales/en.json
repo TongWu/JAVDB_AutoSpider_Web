@@ -1106,6 +1106,44 @@
         "runId": "Run ID",
         "sessionId": "Session ID",
         "topFinding": "Top Finding"
+      },
+      "proposals": {
+        "title": "Remediation Proposals",
+        "empty": "No proposals for this incident.",
+        "loadError": "Failed to load proposals.",
+        "safetyLevel": "Safety level",
+        "actionType": "Action type",
+        "rationale": "Rationale",
+        "requiredChecks": "Required checks",
+        "blockedReasons": "Blocked reasons",
+        "runbookRef": "Runbook",
+        "commandPreview": "Command preview (read-only)",
+        "copyCommand": "Copy",
+        "copiedCommand": "Copied!",
+        "proposedBy": "Proposed by",
+        "decidedBy": "Decided by",
+        "decisionNote": "Decision note",
+        "decidedAt": "Decided at",
+        "approve": "Approve",
+        "reject": "Reject",
+        "approveDisabledBlocked": "Cannot approve: proposal is blocked",
+        "confirmApproveTitle": "Approve proposal?",
+        "confirmRejectTitle": "Reject proposal?",
+        "confirmBody": "Proposal: {title}",
+        "decisionNotePlaceholder": "Optional decision note...",
+        "decisionSuccess": "Decision recorded.",
+        "decisionError": "Failed to record decision.",
+        "status": {
+          "proposed": "Proposed",
+          "approved": "Approved",
+          "rejected": "Rejected",
+          "expired": "Expired"
+        },
+        "safety": {
+          "safe_to_prepare": "Safe",
+          "requires_review": "Requires Review",
+          "blocked": "Blocked"
+        }
       }
     },
     "javdb": {

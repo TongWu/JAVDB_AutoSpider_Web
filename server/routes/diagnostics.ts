@@ -173,6 +173,111 @@ diagnosticsRoutes.get("/ops-incidents/analytics", async (c) => {
   });
 });
 
+interface OpsRemediationProposalRow {
+  proposal_id: string
+  incident_id: string
+  action_type: string
+  status: string
+  safety_level: string
+  title: string
+  rationale: string
+  command_preview: string | null
+  runbook_ref: string | null
+  evidence_refs_json: string
+  required_checks_json: string
+  blocked_reasons_json: string
+  proposed_by: string
+  decided_by: string | null
+  decision_note: string | null
+  created_at: string
+  updated_at: string
+  decided_at: string | null
+}
+
+function mapRemediationProposal(row: OpsRemediationProposalRow) {
+  return {
+    proposal_id: row.proposal_id,
+    incident_id: row.incident_id,
+    action_type: row.action_type,
+    status: row.status,
+    safety_level: row.safety_level,
+    title: row.title,
+    rationale: row.rationale,
+    command_preview: row.command_preview ?? null,
+    runbook_ref: row.runbook_ref ?? null,
+    evidence_refs: parseJsonArray(row.evidence_refs_json),
+    required_checks: parseJsonArray(row.required_checks_json),
+    blocked_reasons: parseJsonArray(row.blocked_reasons_json),
+    proposed_by: row.proposed_by,
+    decided_by: row.decided_by ?? null,
+    decision_note: row.decision_note ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    decided_at: row.decided_at ?? null,
+  };
+}
+
+diagnosticsRoutes.get("/ops-incidents/:incident_id/remediation-proposals", async (c) => {
+  const incidentId = c.req.param("incident_id");
+  const rows = await c.env.REPORTS_DB
+    .prepare("SELECT * FROM OpsRemediationProposals WHERE incident_id = ? ORDER BY created_at ASC")
+    .bind(incidentId)
+    .all<OpsRemediationProposalRow>();
+  return c.json({ items: rows.results.map(mapRemediationProposal) });
+});
+
+diagnosticsRoutes.post("/remediation-proposals/:proposal_id/decision", requireRole("admin"), async (c) => {
+  const proposalId = c.req.param("proposal_id");
+  const body = await c.req.json<{ status: string; decision_note?: string | null }>();
+
+  const allowedStatuses = ["approved", "rejected"];
+  if (!allowedStatuses.includes(body.status)) {
+    throw new HTTPException(422, { message: `status must be one of: ${allowedStatuses.join(", ")}` });
+  }
+
+  const decidedBy = c.get("user").sub;
+  const now = new Date().toISOString();
+
+  const existing = await c.env.REPORTS_DB
+    .prepare("SELECT status, safety_level FROM OpsRemediationProposals WHERE proposal_id = ?")
+    .bind(proposalId)
+    .first<{ status: string; safety_level: string }>();
+  if (!existing) {
+    throw new HTTPException(404, { message: "Remediation proposal not found" });
+  }
+  // Decisions are single-transition (mirrors the Python API): a proposal may be
+  // decided only while still 'proposed'. Re-deciding would overwrite the
+  // actor/note/timestamp audit trail, so a duplicate/stale request gets 409.
+  if (existing.status !== "proposed") {
+    throw new HTTPException(409, {
+      message: `Proposal already decided (${existing.status}); decisions are single-transition`,
+    });
+  }
+  // A proposal the safety policy has blocked must never become 'approved'.
+  // Rejecting a blocked proposal stays allowed.
+  if (body.status === "approved" && existing.safety_level === "blocked") {
+    throw new HTTPException(409, {
+      message: "Cannot approve a proposal blocked by the safety policy",
+    });
+  }
+
+  await c.env.REPORTS_DB
+    .prepare(
+      `UPDATE OpsRemediationProposals
+          SET status = ?, decided_by = ?, decision_note = ?, decided_at = ?, updated_at = ?
+        WHERE proposal_id = ? AND status = 'proposed'`,
+    )
+    .bind(body.status, decidedBy, body.decision_note ?? null, now, now, proposalId)
+    .run();
+
+  const row = await c.env.REPORTS_DB
+    .prepare("SELECT * FROM OpsRemediationProposals WHERE proposal_id = ?")
+    .bind(proposalId)
+    .first<OpsRemediationProposalRow>();
+  if (!row) throw new HTTPException(404, { message: "Remediation proposal not found" });
+  return c.json(mapRemediationProposal(row));
+});
+
 diagnosticsRoutes.get("/ops-incidents/:incident_id", async (c) => {
   const incidentId = c.req.param("incident_id");
   const row = await c.env.REPORTS_DB
