@@ -1426,6 +1426,7 @@
       "recent": "ウォッチリスト",
       "untracked": "未追跡",
       "allStatuses": "全て",
+      "statusAriaLabel": "{code} の視聴ステータス",
       "status": {
         "want": "観たい",
         "viewed": "視聴済み"

@@ -1426,6 +1426,7 @@
       "recent": "Watchlist",
       "untracked": "Untracked",
       "allStatuses": "All",
+      "statusAriaLabel": "Watch status for {code}",
       "status": {
         "want": "Want",
         "viewed": "Viewed"

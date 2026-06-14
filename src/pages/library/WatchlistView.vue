@@ -30,11 +30,15 @@ async function fetchList(): Promise<void> {
   loading.value = true
   error.value = null
   try {
-    // Page through the full set so the table never silently omits rows beyond
-    // the first page; the NDataTable paginates the result client-side.
+    // The "Tracked" KPI is the grand total of ALL intents, independent of the
+    // status filter (mirrors ConsumptionView's stable summary). A cheap
+    // unfiltered head request reads that count; the table below stays filtered.
+    const grand = await listWatchIntents({ status: null, limit: 1, offset: 0 })
+    if (seq !== listSeq) return
+    // Page through the filtered set so the table never silently omits rows
+    // beyond the first page; the NDataTable paginates the result client-side.
     const PAGE = 200
     const all: WatchIntent[] = []
-    let totalCount = 0
     for (let offset = 0; ; offset += PAGE) {
       const res = await listWatchIntents({
         status: statusFilter.value,
@@ -43,16 +47,36 @@ async function fetchList(): Promise<void> {
       })
       if (seq !== listSeq) return
       all.push(...res.items)
-      totalCount = res.total
       if (res.items.length < PAGE) break
     }
     items.value = all
-    total.value = totalCount
+    total.value = grand.total
   } catch (err) {
     if (seq !== listSeq) return
     error.value = err instanceof Error ? err.message : t('library.watchlist.loadError')
   } finally {
     if (seq === listSeq) loading.value = false
+  }
+}
+
+// Reconcile one row in place after StatusControl performs its own write, rather
+// than a full reload: avoids a whole-table loading mask, keeps the user on their
+// current table page, and never raises a load-error banner for a write that
+// already succeeded. Untrack (null) removes the row and decrements the grand
+// total; a re-status keeps the grand total but drops the row when it no longer
+// matches an active status filter.
+function applyLocalChange(videoCode: string, val: WatchStatus | null): void {
+  const idx = items.value.findIndex((r) => r.video_code === videoCode)
+  if (val === null) {
+    if (idx !== -1) items.value = items.value.filter((_, i) => i !== idx)
+    total.value = Math.max(0, total.value - 1)
+    return
+  }
+  if (idx === -1) return
+  if (statusFilter.value !== null && val !== statusFilter.value) {
+    items.value = items.value.filter((_, i) => i !== idx)
+  } else {
+    items.value = items.value.map((r, i) => (i === idx ? { ...r, status: val } : r))
   }
 }
 
@@ -76,7 +100,7 @@ const columns = computed<DataTableColumns<WatchIntent>>(() => [
         videoCode: row.video_code,
         href: row.href,
         initialStatus: row.status,
-        onChange: () => void fetchList(),
+        onChange: (val: WatchStatus | null) => applyLocalChange(row.video_code, val),
       }),
   },
   {
