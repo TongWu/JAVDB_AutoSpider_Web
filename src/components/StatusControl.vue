@@ -18,6 +18,9 @@
   const message = useMessage()
   const status = ref<WatchStatus | null>(props.initialStatus ?? null)
   const loading = ref(false)
+  // Monotonic token: rapid toggles can overlap; only the newest write may
+  // commit local state (and the control is also disabled while saving).
+  let updateSeq = 0
 
   watch(
     () => props.initialStatus,
@@ -32,6 +35,7 @@
   ])
 
   async function onUpdate(value: WatchStatus | null): Promise<void> {
+    const seq = ++updateSeq
     loading.value = true
     try {
       if (value === null) {
@@ -39,12 +43,14 @@
       } else {
         await upsertWatchIntent(props.videoCode, { href: props.href, status: value })
       }
+      if (seq !== updateSeq) return
       status.value = value
       emit('change', value)
     } catch {
+      if (seq !== updateSeq) return
       message.error(t('library.watchlist.saveError'))
     } finally {
-      loading.value = false
+      if (seq === updateSeq) loading.value = false
     }
   }
 </script>
@@ -54,6 +60,7 @@
     :value="status"
     :options="options"
     :loading="loading"
+    :disabled="loading"
     size="small"
     clearable
     style="width: 116px"

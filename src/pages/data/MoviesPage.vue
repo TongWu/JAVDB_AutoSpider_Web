@@ -293,8 +293,18 @@ onMounted(() => {
     await fetchMovies()
     await Promise.all([loadRatings(), loadActorHearted()])
   })()
-  void loadWatchIntents()
 })
+
+// Load watch-intents when the capability resolves (it can arrive after mount),
+// and re-load if it flips; clear the map if the feature is disabled.
+watch(
+  () => cap.data?.features?.watch_intent,
+  (enabled) => {
+    if (enabled) void loadWatchIntents()
+    else watchIntents.value = new Map()
+  },
+  { immediate: true },
+)
 onUnmounted(() => {
   if (debounceTimer) clearTimeout(debounceTimer)
   window.removeEventListener('keydown', handleKeydown)

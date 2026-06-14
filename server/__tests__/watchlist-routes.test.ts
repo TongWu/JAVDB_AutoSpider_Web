@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from "vitest";
+import { describe, it, expect, beforeAll, beforeEach } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
 
@@ -46,6 +46,12 @@ async function seedWatchIntent() {
 describe("Watchlist routes", () => {
   beforeAll(async () => {
     await seedWatchIntent();
+  });
+
+  // Isolation: each test starts from an empty table so count-based assertions
+  // (e.g. total === 1) cannot be made flaky by rows leaked from a prior test.
+  beforeEach(async () => {
+    await env.HISTORY_DB.prepare("DELETE FROM WatchIntent").run();
   });
 
   it("PUT upserts, GET reads, list filters, DELETE untracks", async () => {
@@ -127,5 +133,21 @@ describe("Watchlist routes", () => {
     const body = (await put.json()) as Record<string, unknown>;
     expect(body.status).toBe("viewed");
     expect(body.notes).toBe("keep me");
+  });
+
+  it("rejects malformed pagination with 422", async () => {
+    const { accessToken } = await login();
+    const badLimit = await app.request(
+      "/api/watchlist?limit=abc",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(badLimit.status).toBe(422);
+    const badOffset = await app.request(
+      "/api/watchlist?offset=-1",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(badOffset.status).toBe(422);
   });
 });

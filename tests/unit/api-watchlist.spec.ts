@@ -68,6 +68,30 @@ describe('watchlist API client — path building', () => {
     expect(res).toEqual(ROW)
   })
 
+  it('getWatchIntent percent-encodes a videoCode with special chars', async () => {
+    getSpy.mockResolvedValueOnce({ data: ROW })
+
+    await getWatchIntent('ABC/001 x')
+
+    expect(getSpy).toHaveBeenCalledWith('/api/watchlist/ABC%2F001%20x', {
+      skipErrorToast: undefined,
+    })
+  })
+
+  it('getWatchIntent maps a 404 to null instead of throwing', async () => {
+    getSpy.mockRejectedValueOnce({ isAxiosError: true, response: { status: 404 } })
+
+    const res = await getWatchIntent('GONE-1')
+
+    expect(res).toBeNull()
+  })
+
+  it('getWatchIntent rethrows non-404 errors', async () => {
+    getSpy.mockRejectedValueOnce({ isAxiosError: true, response: { status: 500 } })
+
+    await expect(getWatchIntent('BOOM-1')).rejects.toBeTruthy()
+  })
+
   it('upsertWatchIntent PUTs {href, status} to the video_code path', async () => {
     putSpy.mockResolvedValueOnce({ data: { ...ROW, status: 'viewed' } })
 

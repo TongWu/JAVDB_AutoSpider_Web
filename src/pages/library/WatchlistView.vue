@@ -30,10 +30,24 @@ async function fetchList(): Promise<void> {
   loading.value = true
   error.value = null
   try {
-    const res = await listWatchIntents({ status: statusFilter.value, limit: 200 })
-    if (seq !== listSeq) return
-    items.value = res.items
-    total.value = res.total
+    // Page through the full set so the table never silently omits rows beyond
+    // the first page; the NDataTable paginates the result client-side.
+    const PAGE = 200
+    const all: WatchIntent[] = []
+    let totalCount = 0
+    for (let offset = 0; ; offset += PAGE) {
+      const res = await listWatchIntents({
+        status: statusFilter.value,
+        limit: PAGE,
+        offset,
+      })
+      if (seq !== listSeq) return
+      all.push(...res.items)
+      totalCount = res.total
+      if (res.items.length < PAGE) break
+    }
+    items.value = all
+    total.value = totalCount
   } catch (err) {
     if (seq !== listSeq) return
     error.value = err instanceof Error ? err.message : t('library.watchlist.loadError')
@@ -130,6 +144,7 @@ onMounted(() => void fetchList())
         :bordered="false"
         size="small"
         :row-key="(row: WatchIntent) => row.video_code"
+        :pagination="{ pageSize: 50 }"
       />
     </NCard>
   </NSpin>

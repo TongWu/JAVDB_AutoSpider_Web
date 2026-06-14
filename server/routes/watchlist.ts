@@ -22,9 +22,18 @@ watchlistRoutes.get("/", async (c) => {
   if (status && !VALID_STATUS.has(status)) {
     return c.json(errJson("watchlist.invalid_status", "status must be one of: want, viewed"), 422);
   }
-  const raw = Number(c.req.query("limit") ?? 50);
-  const limit = Number.isNaN(raw) ? 50 : Math.max(1, Math.min(200, raw));
-  const offset = Math.max(0, Number(c.req.query("offset") ?? 0) || 0);
+  // Reject malformed pagination with 422 (mirrors the Python Query(ge=1, le=200)
+  // / Query(ge=0) validation) rather than silently coercing.
+  const limitQ = c.req.query("limit");
+  const offsetQ = c.req.query("offset");
+  const limit = limitQ === undefined ? 50 : Number(limitQ);
+  const offset = offsetQ === undefined ? 0 : Number(offsetQ);
+  if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+    return c.json(errJson("watchlist.invalid_limit", "limit must be an integer in [1, 200]"), 422);
+  }
+  if (!Number.isInteger(offset) || offset < 0) {
+    return c.json(errJson("watchlist.invalid_offset", "offset must be a non-negative integer"), 422);
+  }
 
   const { items, total } = await listWatchIntents(c.env.HISTORY_DB, status, limit, offset);
   return c.json({ items, total });
