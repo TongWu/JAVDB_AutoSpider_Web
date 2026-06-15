@@ -152,12 +152,14 @@ function onDirectorHeart(name: string, val: boolean): void {
 
 onMounted(() => {
   void loadPreferenceContext()
+  void loadAggregated()
 })
 
 watch(
   () => url.value,
   () => {
     void loadPreferenceContext()
+    void loadAggregated()
   },
 )
 
@@ -166,6 +168,29 @@ const magnets = computed<MagnetRow[]>(() => {
   if (!Array.isArray(raw)) return []
   return raw as MagnetRow[]
 })
+
+// ADR-054 WS3: pull external-indexer magnets for this code and append them to the
+// table. browse.aggregateMagnets self-gates on the magnet_aggregation capability
+// (no flag → no call → empty rows), so this is a no-op on deployments without it.
+const aggregatedRows = ref<MagnetRow[]>([])
+const aggregateError = ref<string | null>(null)
+
+async function loadAggregated(): Promise<void> {
+  aggregatedRows.value = []
+  aggregateError.value = null
+  if (props.result.kind !== 'detail') return
+  const codeVal = code.value
+  if (!codeVal) return
+  // Latest-wins guard (mirrors loadPreferenceContext): bail if a newer resolve
+  // superseded this one while the request was in flight.
+  const reqUrl = url.value
+  const { rows, error } = await browse.aggregateMagnets(codeVal)
+  if (reqUrl !== url.value) return
+  aggregatedRows.value = rows
+  aggregateError.value = error
+}
+
+const displayMagnets = computed<MagnetRow[]>(() => [...magnets.value, ...aggregatedRows.value])
 
 // Code-search result branch: render the candidate list, not a detail card.
 const codeMovies = computed<Record<string, unknown>[]>(() => {
@@ -406,7 +431,15 @@ function stringList(obj: Record<string, unknown> | null, keys: string[]): string
           </NSpace>
         </div>
       </div>
-      <ResolveMagnetTable :magnets="magnets" />
+      <NAlert
+        v-if="aggregateError"
+        type="warning"
+        :show-icon="true"
+        style="margin-bottom: 8px;"
+      >
+        {{ t('browse.resolve.magnet.aggregateError') }}
+      </NAlert>
+      <ResolveMagnetTable :magnets="displayMagnets" />
     </template>
 
     <!-- CODE branch: search-by-code returned multiple candidates. -->

@@ -1250,13 +1250,16 @@
         "noMagnet": "Magnet URI missing on this row.",
         "downloaded": "Magnet added to qBittorrent.",
         "download": "Download",
+        "score": "Score",
+        "aggregateError": "Failed to aggregate magnets from external sources.",
         "col": {
           "title": "Title",
           "size": "Size",
           "quality": "Quality",
           "date": "Date",
           "status": "D1",
-          "action": "Action"
+          "action": "Action",
+          "source": "Source"
         }
       }
     },

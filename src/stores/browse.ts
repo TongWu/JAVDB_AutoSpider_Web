@@ -7,11 +7,13 @@ import {
   apiDownloadMagnet,
   apiOneClick,
   apiSyncCookie,
+  apiAggregateMagnets,
   type VideoCodeSearchResponse,
   type ExploreResolveResponse,
   type ExploreOneClickResponse,
 } from '@/api/explore'
 import { apiParseUrl } from '@/api/parse'
+import { useCapabilitiesStore } from '@/stores/capabilities'
 
 export type BrowseMode = 'resolve' | 'lists' | 'preview'
 export type ListsTabKey = 'top' | 'categories' | 'tags' | 'custom'
@@ -30,6 +32,10 @@ export interface MagnetRow {
   quality?: string
   date?: string
   href?: string
+  source?: string
+  sources?: string[]
+  quality_score?: number
+  quality_reasons?: string[]
   [key: string]: unknown
 }
 
@@ -116,6 +122,31 @@ export const useBrowseStore = defineStore('browse', () => {
     category: string | null = null,
   ): Promise<void> {
     await apiDownloadMagnet(magnet, title, category)
+  }
+
+  async function aggregateMagnets(
+    videoCode: string,
+  ): Promise<{ rows: MagnetRow[]; error: string | null }> {
+    const cap = useCapabilitiesStore()
+    if (!cap.data?.features?.magnet_aggregation) return { rows: [], error: null }
+    try {
+      const res = await apiAggregateMagnets(videoCode)
+      // Map the aggregated shape onto the table's MagnetRow shape: the table reads
+      // magnet/title/size, so alias magnet_uri→magnet, name→title. source is the
+      // joined provenance label; quality_score/quality_reasons drive the gated column.
+      const rows: MagnetRow[] = res.magnets.map((m) => ({
+        magnet: m.magnet_uri,
+        title: m.name,
+        size: m.size,
+        source: m.sources.join(', '),
+        sources: m.sources,
+        quality_score: m.quality_score,
+        quality_reasons: m.quality_reasons,
+      }))
+      return { rows, error: null }
+    } catch (err) {
+      return { rows: [], error: err instanceof Error ? err.message : 'aggregation failed' }
+    }
   }
 
   async function oneClick(detailUrl: string): Promise<ExploreOneClickResponse> {
@@ -223,6 +254,7 @@ export const useBrowseStore = defineStore('browse', () => {
     classifyQuery,
     submit,
     downloadMagnet,
+    aggregateMagnets,
     oneClick,
     syncCookie,
     pushRecent,
