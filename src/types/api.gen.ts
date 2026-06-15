@@ -124,6 +124,42 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/content-filter": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Rules */
+        get: operations["list_rules_api_content_filter_get"];
+        put?: never;
+        /** Add Rule */
+        post: operations["add_rule_api_content_filter_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/content-filter/{rule_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Set Enabled */
+        put: operations["set_enabled_api_content_filter__rule_id__put"];
+        post?: never;
+        /** Remove Rule */
+        delete: operations["remove_rule_api_content_filter__rule_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/crawl/index": {
         parameters: {
             query?: never;
@@ -326,6 +362,23 @@ export interface paths {
         put?: never;
         /** Decide Ops Remediation Proposal */
         post: operations["decide_ops_remediation_proposal_api_diag_remediation_proposals__proposal_id__decision_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/explore/aggregate-magnets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explore Aggregate Magnets */
+        post: operations["explore_aggregate_magnets_api_explore_aggregate_magnets_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1948,6 +2001,48 @@ export interface components {
              */
             use_proxy: boolean;
         };
+        /** AggregateMagnetsPayload */
+        AggregateMagnetsPayload: {
+            /** Video Code */
+            video_code: string;
+        };
+        /** AggregateMagnetsResponse */
+        AggregateMagnetsResponse: {
+            /** Magnets */
+            magnets: components["schemas"]["AggregatedMagnet"][];
+            /** Video Code */
+            video_code: string;
+        };
+        /** AggregatedMagnet */
+        AggregatedMagnet: {
+            /**
+             * File Count
+             * @default 0
+             */
+            file_count: number;
+            /** Info Hash */
+            info_hash?: string | null;
+            /** Magnet Uri */
+            magnet_uri: string;
+            /** Name */
+            name: string;
+            /** Quality Reasons */
+            quality_reasons?: string[];
+            /**
+             * Quality Score
+             * @default 0
+             */
+            quality_score: number;
+            /**
+             * Size
+             * @default
+             */
+            size: string;
+            /** Sources */
+            sources?: string[];
+            /** Tags */
+            tags?: string[];
+        };
         /** Build */
         Build: {
             /** Backend Version */
@@ -2119,6 +2214,43 @@ export interface components {
             total_signals: number;
             /** Watched */
             watched: number;
+        };
+        /** ContentFilterRuleCreate */
+        ContentFilterRuleCreate: {
+            /** Dimension */
+            dimension: string;
+            /** Mode */
+            mode: string;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+        };
+        /** ContentFilterRuleEnabledUpdate */
+        ContentFilterRuleEnabledUpdate: {
+            /** Enabled */
+            enabled: boolean;
+        };
+        /** ContentFilterRuleListResponse */
+        ContentFilterRuleListResponse: {
+            /** Items */
+            items: components["schemas"]["ContentFilterRuleResponse"][];
+            /** Total */
+            total: number;
+        };
+        /** ContentFilterRuleResponse */
+        ContentFilterRuleResponse: {
+            /** Dimension */
+            dimension: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Id */
+            id: number;
+            /** Mode */
+            mode: string;
+            /** Value */
+            value: string;
         };
         /** ContentPreferenceListResponse */
         ContentPreferenceListResponse: {
@@ -2468,12 +2600,16 @@ export interface components {
         Features: {
             /** Closed Loop */
             closed_loop: boolean;
+            /** Content Filter */
+            content_filter: boolean;
             /** Javdb Login */
             javdb_login: boolean;
             /** Library Consumption */
             library_consumption: boolean;
             /** Library Ownership */
             library_ownership: boolean;
+            /** Magnet Aggregation */
+            magnet_aggregation: boolean;
             /** Pikpak */
             pikpak: boolean;
             /** Proxy Pool */
@@ -4380,6 +4516,213 @@ export interface operations {
             };
         };
     };
+    list_rules_api_content_filter_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentFilterRuleListResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+        };
+    };
+    add_rule_api_content_filter_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentFilterRuleCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentFilterRuleResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    set_enabled_api_content_filter__rule_id__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentFilterRuleEnabledUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentFilterRuleResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_rule_api_content_filter__rule_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                rule_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     api_crawl_index_api_crawl_index_post: {
         parameters: {
             query?: never;
@@ -4945,6 +5288,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpsRemediationProposalSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    explore_aggregate_magnets_api_explore_aggregate_magnets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AggregateMagnetsPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AggregateMagnetsResponse"];
                 };
             };
             /** @description Unauthorized */
