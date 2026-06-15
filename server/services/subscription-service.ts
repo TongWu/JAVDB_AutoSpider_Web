@@ -73,7 +73,7 @@ export async function listSubscriptions(
 
   const rows = await db
     .prepare(
-      `SELECT * FROM ActorSubscription ${where} ORDER BY updated_at DESC LIMIT ? OFFSET ?`,
+      `SELECT * FROM ActorSubscription ${where} ORDER BY updated_at DESC, actor_href ASC LIMIT ? OFFSET ?`,
     )
     .bind(limit, offset)
     .all<ActorSubscriptionRow>();
@@ -116,7 +116,7 @@ export async function listNewWorks(
 
   const rows = await db
     .prepare(
-      `SELECT * FROM NewWorks ${where} ORDER BY discovered_at DESC LIMIT ? OFFSET ?`,
+      `SELECT * FROM NewWorks ${where} ORDER BY discovered_at DESC, video_code ASC LIMIT ? OFFSET ?`,
     )
     .bind(...bindings, limit, offset)
     .all<NewWorkRow>();
