@@ -9,6 +9,8 @@ export interface ParsedMagnet {
   size: string;
   tags: string[];
   file_count: number;
+  source?: string;
+  quality_score?: number;
 }
 
 export interface ParsedDetailPage {

@@ -130,6 +130,31 @@ exploreRoutes.post("/resolve", async (c) => {
   });
 });
 
+// --- aggregate-magnets ---
+
+exploreRoutes.post("/aggregate-magnets", async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    throw new HTTPException(422, { message: "video_code required (max 64 chars)" });
+  }
+
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    throw new HTTPException(422, { message: "video_code required (max 64 chars)" });
+  }
+
+  const videoCode = (body as { video_code?: unknown }).video_code;
+  const code = typeof videoCode === "string" ? videoCode.trim() : "";
+  if (!code || code.length > 64) {
+    throw new HTTPException(422, { message: "video_code required (max 64 chars)" });
+  }
+
+  throw new HTTPException(501, {
+    message: "Multi-source magnet aggregation unavailable in Cloudflare mode (Python backend only).",
+  });
+});
+
 // --- search-by-video-code ---
 
 exploreRoutes.post("/search-by-video-code", async (c) => {
