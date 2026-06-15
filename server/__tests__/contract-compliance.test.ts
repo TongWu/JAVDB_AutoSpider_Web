@@ -308,6 +308,7 @@ describe("API Contract Compliance", () => {
         "library_ownership",
         "library_consumption",
         "watch_intent",
+        "magnet_aggregation",
         "site_drift_sentinel",
       ];
       assertHasKeys(features, featureKeys, `${label}.features`);
