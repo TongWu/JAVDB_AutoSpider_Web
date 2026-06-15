@@ -173,7 +173,7 @@ function toHex(bytes: ArrayBuffer): string {
 async function buildAlertPolicyId(incidentType: string): Promise<string> {
   const bytes = new TextEncoder().encode(`${OPS_ALERT_POLICY_ID_SALT}${incidentType}`);
   const digest = await crypto.subtle.digest("SHA-256", bytes);
-  return `${OPS_ALERT_POLICY_ID_PREFIX}${toHex(digest).slice(0, Number.parseInt(OPS_ALERT_POLICY_ID_HASH_LENGTH, 10))}`;
+  return `${OPS_ALERT_POLICY_ID_PREFIX}${toHex(digest).slice(0, OPS_ALERT_POLICY_ID_HASH_LENGTH)}`;
 }
 
 diagnosticsRoutes.get("/ops-incidents", async (c) => {

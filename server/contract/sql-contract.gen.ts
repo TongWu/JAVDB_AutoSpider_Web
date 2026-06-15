@@ -1,6 +1,6 @@
 // AUTO-GENERATED from javdb/storage/contract — DO NOT EDIT.
 // Source of truth: ADR-055. Regenerate: python3 -m apps.cli.ops.dump_sql_contract
-// version: d638dbd51de40ba9
+// version: 963af73ee22d0b70
 /* eslint-disable */
 
 export const WATCH_INTENT_UPSERT_SQL =
@@ -97,7 +97,7 @@ export const OPS_ALERT_POLICY_ID_SALT = "alertpolicy|";
 
 export const OPS_ALERT_POLICY_ID_PREFIX = "opspolicy_";
 
-export const OPS_ALERT_POLICY_ID_HASH_LENGTH = "24";
+export const OPS_ALERT_POLICY_ID_HASH_LENGTH = 24;
 
 export const VALID_RULE_MODES: ReadonlySet<string> = new Set([
   "actor:exclude",
