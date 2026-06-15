@@ -32,6 +32,7 @@
     "migrations": "マイグレーション",
     "logs": "ログ",
     "stats": "統計",
+    "filterRules": "フィルタールール",
     "settings": "設定",
     "config": "構成",
     "auth": "認証",
@@ -837,6 +838,24 @@
       "themeDark": "ダーク",
       "themeSystem": "システムに合わせる",
       "language": "言語"
+    },
+    "filterRules": {
+      "disabled": "このデプロイメントではコンテンツフィルタリングは利用できません（reports データベースに ContentFilterRule テーブルが存在しません）。",
+      "addTitle": "フィルタールールを追加",
+      "add": "追加",
+      "added": "フィルタールールを追加しました。",
+      "adminOnly": "フィルタールールの追加・編集は管理者のみ可能です。",
+      "valuePlaceholder": "値（俳優、タグ、性別、年齢、正規表現、または ISO 日付）",
+      "loadError": "フィルタールールの読み込みに失敗しました。",
+      "saveError": "フィルタールールの保存に失敗しました。",
+      "col": {
+        "id": "ID",
+        "dimension": "ディメンション",
+        "mode": "モード",
+        "value": "値",
+        "enabled": "有効",
+        "actions": "操作"
+      }
     }
   },
   "proxyPool": {
@@ -878,6 +897,7 @@
     "totalEstimate": "約 {count} 件",
     "noResults": "動画が見つかりません",
     "exportFailed": "CSV エクスポートに失敗しました",
+    "filteredHint": "コンテンツフィルタールールにより非表示",
     "annotate": "注釈",
     "exitAnnotate": "注釈終了",
     "annotateHint": "注釈中 {current} / {total} · 保留: {pending} · j/k 移動 · 1–5 評価 · Enter 保存 · Space スキップ",

@@ -36,7 +36,8 @@
     "migrations": "Migrations",
     "logs": "Logs",
     "stats": "Statistics",
-    "library": "Library"
+    "library": "Library",
+    "filterRules": "Filter Rules"
   },
   "common": {
     "save": "Save",
@@ -837,6 +838,24 @@
       "themeDark": "Dark",
       "themeSystem": "Match system",
       "language": "Language"
+    },
+    "filterRules": {
+      "disabled": "Content filtering is not available on this deployment (the ContentFilterRule table is not present in the reports database).",
+      "addTitle": "Add a filter rule",
+      "add": "Add",
+      "added": "Filter rule added.",
+      "adminOnly": "Only administrators can add or edit filter rules.",
+      "valuePlaceholder": "Value (actor, tag, gender, age, regex, or ISO date)",
+      "loadError": "Failed to load filter rules.",
+      "saveError": "Failed to save the filter rule.",
+      "col": {
+        "id": "ID",
+        "dimension": "Dimension",
+        "mode": "Mode",
+        "value": "Value",
+        "enabled": "Enabled",
+        "actions": "Actions"
+      }
     }
   },
   "proxyPool": {
@@ -878,6 +897,7 @@
     "totalEstimate": "~{count} results",
     "noResults": "No movies found",
     "exportFailed": "CSV export failed",
+    "filteredHint": "Hidden by a content filter rule",
     "annotate": "Annotate",
     "exitAnnotate": "Exit Annotate",
     "annotateHint": "Annotating {current} / {total} · pending: {pending} · j/k move · 1–5 rate · Enter save · Space skip",

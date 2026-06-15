@@ -36,7 +36,8 @@
     "migrations": "数据迁移",
     "logs": "日志",
     "stats": "统计",
-    "library": "资源库"
+    "library": "资源库",
+    "filterRules": "过滤规则"
   },
   "common": {
     "save": "保存",
@@ -837,6 +838,24 @@
       "themeDark": "深色",
       "themeSystem": "跟随系统",
       "language": "语言"
+    },
+    "filterRules": {
+      "disabled": "当前部署不支持内容过滤（reports 数据库中不存在 ContentFilterRule 表）。",
+      "addTitle": "添加过滤规则",
+      "add": "添加",
+      "added": "过滤规则已添加。",
+      "adminOnly": "只有管理员可以添加或编辑过滤规则。",
+      "valuePlaceholder": "值（演员、标签、性别、年龄、正则或 ISO 日期）",
+      "loadError": "加载过滤规则失败。",
+      "saveError": "保存过滤规则失败。",
+      "col": {
+        "id": "ID",
+        "dimension": "维度",
+        "mode": "模式",
+        "value": "值",
+        "enabled": "启用",
+        "actions": "操作"
+      }
     }
   },
   "proxyPool": {
@@ -878,6 +897,7 @@
     "totalEstimate": "约 {count} 条结果",
     "noResults": "未找到影片",
     "exportFailed": "CSV 导出失败",
+    "filteredHint": "已被内容过滤规则隐藏",
     "annotate": "标注",
     "exitAnnotate": "退出标注",
     "annotateHint": "标注中 {current} / {total} · 待定: {pending} · j/k 移动 · 1–5 评分 · Enter 保存 · Space 跳过",
