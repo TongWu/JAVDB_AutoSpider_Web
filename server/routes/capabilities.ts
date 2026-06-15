@@ -88,6 +88,8 @@ capabilitiesRoutes.get("/", async (c) => {
       library_ownership,
       library_consumption,
       watch_intent,
+      // ADR-054 WS3: aggregation runs in the Python backend only; the Worker cannot reach/clear external indexers, so it is capability-honestly false.
+      magnet_aggregation: false,
       subscriptions,
       // ADR-035 Phase 3: gates the frontend site-drift sentinel panel.
       site_drift_sentinel: true,
