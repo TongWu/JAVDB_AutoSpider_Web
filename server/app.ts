@@ -22,6 +22,7 @@ import { libraryOwnershipRoutes } from "./routes/library_ownership";
 import { libraryConsumptionRoutes } from "./routes/library_consumption";
 import { preferencesRoutes } from "./routes/preferences";
 import { watchlistRoutes } from "./routes/watchlist";
+import { subscriptionsRoutes } from "./routes/subscriptions";
 import { stubRoutes } from "./routes/stubs";
 import { initializeTables } from "./services/table-init";
 
@@ -86,6 +87,7 @@ app.route("/api/library", libraryOwnershipRoutes);
 app.route("/api/library", libraryConsumptionRoutes);
 app.route("/api/preferences", preferencesRoutes);
 app.route("/api/watchlist", watchlistRoutes);
+app.route("/api", subscriptionsRoutes);
 app.route("/api", stubRoutes);
 
 // 404 fallback
