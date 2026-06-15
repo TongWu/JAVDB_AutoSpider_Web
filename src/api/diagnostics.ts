@@ -177,3 +177,58 @@ export async function decideRemediationProposal(proposalId: string, body: Remedi
   const { data } = await http.post<OpsRemediationProposal>(`/api/diag/remediation-proposals/${proposalId}/decision`, body)
   return data
 }
+
+// ── Ops Alerting (ADR-026 Phase 4) ──────────────────────────────────
+export interface OpsAlertPolicy {
+  policy_id: string
+  incident_type: string
+  min_confidence: 'low' | 'medium' | 'high'
+  enabled: boolean
+  channels: string[]
+  updated_by?: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface OpsAlertPolicyListResponse {
+  items: OpsAlertPolicy[]
+}
+
+export interface AlertPolicyUpsertRequest {
+  min_confidence: 'low' | 'medium' | 'high'
+  enabled: boolean
+  channels: string[]
+}
+
+export interface OpsAlertEvent {
+  alert_id: string
+  incident_id: string
+  policy_id?: string | null
+  status: 'fired' | 'suppressed' | 'skipped'
+  reason?: string | null
+  fired_at: string
+}
+
+export interface OpsAlertEventListResponse {
+  items: OpsAlertEvent[]
+}
+
+export async function listAlertPolicies(): Promise<OpsAlertPolicyListResponse> {
+  const { data } = await http.get<OpsAlertPolicyListResponse>('/api/diag/alert-policies')
+  return data
+}
+
+export async function upsertAlertPolicy(
+  incidentType: string,
+  body: AlertPolicyUpsertRequest,
+): Promise<OpsAlertPolicy> {
+  const { data } = await http.put<OpsAlertPolicy>(`/api/diag/alert-policies/${incidentType}`, body)
+  return data
+}
+
+export async function listAlertEvents(incidentId: string): Promise<OpsAlertEventListResponse> {
+  const { data } = await http.get<OpsAlertEventListResponse>(
+    `/api/diag/ops-incidents/${incidentId}/alert-events`,
+  )
+  return data
+}
