@@ -5,6 +5,7 @@ import {
   NStatistic, NSwitch, useMessage, type DataTableColumns,
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
+import { useAuthStore } from '@/stores/auth'
 import {
   listSubscriptions, upsertSubscription, deleteSubscription,
   type ActorSubscription,
@@ -12,6 +13,11 @@ import {
 
 const { t } = useI18n()
 const message = useMessage()
+const auth = useAuthStore()
+// Follow/unfollow/toggle require admin on both backends; mirror the
+// ResolveMagnetTable pattern and only expose write controls to admins so a
+// read-only session isn't shown buttons that 403.
+const isAdmin = computed(() => auth.role === 'admin')
 
 const items = ref<ActorSubscription[]>([])
 const total = ref(0)
@@ -63,40 +69,46 @@ async function unfollow(row: ActorSubscription): Promise<void> {
   }
 }
 
-const columns = computed<DataTableColumns<ActorSubscription>>(() => [
-  {
-    title: t('library.subscriptions.col.actor'),
-    key: 'actor_href',
-    render: (row) => row.actor_name || row.actor_href,
-  },
-  {
-    title: t('library.subscriptions.col.active'),
-    key: 'active',
-    width: 100,
-    render: (row) =>
-      h(NSwitch, {
-        value: row.active,
-        'onUpdate:value': (v: boolean) => void toggleActive(row, v),
-      }),
-  },
-  {
-    title: t('library.subscriptions.col.lastChecked'),
-    key: 'last_checked_at',
-    render: (row) =>
-      row.last_checked_at ? row.last_checked_at.slice(0, 19).replace('T', ' ') : '—',
-  },
-  {
-    title: t('library.subscriptions.col.actions'),
-    key: 'actions',
-    width: 120,
-    render: (row) =>
-      h(
-        NButton,
-        { size: 'small', tertiary: true, type: 'error', onClick: () => void unfollow(row) },
-        { default: () => t('library.subscriptions.unfollow') },
-      ),
-  },
-])
+const columns = computed<DataTableColumns<ActorSubscription>>(() => {
+  const cols: DataTableColumns<ActorSubscription> = [
+    {
+      title: t('library.subscriptions.col.actor'),
+      key: 'actor_href',
+      render: (row) => row.actor_name || row.actor_href,
+    },
+    {
+      title: t('library.subscriptions.col.active'),
+      key: 'active',
+      width: 100,
+      render: (row) =>
+        h(NSwitch, {
+          value: row.active,
+          disabled: !isAdmin.value,
+          'onUpdate:value': (v: boolean) => void toggleActive(row, v),
+        }),
+    },
+    {
+      title: t('library.subscriptions.col.lastChecked'),
+      key: 'last_checked_at',
+      render: (row) =>
+        row.last_checked_at ? row.last_checked_at.slice(0, 19).replace('T', ' ') : '—',
+    },
+  ]
+  if (isAdmin.value) {
+    cols.push({
+      title: t('library.subscriptions.col.actions'),
+      key: 'actions',
+      width: 120,
+      render: (row) =>
+        h(
+          NButton,
+          { size: 'small', tertiary: true, type: 'error', onClick: () => void unfollow(row) },
+          { default: () => t('library.subscriptions.unfollow') },
+        ),
+    })
+  }
+  return cols
+})
 
 onMounted(() => void fetchList())
 </script>
@@ -140,7 +152,10 @@ onMounted(() => void fetchList())
       :title="t('library.subscriptions.followed')"
       class="block"
     >
-      <NSpace class="add-row">
+      <NSpace
+        v-if="isAdmin"
+        class="add-row"
+      >
         <NInput
           v-model:value="newActorHref"
           :placeholder="t('library.subscriptions.addPlaceholder')"
