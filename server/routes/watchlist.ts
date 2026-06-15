@@ -55,6 +55,9 @@ watchlistRoutes.put("/:videoCode", requireRole("admin"), async (c) => {
   if (!body.status || !VALID_STATUS.has(body.status)) {
     return c.json(errJson("watchlist.invalid_status", "status must be one of: want, viewed"), 422);
   }
+  if (body.notes !== undefined && body.notes !== null && typeof body.notes !== "string") {
+    return c.json(errJson("watchlist.invalid_notes", "notes must be a string or null"), 422);
+  }
   const row = await upsertWatchIntent(c.env.HISTORY_DB, videoCode, body.href, body.status, body.notes ?? null);
   return c.json(row);
 });

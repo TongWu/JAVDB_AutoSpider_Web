@@ -109,6 +109,20 @@ describe("Watchlist routes", () => {
     expect(res.status).toBe(422);
   });
 
+  it("rejects an empty href with 422", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/watchlist/X-2",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ href: "", status: "want" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
+
   it("preserves existing notes when a status-only update omits notes", async () => {
     const { accessToken, csrfToken } = await login();
     await app.request(
@@ -133,6 +147,20 @@ describe("Watchlist routes", () => {
     const body = (await put.json()) as Record<string, unknown>;
     expect(body.status).toBe("viewed");
     expect(body.notes).toBe("keep me");
+  });
+
+  it("rejects non-string notes with 422", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/watchlist/BAD-NOTE-1",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ href: "/v/bad-note", status: "want", notes: 123 }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
   });
 
   it("rejects malformed pagination with 422", async () => {

@@ -305,6 +305,9 @@ describe("API Contract Compliance", () => {
         "javdb_login",
         "proxy_preview",
         "closed_loop",
+        "library_ownership",
+        "library_consumption",
+        "watch_intent",
         "site_drift_sentinel",
       ];
       assertHasKeys(features, featureKeys, `${label}.features`);
