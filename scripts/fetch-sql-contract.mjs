@@ -30,8 +30,22 @@ const TOKEN =
   ''
 
 function assertContract(text) {
-  if (!text.includes('AUTO-GENERATED') || !text.includes('export const')) {
-    throw new Error('sql-contract payload is not a generated TS module')
+  const checks = [
+    ['generated header', /^\/\/ AUTO-GENERATED from javdb\/storage\/contract/m],
+    ['version header', /^\/\/ version: [0-9a-f]{16}$/m],
+    ['WATCH_INTENT_UPSERT_SQL export', /export const WATCH_INTENT_UPSERT_SQL\s*=/],
+    [
+      'prepareWatchIntentUpsert D1Database helper',
+      /export function prepareWatchIntentUpsert\(\s*db: D1Database,/m,
+    ],
+    ['D1PreparedStatement return type', /D1PreparedStatement/],
+    ['prepared statement binding', /\.bind\(/],
+  ]
+
+  for (const [label, pattern] of checks) {
+    if (!pattern.test(text)) {
+      throw new Error('sql-contract payload missing ' + label)
+    }
   }
 }
 
