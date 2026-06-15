@@ -34,11 +34,35 @@ import {
 import { listWatchIntents, type WatchStatus } from '@/api/watchlist'
 import { useCapabilitiesStore } from '@/stores/capabilities'
 import { computePreferenceScore } from './preference-score'
+import { listContentFilterRules, type ContentFilterRule } from '@/api/content-filter'
+import { isDimmedByRules } from './content-filter-overlay'
 import { reduceBatchKey } from './batch-annotation'
 import { createRatingSaver } from './rating-saver'
 
 const { t } = useI18n()
 const cap = useCapabilitiesStore()
+
+const filterRules = ref<ContentFilterRule[]>([])
+
+async function loadFilterRules(): Promise<void> {
+  if (!cap.data?.features?.content_filter) return
+  try {
+    const { items } = await listContentFilterRules()
+    filterRules.value = items.filter((r) => r.enabled)
+  } catch {
+    // non-fatal: the overlay simply dims nothing
+  }
+}
+
+// Load when the capability resolves (it can arrive after mount); clear when off.
+watch(
+  () => cap.data?.features?.content_filter,
+  (enabled) => {
+    if (enabled) void loadFilterRules()
+    else filterRules.value = []
+  },
+  { immediate: true },
+)
 
 // Valid tag slugs mirror the backend VALID_TAGS (ADR-022 C1); labels are i18n'd.
 const VALID_TAGS = [
@@ -140,12 +164,16 @@ function handleKeydown(e: KeyboardEvent) {
   }
 }
 
-function rowProps(_row: MovieSearchItem, index: number) {
+function rowProps(row: MovieSearchItem, index: number) {
+  const dimmed =
+    cap.data?.features?.content_filter === true && isDimmedByRules(row, filterRules.value)
+  const base =
+    batchMode.value && index === focusedIndex.value
+      ? 'background: rgba(24,160,88,0.12);'
+      : ''
   return {
-    style:
-      batchMode.value && index === focusedIndex.value
-        ? 'background: rgba(24,160,88,0.12);'
-        : '',
+    style: dimmed ? `${base} opacity: 0.45; text-decoration: line-through;` : base,
+    title: dimmed ? t('movies.filteredHint') : undefined,
   }
 }
 
