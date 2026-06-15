@@ -9,45 +9,11 @@ import {
   setEnabled,
   removeRule,
 } from "../services/content-filter-service";
+import { VALID_RULE_MODES, VALUE_REQUIRED } from "../contract/sql-contract.gen";
 
 type CfEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const contentFilterRoutes = new Hono<CfEnv>();
-
-// Hand-mirrored from apps/cli/ops/content_filter.py (the canonical source of
-// truth). Pinned by server/__tests__/content-filter-modes-parity.test.ts — if
-// these drift from the Python tuples, that test fails. Includes the regex /
-// release_date pairs added by IMP-ADR040-03. Encoded "dimension:mode".
-export const VALID_RULE_MODES = new Set([
-  "actor:exclude",
-  "tag:exclude",
-  "tag:include",
-  "gender:require_lead",
-  "gender:exclude_all_male",
-  "age:min_age",
-  "age:max_age",
-  "actor:regex_exclude",
-  "actor:regex_include",
-  "tag:regex_exclude",
-  "tag:regex_include",
-  "release_date:before",
-  "release_date:after",
-]);
-
-export const VALUE_REQUIRED = new Set([
-  "actor:exclude",
-  "tag:exclude",
-  "tag:include",
-  "gender:require_lead",
-  "age:min_age",
-  "age:max_age",
-  "actor:regex_exclude",
-  "actor:regex_include",
-  "tag:regex_exclude",
-  "tag:regex_include",
-  "release_date:before",
-  "release_date:after",
-]);
 
 const errJson = (code: string, message: string) => ({ error: { code, message } });
 const rowToRule = (r: { id: number; dimension: string; mode: string; value: string | null; enabled: number }) => ({
