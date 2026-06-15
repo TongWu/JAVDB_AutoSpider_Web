@@ -101,3 +101,36 @@ export async function apiProxyPage(url: string): Promise<string> {
   })
   return data
 }
+
+export interface AggregatedMagnet {
+  magnet_uri: string
+  name: string
+  // Per the OpenAPI contract only magnet_uri + name are required; a valid
+  // response may omit the rest, so they are optional here (see store mapping,
+  // which defaults sources before joining).
+  size?: string
+  tags?: string[]
+  file_count?: number
+  info_hash?: string | null
+  sources?: string[]
+  quality_score?: number
+  quality_reasons?: string[]
+}
+
+export interface AggregateMagnetsResponse {
+  video_code: string
+  magnets: AggregatedMagnet[]
+}
+
+export async function apiAggregateMagnets(
+  videoCode: string,
+): Promise<AggregateMagnetsResponse> {
+  const { data } = await http.post<AggregateMagnetsResponse>(
+    '/api/explore/aggregate-magnets',
+    { video_code: videoCode },
+    // The caller renders the failure inline (aggregateError alert), so opt out of
+    // the global error toast to avoid a duplicate notification.
+    { skipErrorToast: true },
+  )
+  return data
+}

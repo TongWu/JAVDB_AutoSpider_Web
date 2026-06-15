@@ -1250,13 +1250,16 @@
         "noMagnet": "この行にはマグネット URI がありません。",
         "downloaded": "マグネットを qBittorrent に追加しました。",
         "download": "ダウンロード",
+        "score": "スコア",
+        "aggregateError": "外部ソースからの磁力リンク集約に失敗しました。",
         "col": {
           "title": "タイトル",
           "size": "サイズ",
           "quality": "画質",
           "date": "日付",
           "status": "D1",
-          "action": "操作"
+          "action": "操作",
+          "source": "ソース"
         }
       }
     },

@@ -6,6 +6,7 @@ const resolveSpy = vi.fn()
 const downloadSpy = vi.fn()
 const oneClickSpy = vi.fn()
 const syncCookieSpy = vi.fn()
+const aggregateSpy = vi.fn()
 
 vi.mock('@/api/explore', () => ({
   apiSearchByVideoCode: (...args: unknown[]) => searchSpy(...args),
@@ -13,6 +14,12 @@ vi.mock('@/api/explore', () => ({
   apiDownloadMagnet: (...args: unknown[]) => downloadSpy(...args),
   apiOneClick: (...args: unknown[]) => oneClickSpy(...args),
   apiSyncCookie: (...args: unknown[]) => syncCookieSpy(...args),
+  apiAggregateMagnets: (...args: unknown[]) => aggregateSpy(...args),
+}))
+
+const capFlag = vi.hoisted(() => ({ on: false }))
+vi.mock('@/stores/capabilities', () => ({
+  useCapabilitiesStore: () => ({ data: { features: { magnet_aggregation: capFlag.on } } }),
 }))
 
 import { useBrowseStore } from '@/stores/browse'
@@ -26,6 +33,8 @@ describe('browse store', () => {
     downloadSpy.mockReset()
     oneClickSpy.mockReset()
     syncCookieSpy.mockReset()
+    aggregateSpy.mockReset()
+    capFlag.on = false
   })
 
   it('classifyQuery distinguishes code, url, and invalid', () => {
@@ -106,5 +115,71 @@ describe('browse store', () => {
     const res = await browse.oneClick('https://javdb.com/v/abc')
     expect(oneClickSpy).toHaveBeenCalledWith('https://javdb.com/v/abc')
     expect(res.status).toBe('ok')
+  })
+
+  describe('aggregateMagnets', () => {
+    it('gate off → does not call API, returns empty rows', async () => {
+      capFlag.on = false
+      const browse = useBrowseStore()
+      const r = await browse.aggregateMagnets('ABC-123')
+      expect(aggregateSpy).not.toHaveBeenCalled()
+      expect(r).toEqual({ rows: [], error: null })
+    })
+
+    it('success → maps response rows correctly', async () => {
+      capFlag.on = true
+      aggregateSpy.mockResolvedValueOnce({
+        video_code: 'ABC-123',
+        magnets: [
+          {
+            magnet_uri: 'magnet:?xt=urn:btih:abc',
+            name: 'My Title',
+            size: '1.4 GB',
+            tags: [],
+            file_count: 3,
+            info_hash: 'abc',
+            sources: ['JAVBUS', 'Sukebei'],
+            quality_score: 8.5,
+            quality_reasons: ['hd', 'multi-source'],
+          },
+        ],
+      })
+      const browse = useBrowseStore()
+      const r = await browse.aggregateMagnets('ABC-123')
+      expect(aggregateSpy).toHaveBeenCalledWith('ABC-123')
+      expect(r.error).toBeNull()
+      expect(r.rows[0].magnet).toBe('magnet:?xt=urn:btih:abc')
+      expect(r.rows[0].title).toBe('My Title')
+      expect(r.rows[0].size).toBe('1.4 GB')
+      expect(r.rows[0].source).toBe('JAVBUS, Sukebei')
+      expect(r.rows[0].sources).toEqual(['JAVBUS', 'Sukebei'])
+      expect(r.rows[0].quality_score).toBe(8.5)
+      expect(r.rows[0].quality_reasons).toEqual(['hd', 'multi-source'])
+    })
+
+    it('reject → captures error message, returns empty rows', async () => {
+      capFlag.on = true
+      aggregateSpy.mockRejectedValueOnce(new Error('boom'))
+      const browse = useBrowseStore()
+      const r = await browse.aggregateMagnets('ABC-123')
+      expect(r.rows).toEqual([])
+      expect(r.error).toBe('boom')
+    })
+
+    it('source-less magnet → empty source, does not discard the result', async () => {
+      capFlag.on = true
+      // Per the OpenAPI contract only magnet_uri + name are required; a magnet may
+      // omit sources. It must not throw (which would discard every aggregated row).
+      aggregateSpy.mockResolvedValueOnce({
+        video_code: 'ABC-123',
+        magnets: [{ magnet_uri: 'magnet:?xt=urn:btih:def', name: 'No Sources' }],
+      })
+      const browse = useBrowseStore()
+      const r = await browse.aggregateMagnets('ABC-123')
+      expect(r.error).toBeNull()
+      expect(r.rows).toHaveLength(1)
+      expect(r.rows[0].source).toBe('')
+      expect(r.rows[0].sources).toEqual([])
+    })
   })
 })

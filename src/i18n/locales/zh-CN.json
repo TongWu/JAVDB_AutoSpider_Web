@@ -1250,13 +1250,16 @@
         "noMagnet": "该行缺少磁力 URI。",
         "downloaded": "磁力已加入 qBittorrent。",
         "download": "下载",
+        "score": "评分",
+        "aggregateError": "从外部来源聚合磁力链接失败。",
         "col": {
           "title": "标题",
           "size": "大小",
           "quality": "画质",
           "date": "日期",
           "status": "D1",
-          "action": "操作"
+          "action": "操作",
+          "source": "来源"
         }
       }
     },

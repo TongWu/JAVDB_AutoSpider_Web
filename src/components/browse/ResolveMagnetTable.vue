@@ -5,6 +5,7 @@ import { NDataTable, NButton, NTag, NSpace, useMessage } from 'naive-ui'
 import type { DataTableColumns } from 'naive-ui'
 import { useAuthStore } from '@/stores/auth'
 import { useBrowseStore, type MagnetRow } from '@/stores/browse'
+import { useCapabilitiesStore } from '@/stores/capabilities'
 import { extractErrorMessage } from '@/api/errors'
 import { useIndexStatus } from '@/composables/useIndexStatus'
 import D1StatusDot from './D1StatusDot.vue'
@@ -21,6 +22,8 @@ const message = useMessage()
 const { observe, statuses } = useIndexStatus()
 
 const isAdmin = computed(() => auth.role === 'admin')
+const cap = useCapabilitiesStore()
+const showSource = computed(() => !!cap.data?.features?.magnet_aggregation)
 
 // Each magnet maps to a status keyed by its href (when present). We register
 // every visible row immediately — the table fits on one screen so there's no
@@ -99,6 +102,35 @@ const columns = computed<DataTableColumns<MagnetRow>>(() => {
       },
     },
   ]
+  if (showSource.value) {
+    cols.push({
+      title: t('browse.resolve.magnet.col.source'),
+      key: 'source',
+      width: 200,
+      render: (row) => {
+        if (!row.source) return '—'
+        const sources = String(row.source)
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean)
+        const children = sources.map((s) =>
+          h(NTag, { size: 'small', round: true, type: 'success' }, { default: () => s }),
+        )
+        const qs = row.quality_score
+        if (typeof qs === 'number') {
+          const reasons = Array.isArray(row.quality_reasons) ? row.quality_reasons.join('; ') : ''
+          children.push(
+            h(
+              NTag,
+              { size: 'small', round: true, type: 'warning', title: reasons || undefined },
+              { default: () => `${t('browse.resolve.magnet.score')} ${qs.toFixed(1)}` },
+            ),
+          )
+        }
+        return h(NSpace, { size: 4, wrap: true }, { default: () => children })
+      },
+    })
+  }
   if (isAdmin.value) {
     cols.push({
       title: t('browse.resolve.magnet.col.action'),
