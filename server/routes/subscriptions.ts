@@ -19,7 +19,22 @@ const errJson = (code: string, message: string) => ({ error: { code, message } }
 
 function normActorHref(raw: string): string {
   const trimmed = raw.replace(/^\/+|\/+$/g, "");
-  return trimmed ? `/${trimmed}` : trimmed;
+  const normalized = trimmed ? `/${trimmed}` : trimmed;
+  if (!/^\/actors\/[^/]+$/.test(normalized)) {
+    throw new Error("invalid_actor_href");
+  }
+  return normalized;
+}
+
+function parseActorHref(raw: string): { ok: true; value: string } | { ok: false; error: Response } {
+  try {
+    return { ok: true, value: normActorHref(raw) };
+  } catch {
+    return {
+      ok: false,
+      error: Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+    };
+  }
 }
 
 function parseLimit(
@@ -70,13 +85,18 @@ subscriptionsRoutes.get("/subscriptions", async (c) => {
 });
 
 subscriptionsRoutes.put("/subscriptions/actors/:id", requireRole("admin"), async (c) => {
-  const actorHref = normActorHref(`actors/${c.req.param("id")}`);
-  let body: { actor_name?: string | null; active?: boolean };
+  const actorHref = parseActorHref(`actors/${c.req.param("id")}`);
+  if (!actorHref.ok) return actorHref.error;
+  let rawBody: unknown;
   try {
-    body = await c.req.json();
+    rawBody = await c.req.json();
   } catch {
     return c.json(errJson("subscriptions.invalid_body", "Request body must be valid JSON"), 422);
   }
+  if (rawBody === null || typeof rawBody !== "object" || Array.isArray(rawBody)) {
+    return c.json(errJson("subscriptions.invalid_body", "Request body must be a JSON object"), 422);
+  }
+  const body = rawBody as { actor_name?: string | null; active?: boolean };
   if (body.actor_name !== undefined && body.actor_name !== null && typeof body.actor_name !== "string") {
     return c.json(errJson("subscriptions.invalid_actor_name", "actor_name must be a string or null"), 422);
   }
@@ -86,7 +106,7 @@ subscriptionsRoutes.put("/subscriptions/actors/:id", requireRole("admin"), async
 
   const row = await upsertSubscription(
     c.env.HISTORY_DB,
-    actorHref,
+    actorHref.value,
     body.actor_name ?? null,
     body.active === false ? 0 : 1,
   );
@@ -94,9 +114,11 @@ subscriptionsRoutes.put("/subscriptions/actors/:id", requireRole("admin"), async
 });
 
 subscriptionsRoutes.get("/subscriptions/actors/:id", async (c) => {
+  const actorHref = parseActorHref(`actors/${c.req.param("id")}`);
+  if (!actorHref.ok) return actorHref.error;
   const row = await getSubscription(
     c.env.HISTORY_DB,
-    normActorHref(`actors/${c.req.param("id")}`),
+    actorHref.value,
   );
   if (row === null) {
     return c.json(errJson("subscriptions.not_found", "Record not found"), 404);
@@ -105,12 +127,24 @@ subscriptionsRoutes.get("/subscriptions/actors/:id", async (c) => {
 });
 
 subscriptionsRoutes.delete("/subscriptions/actors/:id", requireRole("admin"), async (c) => {
+  const actorHref = parseActorHref(`actors/${c.req.param("id")}`);
+  if (!actorHref.ok) return actorHref.error;
   const deleted = await deleteSubscription(
     c.env.HISTORY_DB,
-    normActorHref(`actors/${c.req.param("id")}`),
+    actorHref.value,
   );
   return c.json({ deleted });
 });
+
+subscriptionsRoutes.get("/subscriptions/actors/*", () =>
+  Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+);
+subscriptionsRoutes.put("/subscriptions/actors/*", requireRole("admin"), () =>
+  Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+);
+subscriptionsRoutes.delete("/subscriptions/actors/*", requireRole("admin"), () =>
+  Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+);
 
 subscriptionsRoutes.get("/new-works", async (c) => {
   const limit = parseLimit(c.req.query("limit"), 50, 200);
@@ -118,7 +152,13 @@ subscriptionsRoutes.get("/new-works", async (c) => {
   const offset = parseOffset(c.req.query("offset"));
   if (!offset.ok) return offset.error;
 
-  const actorHref = c.req.query("actor_href") ?? null;
+  const actorHrefRaw = c.req.query("actor_href");
+  let actorHref: string | null = null;
+  if (actorHrefRaw !== undefined) {
+    const parsedActorHref = parseActorHref(actorHrefRaw);
+    if (!parsedActorHref.ok) return parsedActorHref.error;
+    actorHref = parsedActorHref.value;
+  }
   const includeDismissed = c.req.query("include_dismissed") === "true";
   const { items, total } = await listNewWorks(
     c.env.HISTORY_DB,
