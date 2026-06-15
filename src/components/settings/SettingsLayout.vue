@@ -3,29 +3,32 @@ import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NTabs, NTabPane, NMessageProvider } from 'naive-ui'
+import { useCapabilitiesStore } from '@/stores/capabilities'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
+const cap = useCapabilitiesStore()
 
-const TABS = [
+const TABS = computed(() => [
   { key: 'config', path: '/settings/config' },
   { key: 'auth', path: '/settings/auth' },
   { key: 'capabilities', path: '/settings/capabilities' },
   { key: 'appearance', path: '/settings/appearance' },
-] as const
+  ...(cap.data?.features?.content_filter
+    ? [{ key: 'filter-rules', path: '/settings/filter-rules' }]
+    : []),
+])
 
-type TabKey = typeof TABS[number]['key']
-
-const active = computed<TabKey>(() => {
-  for (const tab of TABS) {
+const active = computed<string>(() => {
+  for (const tab of TABS.value) {
     if (route.path.startsWith(tab.path)) return tab.key
   }
   return 'config'
 })
 
 function onTab(key: string): void {
-  const target = TABS.find((t) => t.key === key)
+  const target = TABS.value.find((t) => t.key === key)
   if (target && route.path !== target.path) void router.push(target.path)
 }
 </script>
@@ -61,6 +64,11 @@ function onTab(key: string): void {
         <NTabPane
           name="appearance"
           :tab="t('nav.appearance')"
+        />
+        <NTabPane
+          v-if="cap.data?.features?.content_filter"
+          name="filter-rules"
+          :tab="t('nav.filterRules')"
         />
       </NTabs>
 

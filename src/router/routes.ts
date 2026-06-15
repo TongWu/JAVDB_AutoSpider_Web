@@ -102,6 +102,11 @@ export const routes: RouteRecordRaw[] = [
         name: 'settings-appearance',
         component: () => import('@/pages/settings/SettingsAppearancePage.vue'),
       },
+      {
+        path: 'filter-rules',
+        name: 'settings-filter-rules',
+        component: () => import('@/pages/settings/SettingsFilterRulesPage.vue'),
+      },
     ],
   },
   {
