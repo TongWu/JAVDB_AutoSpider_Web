@@ -134,15 +134,20 @@ export const useBrowseStore = defineStore('browse', () => {
       // Map the aggregated shape onto the table's MagnetRow shape: the table reads
       // magnet/title/size, so alias magnet_uri→magnet, name→title. source is the
       // joined provenance label; quality_score/quality_reasons drive the gated column.
-      const rows: MagnetRow[] = res.magnets.map((m) => ({
-        magnet: m.magnet_uri,
-        title: m.name,
-        size: m.size,
-        source: m.sources.join(', '),
-        sources: m.sources,
-        quality_score: m.quality_score,
-        quality_reasons: m.quality_reasons,
-      }))
+      const rows: MagnetRow[] = res.magnets.map((m) => {
+        // sources is optional in the contract; default before joining so one
+        // source-less magnet cannot throw and discard the entire result set.
+        const sources = m.sources ?? []
+        return {
+          magnet: m.magnet_uri,
+          title: m.name,
+          size: m.size,
+          source: sources.join(', '),
+          sources,
+          quality_score: m.quality_score,
+          quality_reasons: m.quality_reasons,
+        }
+      })
       return { rows, error: null }
     } catch (err) {
       return { rows: [], error: err instanceof Error ? err.message : 'aggregation failed' }

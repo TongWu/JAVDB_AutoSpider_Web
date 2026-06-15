@@ -165,5 +165,21 @@ describe('browse store', () => {
       expect(r.rows).toEqual([])
       expect(r.error).toBe('boom')
     })
+
+    it('source-less magnet → empty source, does not discard the result', async () => {
+      capFlag.on = true
+      // Per the OpenAPI contract only magnet_uri + name are required; a magnet may
+      // omit sources. It must not throw (which would discard every aggregated row).
+      aggregateSpy.mockResolvedValueOnce({
+        video_code: 'ABC-123',
+        magnets: [{ magnet_uri: 'magnet:?xt=urn:btih:def', name: 'No Sources' }],
+      })
+      const browse = useBrowseStore()
+      const r = await browse.aggregateMagnets('ABC-123')
+      expect(r.error).toBeNull()
+      expect(r.rows).toHaveLength(1)
+      expect(r.rows[0].source).toBe('')
+      expect(r.rows[0].sources).toEqual([])
+    })
   })
 })

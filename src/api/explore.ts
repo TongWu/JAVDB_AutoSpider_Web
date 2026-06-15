@@ -105,13 +105,16 @@ export async function apiProxyPage(url: string): Promise<string> {
 export interface AggregatedMagnet {
   magnet_uri: string
   name: string
-  size: string
-  tags: string[]
-  file_count: number
-  info_hash: string | null
-  sources: string[]
-  quality_score: number
-  quality_reasons: string[]
+  // Per the OpenAPI contract only magnet_uri + name are required; a valid
+  // response may omit the rest, so they are optional here (see store mapping,
+  // which defaults sources before joining).
+  size?: string
+  tags?: string[]
+  file_count?: number
+  info_hash?: string | null
+  sources?: string[]
+  quality_score?: number
+  quality_reasons?: string[]
 }
 
 export interface AggregateMagnetsResponse {
