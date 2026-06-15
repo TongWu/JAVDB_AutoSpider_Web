@@ -1145,6 +1145,13 @@
         "sessionId": "セッション ID",
         "topFinding": "主要検出事項"
       },
+      "alertStatus": {
+        "label": "アラート状態",
+        "none": "アラートなし",
+        "fired": "発火",
+        "suppressed": "抑制",
+        "skipped": "スキップ"
+      },
       "proposals": {
         "title": "修復提案",
         "empty": "このインシデントに対する提案はありません。",

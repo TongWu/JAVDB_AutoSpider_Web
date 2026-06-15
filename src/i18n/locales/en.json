@@ -1145,6 +1145,13 @@
         "sessionId": "Session ID",
         "topFinding": "Top Finding"
       },
+      "alertStatus": {
+        "label": "Alert status",
+        "none": "No alert",
+        "fired": "Fired",
+        "suppressed": "Suppressed",
+        "skipped": "Skipped"
+      },
       "proposals": {
         "title": "Remediation Proposals",
         "empty": "No proposals for this incident.",
