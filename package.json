@@ -20,6 +20,7 @@
     "test:e2e": "playwright test --config tests/e2e/playwright.config.ts",
     "gen:api-types": "node scripts/fetch-openapi.mjs",
     "gen:query-golden": "node scripts/fetch-query-golden.mjs",
+    "gen:sql-contract": "node scripts/fetch-sql-contract.mjs",
     "dev:api": "wrangler dev",
     "test:server": "vitest run --config vitest.server.config.ts",
     "typecheck:server": "tsc --noEmit -p server/tsconfig.json",
