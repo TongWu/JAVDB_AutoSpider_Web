@@ -66,6 +66,22 @@ jobs:
             exit 1
           fi
 
+      - name: Refresh SQL contract from main repo
+        # ADR-055 freshness check: re-fetch the Python-main generated SQL
+        # contract and confirm the committed vendored copy matches. Catches
+        # Python-side drift (stale vendor). Mirrors the query-golden step.
+        env:
+          SQL_CONTRACT_URL: https://raw.githubusercontent.com/TongWu/JAVDB_AutoSpider_CICD/main/docs/api/contract/sql-contract.gen.ts
+          SQL_CONTRACT_TOKEN: ${{ secrets.CICD_REPO_TOKEN }}
+        run: |
+          npm run gen:sql-contract
+          if ! git diff --quiet server/contract/sql-contract.gen.ts; then
+            echo "::error::Vendored sql-contract.gen.ts is out of sync with Python main."
+            echo "Run 'npm run gen:sql-contract' and commit, or trigger the 'Re-vendor SQL contract' workflow."
+            git --no-pager diff server/contract/sql-contract.gen.ts | head -100
+            exit 1
+          fi
+
       - name: Unit tests
         run: npm run test:unit -- --coverage
 

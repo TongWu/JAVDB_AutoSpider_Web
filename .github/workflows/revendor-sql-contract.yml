@@ -1,0 +1,60 @@
+name: Re-vendor SQL contract
+
+# ADR-055: dispatched by the Python repo when sql-contract.gen.ts changes on
+# main (or run manually). Re-fetches the vendored module and opens a PR. CI on
+# that PR runs the freshness check (now green) + the conformance smoke.
+on:
+  repository_dispatch:
+    types: [sql-contract-updated]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  revendor:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Don't persist the job's GITHUB_TOKEN in .git/config — npm ci runs
+          # third-party install scripts and we never use the persisted creds
+          # (the PR is pushed with the explicit REVENDOR_PR_TOKEN below).
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Refresh vendored SQL contract
+        env:
+          SQL_CONTRACT_TOKEN: ${{ secrets.CICD_REPO_TOKEN }}
+        run: npm run gen:sql-contract
+
+      - name: Open re-vendor PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          # PAT (or GitHub App token) with contents:write + pull-requests:write
+          # on THIS repo. Required so the PR's commits are authored by a real
+          # token and therefore TRIGGER ci.yml (freshness + conformance). GitHub
+          # deliberately suppresses workflow runs on PRs created with the default
+          # GITHUB_TOKEN, which would leave the re-vendor PR with no CI.
+          token: ${{ secrets.REVENDOR_PR_TOKEN }}
+          branch: chore/revendor-sql-contract
+          title: "chore: re-vendor SQL contract (ADR-055)"
+          commit-message: "chore: re-vendor SQL contract (ADR-055)"
+          body: |
+            Upstream `sql-contract.gen.ts` changed on Python `main`.
+
+            The vendored generated module has been refreshed. Freshness CI is
+            now green; the conformance smoke (`npm run test:server`) confirms the
+            generated bind helpers still execute correctly. Merge once green.
