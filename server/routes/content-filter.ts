@@ -81,6 +81,60 @@ function parseIsoDate(value: string): string | null {
   return `${y}-${mo}-${d}`;
 }
 
+const GENDER_VALUES = new Set(["female", "male"]);
+const MAX_REGEX_LEN = 200;
+// Heuristic ReDoS guard mirroring the Python regex_write_risk: a quantified group
+// whose body contains an unbounded quantifier (e.g. (a+)+, (a*)*, (.*)+). Rejected
+// at the write boundary because the Python ingestion matcher has no timeout.
+const NESTED_QUANTIFIER_RE = /\([^()]*[*+][^()]*\)[*+]/;
+
+// Validate + normalize a rule value, mirroring the Python `validate_rule_value`
+// (apps/cli/ops/content_filter.py) so both backends accept/reject the same
+// gender/age/release_date/ReDoS inputs. Regex *compile* is NOT checked here
+// (JS/Python dialect). Returns the normalized value, or a {code,message} for 422.
+function validateRuleValue(
+  dimension: string,
+  mode: string,
+  value: string,
+): { value: string } | { error: { code: string; message: string } } {
+  if (dimension === "gender" && mode === "require_lead") {
+    const normalized = value.toLowerCase();
+    if (!GENDER_VALUES.has(normalized)) {
+      return { error: { code: "content_filter.invalid_value", message: "gender require_lead rules require a value of female or male" } };
+    }
+    return { value: normalized };
+  }
+  if (dimension === "gender" && mode === "exclude_all_male") {
+    if (value.length > 0) {
+      return { error: { code: "content_filter.invalid_value", message: "gender exclude_all_male rules do not accept a value" } };
+    }
+    return { value: "" };
+  }
+  if (dimension === "age") {
+    if (!/^\d+$/.test(value)) {
+      return { error: { code: "content_filter.invalid_value", message: "age rules require a non-negative integer value" } };
+    }
+    return { value: String(Number(value)) };
+  }
+  if (dimension === "release_date") {
+    const normalized = parseIsoDate(value);
+    if (normalized === null) {
+      return { error: { code: "content_filter.invalid_date", message: "release_date rules require value as an ISO date (YYYY-MM-DD)" } };
+    }
+    return { value: normalized };
+  }
+  if (mode === "regex_exclude" || mode === "regex_include") {
+    if (value.length > MAX_REGEX_LEN) {
+      return { error: { code: "content_filter.invalid_value", message: `regex pattern too long (max ${MAX_REGEX_LEN} characters)` } };
+    }
+    if (NESTED_QUANTIFIER_RE.test(value)) {
+      return { error: { code: "content_filter.invalid_value", message: "regex pattern has nested quantifiers (catastrophic-backtracking risk); rewrite it" } };
+    }
+    return { value };
+  }
+  return { value };
+}
+
 // GET / — list all rules (auth only; the read-side overlay needs this).
 contentFilterRoutes.get("/", async (c) => {
   const rows = await listRules(c.env.REPORTS_DB);
@@ -121,13 +175,11 @@ contentFilterRoutes.post("/", requireRole("admin"), async (c) => {
   if (VALUE_REQUIRED.has(key) && value.length === 0) {
     return c.json(errJson("content_filter.value_required", "this dimension/mode requires a non-empty value"), 422);
   }
-  if (dimension === "release_date") {
-    const normalized = parseIsoDate(value);
-    if (normalized === null) {
-      return c.json(errJson("content_filter.invalid_date", "release_date rules require value as an ISO date (YYYY-MM-DD)"), 422);
-    }
-    value = normalized;
+  const validated = validateRuleValue(dimension, mode, value);
+  if ("error" in validated) {
+    return c.json(errJson(validated.error.code, validated.error.message), 422);
   }
+  value = validated.value;
   const row = await addRule(c.env.REPORTS_DB, dimension, mode, value);
   return c.json(rowToRule(row), 201);
 });

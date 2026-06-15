@@ -216,4 +216,61 @@ describe("Content-filter routes", () => {
     );
     expect(del.status).toBe(422);
   });
+
+  it("rejects an invalid gender value with 422 (mirrors the Python validator)", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/content-filter",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ dimension: "gender", mode: "require_lead", value: "femail" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
+
+  it("rejects a negative age value with 422", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/content-filter",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ dimension: "age", mode: "max_age", value: "-1" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
+
+  it("rejects a catastrophic nested-quantifier regex with 422 (ReDoS guard)", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/content-filter",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ dimension: "tag", mode: "regex_exclude", value: "(a+)+" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
+
+  it("normalizes a valid gender value to lowercase", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/content-filter",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ dimension: "gender", mode: "require_lead", value: "Female" }),
+      },
+      env,
+    );
+    expect(res.status).toBe(201);
+    expect((await res.json() as Record<string, unknown>).value).toBe("female");
+  });
 });
