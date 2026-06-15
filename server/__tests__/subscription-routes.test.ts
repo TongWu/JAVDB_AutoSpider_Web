@@ -136,6 +136,33 @@ describe("Subscription routes", () => {
     expect((await after.json() as { total: number }).total).toBe(0);
   });
 
+  it("normalizes and validates actor_href filters for new works", async () => {
+    const { accessToken } = await login();
+
+    const normalized = await app.request(
+      "/api/new-works?actor_href=actors/EvkJ",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(normalized.status).toBe(200);
+    const body = (await normalized.json()) as {
+      total: number;
+      items: Array<Record<string, unknown>>;
+    };
+    expect(body.total).toBe(1);
+    expect(body.items[0].actor_href).toBe("/actors/EvkJ");
+
+    const malformed = await app.request(
+      "/api/new-works?actor_href=/actors/EvkJ/extra",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(malformed.status).toBe(422);
+    expect((await malformed.json() as { error: { code: string } }).error.code).toBe(
+      "subscriptions.invalid_actor_href",
+    );
+  });
+
   it("rejects malformed pagination with 422", async () => {
     const { accessToken } = await login();
     const badLimit = await app.request(

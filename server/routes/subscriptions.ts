@@ -152,7 +152,13 @@ subscriptionsRoutes.get("/new-works", async (c) => {
   const offset = parseOffset(c.req.query("offset"));
   if (!offset.ok) return offset.error;
 
-  const actorHref = c.req.query("actor_href") ?? null;
+  const actorHrefRaw = c.req.query("actor_href");
+  let actorHref: string | null = null;
+  if (actorHrefRaw !== undefined) {
+    const parsedActorHref = parseActorHref(actorHrefRaw);
+    if (!parsedActorHref.ok) return parsedActorHref.error;
+    actorHref = parsedActorHref.value;
+  }
   const includeDismissed = c.req.query("include_dismissed") === "true";
   const { items, total } = await listNewWorks(
     c.env.HISTORY_DB,
