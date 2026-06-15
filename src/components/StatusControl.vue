@@ -1,6 +1,7 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
-  import { NSelect } from 'naive-ui'
+  import axios from 'axios'
+  import { NSelect, useMessage } from 'naive-ui'
   import { useI18n } from 'vue-i18n'
   import { upsertWatchIntent, deleteWatchIntent, type WatchStatus } from '@/api/watchlist'
 
@@ -15,6 +16,7 @@
   }>()
 
   const { t } = useI18n()
+  const message = useMessage()
   const status = ref<WatchStatus | null>(props.initialStatus ?? null)
   const loading = ref(false)
   // Monotonic token: rapid toggles can overlap; only the newest write may
@@ -45,9 +47,16 @@
       if (seq !== updateSeq) return
       status.value = value
       emit('change', value)
-    } catch {
-      // The global response interceptor already surfaces the error toast (with
-      // server detail); a second local toast here would double-notify.
+    } catch (err) {
+      if (seq !== updateSeq) return
+      // The global interceptor only toasts errors that carry an HTTP response
+      // (4xx/5xx). Transport-level failures (offline, DNS, timeout) have no
+      // response, so it stays silent — surface a local fallback for those,
+      // otherwise the control reverts with no explanation. HTTP errors are
+      // left to the interceptor's more specific, server-detail toast.
+      if (!axios.isAxiosError(err) || !err.response) {
+        message.error(t('library.watchlist.saveError'))
+      }
     } finally {
       if (seq === updateSeq) loading.value = false
     }
