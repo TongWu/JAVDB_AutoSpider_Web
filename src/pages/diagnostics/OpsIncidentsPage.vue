@@ -288,7 +288,7 @@ const latestAlertEvent = computed<OpsAlertEvent | null>(() =>
   alertEvents.value.length ? alertEvents.value[alertEvents.value.length - 1] : null,
 )
 
-function alertStatusTagType(status: string): 'success' | 'default' {
+function alertStatusTagType(status: OpsAlertEvent['status']): 'success' | 'default' {
   return status === 'fired' ? 'success' : 'default'
 }
 

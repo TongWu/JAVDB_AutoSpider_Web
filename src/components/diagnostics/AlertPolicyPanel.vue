@@ -29,11 +29,12 @@ const message = useMessage()
 const cap = useCapabilitiesStore()
 const auth = useAuthStore()
 
-// `ops_alerting` is the ADR-034 D4 capability flag the backend exposes once the
-// OpsAlertPolicy/OpsAlertEvent tables exist. It is not yet in the generated
-// Features type (the backend re-vendors openapi.json once the contract lands), so
-// read it through a string-indexed view. Absent/false => the panel renders
-// nothing: a deployment without the alerting tables never shows a broken page.
+// `ops_alerting` is ADR-026 Phase 4's capability flag, exposed via the ADR-034 D4
+// capability-honesty pattern: the backend sets it once the OpsAlertPolicy/
+// OpsAlertEvent tables exist. It is not yet in the generated Features type (the
+// backend re-vendors openapi.json once the contract lands), so read it through a
+// string-indexed view. Absent/false => the panel renders nothing: a deployment
+// without the alerting tables never shows a broken page.
 const alertingEnabled = computed(
   () => (cap.data?.features as Record<string, boolean> | undefined)?.ops_alerting === true,
 )
