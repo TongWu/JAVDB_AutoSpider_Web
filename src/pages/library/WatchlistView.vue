@@ -66,6 +66,10 @@ async function fetchList(): Promise<void> {
 // total; a re-status keeps the grand total but drops the row when it no longer
 // matches an active status filter.
 function applyLocalChange(videoCode: string, val: WatchStatus | null): void {
+  // Invalidate any list fetch already in flight: a GET that observed the
+  // pre-write state must not commit on top of this optimistic reconciliation,
+  // which would resurrect a removed row or restore the stale grand total.
+  listSeq += 1
   const idx = items.value.findIndex((r) => r.video_code === videoCode)
   if (val === null) {
     if (idx !== -1) items.value = items.value.filter((_, i) => i !== idx)

@@ -5,8 +5,9 @@ import { NSelect } from 'naive-ui'
 
 // Two intents: one 'want' (A-1), one 'viewed' (B-2). The grand-total head
 // request (limit:1, unfiltered) reports total=2 regardless of the filter.
-const { ROWS } = vi.hoisted(() => ({
-  ROWS: [
+type ListParams = { status?: string | null; limit?: number }
+const { ROWS, defaultListImpl } = vi.hoisted(() => {
+  const ROWS = [
     {
       video_code: 'A-1',
       href: '/v/a1',
@@ -23,20 +24,18 @@ const { ROWS } = vi.hoisted(() => ({
       status_at: null,
       updated_at: '2026-06-12T00:00:00.000Z',
     },
-  ],
-}))
+  ]
+  const defaultListImpl = async (params: { status?: string | null; limit?: number } = {}) => {
+    // Unfiltered head request used purely for the grand-total KPI.
+    if (params.limit === 1) return { items: ROWS.slice(0, 1), total: ROWS.length }
+    const filtered = params.status ? ROWS.filter((r) => r.status === params.status) : ROWS
+    return { items: filtered, total: filtered.length }
+  }
+  return { ROWS, defaultListImpl }
+})
 
 vi.mock('@/api/watchlist', () => ({
-  listWatchIntents: vi.fn(
-    async (params: { status?: string | null; limit?: number } = {}) => {
-      // Unfiltered head request used purely for the grand-total KPI.
-      if (params.limit === 1) return { items: ROWS.slice(0, 1), total: ROWS.length }
-      const filtered = params.status
-        ? ROWS.filter((r) => r.status === params.status)
-        : ROWS
-      return { items: filtered, total: filtered.length }
-    },
-  ),
+  listWatchIntents: vi.fn(defaultListImpl),
   upsertWatchIntent: vi.fn().mockResolvedValue({}),
   deleteWatchIntent: vi.fn().mockResolvedValue(undefined),
 }))
@@ -79,8 +78,15 @@ function trackedValue(wrapper: ReturnType<typeof mount>): string {
   return stat!.find('.n-statistic-value').text()
 }
 
+const listMock = listWatchIntents as ReturnType<typeof vi.fn>
+
 describe('WatchlistView', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    // clearAllMocks keeps implementations; reset explicitly so a per-test
+    // override (the race test below) cannot leak into other tests.
+    listMock.mockImplementation(defaultListImpl)
+  })
 
   it('keeps the "Tracked" KPI at the grand total when a status filter narrows the table', async () => {
     const wrapper = mount(WatchlistView, { global: { plugins: [i18n] } })
@@ -141,5 +147,49 @@ describe('WatchlistView', () => {
     )
     expect(wrapper.text()).not.toContain('A-1')
     expect(trackedValue(wrapper)).toContain('2')
+  })
+
+  it('a list response started before a local write cannot clobber the reconciliation', async () => {
+    const wrapper = mount(WatchlistView, { global: { plugins: [i18n] } })
+    await flushPromises()
+    expect(wrapper.text()).toContain('A-1')
+
+    // Suspend the next fetchList so a write can land while it is in flight. When
+    // released it resolves with the STALE pre-write snapshot (A-1 still present).
+    const release: Array<() => void> = []
+    listMock.mockImplementation(
+      (params: ListParams = {}) =>
+        new Promise((resolve) => {
+          release.push(() =>
+            resolve(
+              params.limit === 1
+                ? { items: ROWS.slice(0, 1), total: ROWS.length }
+                : { items: ROWS, total: ROWS.length },
+            ),
+          )
+        }),
+    )
+
+    // Start an in-flight fetch via a filter change. The table still shows the old
+    // rows (and their StatusControls) until this suspended fetch commits.
+    wrapper.find('.filter-row').findComponent(NSelect).vm.$emit('update:value', 'want')
+    await flushPromises()
+
+    // While that fetch is suspended, untrack A-1 (optimistic local reconcile).
+    wrapper.find('.n-data-table').findAllComponents(NSelect)[0].vm.$emit('update:value', null)
+    await flushPromises()
+    expect(deleteWatchIntent).toHaveBeenCalledWith('A-1')
+    expect(wrapper.text()).not.toContain('A-1')
+    expect(trackedValue(wrapper)).toContain('1')
+
+    // Drain the suspended fetch to completion. Its pre-write snapshot must NOT
+    // commit over the reconciliation (without the listSeq bump it would resurrect
+    // A-1 and restore total=2).
+    for (let guard = 0; release.length && guard < 5; guard++) {
+      release.splice(0).forEach((fn) => fn())
+      await flushPromises()
+    }
+    expect(wrapper.text()).not.toContain('A-1')
+    expect(trackedValue(wrapper)).toContain('1')
   })
 })
