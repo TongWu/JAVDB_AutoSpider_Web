@@ -31,6 +31,25 @@ async function getCsrf(): Promise<{ token: string; csrfToken: string; csrfCookie
   return { token: data.access_token, csrfToken: data.csrf_token, csrfCookie: `csrf_token=${data.csrf_token}` };
 }
 
+async function getReadonlyCsrf(): Promise<{ token: string; csrfToken: string; csrfCookie: string }> {
+  const readonlyEnv = {
+    ...env,
+    READONLY_USERNAME: "viewer",
+    READONLY_PASSWORD_HASH: "plain:viewerpass",
+  };
+  const res = await app.request(
+    "/api/auth/login",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "viewer", password: "viewerpass" }),
+    },
+    readonlyEnv,
+  );
+  const data = (await res.json()) as any;
+  return { token: data.access_token, csrfToken: data.csrf_token, csrfCookie: `csrf_token=${data.csrf_token}` };
+}
+
 async function seedTables(db: D1Database) {
   await db
     .prepare(
@@ -85,6 +104,33 @@ async function seedOpsIncidentTables(db: D1Database) {
       '[]', '[]', '2026-05-27T00:00:00Z', '2026-05-27T00:00:00Z', NULL
     )
   `).run();
+}
+
+async function seedAlertTables(db: D1Database) {
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS OpsAlertPolicy (
+      policy_id TEXT PRIMARY KEY,
+      incident_type TEXT NOT NULL UNIQUE,
+      min_confidence TEXT NOT NULL,
+      enabled INTEGER NOT NULL,
+      channels_json TEXT NOT NULL,
+      updated_by TEXT,
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `).run();
+  await db.prepare(`
+    CREATE TABLE IF NOT EXISTS OpsAlertEvent (
+      alert_id TEXT PRIMARY KEY,
+      incident_id TEXT NOT NULL,
+      policy_id TEXT,
+      status TEXT NOT NULL,
+      reason TEXT,
+      fired_at TEXT NOT NULL
+    )
+  `).run();
+  await db.prepare("DELETE FROM OpsAlertEvent").run();
+  await db.prepare("DELETE FROM OpsAlertPolicy").run();
 }
 
 interface ParseFillSeed {
@@ -261,6 +307,198 @@ describe("Diagnostics routes", () => {
     }, env);
 
     expect(res.status).toBe(404);
+  });
+
+  it("GET /api/diag/alert-policies returns mapped policies without channels_json", async () => {
+    await seedAlertTables(env.REPORTS_DB);
+    await env.REPORTS_DB.prepare(`
+      INSERT INTO OpsAlertPolicy (
+        policy_id, incident_type, min_confidence, enabled, channels_json, updated_by, created_at, updated_at
+      ) VALUES (
+        'policy_failed_ingestion', 'failed_ingestion', 'medium', 1, '["email","github_issue"]', 'admin',
+        '2026-06-15T00:00:00Z', '2026-06-15T00:01:00Z'
+      )
+    `).run();
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/alert-policies", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: Record<string, unknown>[] };
+    expect(data.items).toEqual([
+      {
+        policy_id: "policy_failed_ingestion",
+        incident_type: "failed_ingestion",
+        min_confidence: "medium",
+        enabled: true,
+        channels: ["email", "github_issue"],
+        updated_by: "admin",
+        created_at: "2026-06-15T00:00:00Z",
+        updated_at: "2026-06-15T00:01:00Z",
+      },
+    ]);
+    expect(data.items[0]).not.toHaveProperty("channels_json");
+  });
+
+  it("PUT /api/diag/alert-policies/:incident_type upserts as admin and returns the mapped policy", async () => {
+    await seedAlertTables(env.REPORTS_DB);
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+
+    const res = await app.request(
+      "/api/diag/alert-policies/failed_ingestion",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Cookie: csrfCookie,
+        },
+        body: JSON.stringify({
+          min_confidence: "high",
+          enabled: false,
+          channels: ["email"],
+        }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as Record<string, unknown>;
+    expect(data).toMatchObject({
+      incident_type: "failed_ingestion",
+      min_confidence: "high",
+      enabled: false,
+      channels: ["email"],
+      updated_by: "admin",
+    });
+    expect(typeof data.policy_id).toBe("string");
+    expect(data.created_at).toEqual(expect.any(String));
+    expect(data.updated_at).toEqual(expect.any(String));
+    expect(data).not.toHaveProperty("channels_json");
+
+    const row = await env.REPORTS_DB
+      .prepare("SELECT incident_type, min_confidence, enabled, channels_json, updated_by FROM OpsAlertPolicy WHERE incident_type = ?")
+      .bind("failed_ingestion")
+      .first<{ incident_type: string; min_confidence: string; enabled: number; channels_json: string; updated_by: string }>();
+    expect(row).toEqual({
+      incident_type: "failed_ingestion",
+      min_confidence: "high",
+      enabled: 0,
+      channels_json: '["email"]',
+      updated_by: "admin",
+    });
+  });
+
+  it("PUT /api/diag/alert-policies/:incident_type rejects invalid min_confidence with 422", async () => {
+    await seedAlertTables(env.REPORTS_DB);
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+
+    const res = await app.request(
+      "/api/diag/alert-policies/failed_ingestion",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Cookie: csrfCookie,
+        },
+        body: JSON.stringify({ min_confidence: "urgent", channels: [] }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(422);
+  });
+
+  it.each([
+    ["malformed JSON", "{not-json"],
+    ["null JSON", "null"],
+    ["array JSON", "[]"],
+    ["primitive JSON", "\"bad\""],
+  ])("PUT /api/diag/alert-policies/:incident_type rejects %s body with 422", async (_label, body) => {
+    await seedAlertTables(env.REPORTS_DB);
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+
+    const res = await app.request(
+      "/api/diag/alert-policies/failed_ingestion",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Cookie: csrfCookie,
+        },
+        body,
+      },
+      env,
+    );
+
+    expect(res.status).toBe(422);
+  });
+
+  it("PUT /api/diag/alert-policies/:incident_type rejects readonly users", async () => {
+    await seedAlertTables(env.REPORTS_DB);
+    const { token, csrfToken, csrfCookie } = await getReadonlyCsrf();
+
+    const res = await app.request(
+      "/api/diag/alert-policies/failed_ingestion",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Cookie: csrfCookie,
+        },
+        body: JSON.stringify({ min_confidence: "medium", channels: [] }),
+      },
+      {
+        ...env,
+        READONLY_USERNAME: "viewer",
+        READONLY_PASSWORD_HASH: "plain:viewerpass",
+      },
+    );
+
+    expect(res.status).toBe(403);
+  });
+
+  it("GET /api/diag/ops-incidents/:id/alert-events returns mapped alert events", async () => {
+    await seedAlertTables(env.REPORTS_DB);
+    await env.REPORTS_DB.prepare(`
+      INSERT INTO OpsAlertPolicy (
+        policy_id, incident_type, min_confidence, enabled, channels_json, updated_by, created_at, updated_at
+      ) VALUES (
+        'policy_failed_ingestion', 'failed_ingestion', 'medium', 1, '[]', 'admin',
+        '2026-06-15T00:00:00Z', '2026-06-15T00:01:00Z'
+      )
+    `).run();
+    await env.REPORTS_DB.prepare(`
+      INSERT INTO OpsAlertEvent (alert_id, incident_id, policy_id, status, reason, fired_at)
+      VALUES ('alert_1', 'opsinc_test', 'policy_failed_ingestion', 'fired', NULL, '2026-06-15T00:02:00Z')
+    `).run();
+    const token = await getToken();
+
+    const res = await app.request("/api/diag/ops-incidents/opsinc_test/alert-events", {
+      headers: { Authorization: `Bearer ${token}` },
+    }, env);
+
+    expect(res.status).toBe(200);
+    const data = await res.json() as { items: Record<string, unknown>[] };
+    expect(data.items).toEqual([
+      {
+        alert_id: "alert_1",
+        incident_id: "opsinc_test",
+        policy_id: "policy_failed_ingestion",
+        status: "fired",
+        reason: null,
+        fired_at: "2026-06-15T00:02:00Z",
+      },
+    ]);
   });
 
   it("GET /api/diag/ops-incidents filters by run_id", async () => {

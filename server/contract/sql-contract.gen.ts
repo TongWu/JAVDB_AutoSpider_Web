@@ -1,6 +1,6 @@
 // AUTO-GENERATED from javdb/storage/contract — DO NOT EDIT.
 // Source of truth: ADR-055. Regenerate: python3 -m apps.cli.ops.dump_sql_contract
-// version: 8388707dd033e195
+// version: d638dbd51de40ba9
 /* eslint-disable */
 
 export const WATCH_INTENT_UPSERT_SQL =
@@ -32,6 +32,72 @@ export function prepareSystemStateUpsert(
 ): D1PreparedStatement {
   return db.prepare(SYSTEM_STATE_UPSERT_SQL).bind(p.key, p.value);
 }
+
+export const OPS_ALERT_POLICY_UPSERT_SQL =
+  `INSERT INTO OpsAlertPolicy ( policy_id, incident_type, min_confidence, enabled, channels_json, updated_by, created_at, updated_at ) VALUES ( ?, ?, ?, ?, ?, ?, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now') ) ON CONFLICT(incident_type) DO UPDATE SET min_confidence = excluded.min_confidence, enabled = excluded.enabled, channels_json = excluded.channels_json, updated_by = excluded.updated_by, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')`;
+
+export function prepareOpsAlertPolicyUpsert(
+  db: D1Database,
+  p: { policyId: string; incidentType: string; minConfidence: string; enabled: number; channelsJson: string; updatedBy: string | null },
+): D1PreparedStatement {
+  return db.prepare(OPS_ALERT_POLICY_UPSERT_SQL).bind(p.policyId, p.incidentType, p.minConfidence, p.enabled, p.channelsJson, p.updatedBy);
+}
+
+export const OPS_ALERT_POLICY_GET_BY_INCIDENT_TYPE_SQL =
+  `SELECT policy_id, incident_type, min_confidence, enabled, channels_json, updated_by, created_at, updated_at FROM OpsAlertPolicy WHERE incident_type = ?`;
+
+export function prepareOpsAlertPolicyGetByIncidentType(
+  db: D1Database,
+  p: { incidentType: string },
+): D1PreparedStatement {
+  return db.prepare(OPS_ALERT_POLICY_GET_BY_INCIDENT_TYPE_SQL).bind(p.incidentType);
+}
+
+export const OPS_ALERT_POLICIES_LIST_SQL =
+  `SELECT policy_id, incident_type, min_confidence, enabled, channels_json, updated_by, created_at, updated_at FROM OpsAlertPolicy ORDER BY incident_type ASC`;
+
+export function prepareOpsAlertPoliciesList(
+  db: D1Database,
+  _p?: Record<string, never>,
+): D1PreparedStatement {
+  return db.prepare(OPS_ALERT_POLICIES_LIST_SQL).bind();
+}
+
+export const OPS_ALERT_EVENTS_LIST_BY_INCIDENT_SQL =
+  `SELECT alert_id, incident_id, policy_id, status, reason, fired_at FROM OpsAlertEvent WHERE incident_id = ? ORDER BY fired_at ASC`;
+
+export function prepareOpsAlertEventsListByIncident(
+  db: D1Database,
+  p: { incidentId: string },
+): D1PreparedStatement {
+  return db.prepare(OPS_ALERT_EVENTS_LIST_BY_INCIDENT_SQL).bind(p.incidentId);
+}
+
+export const OPS_ALERT_POLICY_PROBE_SQL =
+  `SELECT 1 FROM OpsAlertPolicy LIMIT 1`;
+
+export function prepareOpsAlertPolicyProbe(
+  db: D1Database,
+  _p?: Record<string, never>,
+): D1PreparedStatement {
+  return db.prepare(OPS_ALERT_POLICY_PROBE_SQL).bind();
+}
+
+export const OPS_ALERT_EVENT_PROBE_SQL =
+  `SELECT 1 FROM OpsAlertEvent LIMIT 1`;
+
+export function prepareOpsAlertEventProbe(
+  db: D1Database,
+  _p?: Record<string, never>,
+): D1PreparedStatement {
+  return db.prepare(OPS_ALERT_EVENT_PROBE_SQL).bind();
+}
+
+export const OPS_ALERT_POLICY_ID_SALT = "alertpolicy|";
+
+export const OPS_ALERT_POLICY_ID_PREFIX = "opspolicy_";
+
+export const OPS_ALERT_POLICY_ID_HASH_LENGTH = "24";
 
 export const VALID_RULE_MODES: ReadonlySet<string> = new Set([
   "actor:exclude",
