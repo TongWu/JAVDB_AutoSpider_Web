@@ -1364,7 +1364,9 @@
       "acquisition": "Acquisition",
       "ownership": "Ownership",
       "consumption": "Consumption",
-      "watchlist": "Watchlist"
+      "watchlist": "Watchlist",
+      "subscriptions": "Subscriptions",
+      "newWorks": "New Works"
     },
     "loadError": "Failed to load acquisition data.",
     "comingSoon": "Coming soon",
@@ -1435,6 +1437,35 @@
         "videoCode": "Code",
         "status": "Status",
         "updatedAt": "Updated"
+      }
+    },
+    "subscriptions": {
+      "loadError": "Failed to load subscriptions.",
+      "saveError": "Failed to update subscription.",
+      "total": "Followed",
+      "followed": "Followed Actors",
+      "add": "Follow",
+      "unfollow": "Unfollow",
+      "addPlaceholder": "Actor href, e.g. /actors/EvkJ",
+      "col": {
+        "actor": "Actor",
+        "active": "Active",
+        "lastChecked": "Last Checked",
+        "actions": "Actions"
+      }
+    },
+    "newWorks": {
+      "loadError": "Failed to load new works.",
+      "dismissError": "Failed to dismiss.",
+      "total": "New Works",
+      "recent": "New Works Feed",
+      "dismiss": "Dismiss",
+      "col": {
+        "videoCode": "Code",
+        "title": "Title",
+        "releaseDate": "Release",
+        "status": "Status",
+        "actions": "Actions"
       }
     },
     "consumption": {

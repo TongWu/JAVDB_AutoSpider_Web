@@ -1364,7 +1364,9 @@
       "acquisition": "取得",
       "ownership": "所有",
       "consumption": "視聴",
-      "watchlist": "ウォッチリスト"
+      "watchlist": "ウォッチリスト",
+      "subscriptions": "サブスクリプション",
+      "newWorks": "新作"
     },
     "loadError": "取得データの読み込みに失敗しました。",
     "comingSoon": "近日公開",
@@ -1435,6 +1437,35 @@
         "videoCode": "コード",
         "status": "ステータス",
         "updatedAt": "更新日時"
+      }
+    },
+    "subscriptions": {
+      "loadError": "サブスクリプションの読み込みに失敗しました。",
+      "saveError": "サブスクリプションの更新に失敗しました。",
+      "total": "フォロー中",
+      "followed": "フォロー中の出演者",
+      "add": "フォロー",
+      "unfollow": "フォロー解除",
+      "addPlaceholder": "出演者の href（例: /actors/EvkJ）",
+      "col": {
+        "actor": "出演者",
+        "active": "有効",
+        "lastChecked": "最終確認日時",
+        "actions": "操作"
+      }
+    },
+    "newWorks": {
+      "loadError": "新作の読み込みに失敗しました。",
+      "dismissError": "非表示にできませんでした。",
+      "total": "新作",
+      "recent": "新作フィード",
+      "dismiss": "非表示",
+      "col": {
+        "videoCode": "コード",
+        "title": "タイトル",
+        "releaseDate": "発売日",
+        "status": "ステータス",
+        "actions": "操作"
       }
     },
     "consumption": {
