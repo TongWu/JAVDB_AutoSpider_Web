@@ -180,4 +180,40 @@ describe("Content-filter routes", () => {
     );
     expect(res.status).toBe(422);
   });
+
+  it("rejects a null JSON body with 422 (not a 500) on POST and PUT", async () => {
+    const { accessToken, csrfToken } = await login();
+    const post = await app.request(
+      "/api/content-filter",
+      { method: "POST", headers: mutationHeaders(accessToken, csrfToken), body: "null" },
+      env,
+    );
+    expect(post.status).toBe(422);
+    const put = await app.request(
+      "/api/content-filter/1",
+      { method: "PUT", headers: mutationHeaders(accessToken, csrfToken), body: "null" },
+      env,
+    );
+    expect(put.status).toBe(422);
+  });
+
+  it("rejects a non-integer rule id with 422 on PUT and DELETE", async () => {
+    const { accessToken, csrfToken } = await login();
+    const put = await app.request(
+      "/api/content-filter/not-a-number",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ enabled: true }),
+      },
+      env,
+    );
+    expect(put.status).toBe(422);
+    const del = await app.request(
+      "/api/content-filter/not-a-number",
+      { method: "DELETE", headers: mutationHeaders(accessToken, csrfToken) },
+      env,
+    );
+    expect(del.status).toBe(422);
+  });
 });

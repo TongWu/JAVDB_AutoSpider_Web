@@ -90,23 +90,29 @@ contentFilterRoutes.get("/", async (c) => {
 
 // POST / — add a rule (admin only).
 contentFilterRoutes.post("/", requireRole("admin"), async (c) => {
-  let body: { dimension?: string; mode?: string; value?: unknown };
+  let body: unknown;
   try {
     body = await c.req.json();
   } catch {
     return c.json(errJson("content_filter.invalid_body", "Request body must be valid JSON"), 422);
   }
-  const dimension = body.dimension ?? "";
-  const mode = body.mode ?? "";
+  // A JSON `null` (or array/primitive) parses fine; guard before field access so
+  // it returns 422 like the Python schema, never a 500 from dereferencing null.
+  if (body === null || typeof body !== "object") {
+    return c.json(errJson("content_filter.invalid_body", "Request body must be a JSON object"), 422);
+  }
+  const b = body as { dimension?: unknown; mode?: unknown; value?: unknown };
+  const dimension = typeof b.dimension === "string" ? b.dimension : "";
+  const mode = typeof b.mode === "string" ? b.mode : "";
   // Guard the value type before calling .trim() — mirrors the watchlist route's
   // string-field guard and the Python `value: str` schema (a non-string `value`
   // is 422 on both backends, never a 500). An omitted value defaults to "".
   let value = "";
-  if (body.value !== undefined) {
-    if (typeof body.value !== "string") {
+  if (b.value !== undefined) {
+    if (typeof b.value !== "string") {
       return c.json(errJson("content_filter.invalid_value", "value must be a string"), 422);
     }
-    value = body.value.trim();
+    value = b.value.trim();
   }
   const key = `${dimension}:${mode}`;
   if (!VALID_RULE_MODES.has(key)) {
@@ -129,25 +135,38 @@ contentFilterRoutes.post("/", requireRole("admin"), async (c) => {
 // PUT /:ruleId — toggle enabled (admin only).
 contentFilterRoutes.put("/:ruleId", requireRole("admin"), async (c) => {
   const ruleId = Number(c.req.param("ruleId"));
-  let body: { enabled?: boolean };
+  // The Python path param is typed `int`; reject a non-integer id with 422
+  // instead of binding NaN into the D1 query.
+  if (!Number.isInteger(ruleId)) {
+    return c.json(errJson("content_filter.invalid_id", "rule id must be an integer"), 422);
+  }
+  let body: unknown;
   try {
     body = await c.req.json();
   } catch {
     return c.json(errJson("content_filter.invalid_body", "Request body must be valid JSON"), 422);
   }
-  if (typeof body.enabled !== "boolean") {
+  if (body === null || typeof body !== "object") {
+    return c.json(errJson("content_filter.invalid_body", "Request body must be a JSON object"), 422);
+  }
+  const enabled = (body as { enabled?: unknown }).enabled;
+  if (typeof enabled !== "boolean") {
     return c.json(errJson("content_filter.invalid_enabled", "enabled must be a boolean"), 422);
   }
   const existing = await getRule(c.env.REPORTS_DB, ruleId);
   if (existing === null) {
     return c.json(errJson("content_filter.not_found", "Rule not found"), 404);
   }
-  await setEnabled(c.env.REPORTS_DB, ruleId, body.enabled);
+  await setEnabled(c.env.REPORTS_DB, ruleId, enabled);
   return c.json(rowToRule((await getRule(c.env.REPORTS_DB, ruleId))!));
 });
 
 // DELETE /:ruleId — remove a rule (admin only).
 contentFilterRoutes.delete("/:ruleId", requireRole("admin"), async (c) => {
-  const deleted = await removeRule(c.env.REPORTS_DB, Number(c.req.param("ruleId")));
+  const ruleId = Number(c.req.param("ruleId"));
+  if (!Number.isInteger(ruleId)) {
+    return c.json(errJson("content_filter.invalid_id", "rule id must be an integer"), 422);
+  }
+  const deleted = await removeRule(c.env.REPORTS_DB, ruleId);
   return c.json({ deleted });
 });

@@ -23,6 +23,13 @@ export function isDimmedByRules(row: OverlayMovieRow, rules: ContentFilterRule[]
     } else if (r.dimension === 'gender' && r.mode === 'exclude_all_male') {
       // No female actor known on this row → would be dropped by the engine.
       if (cf(row.actor_gender) === 'male') return true
+    } else if (r.dimension === 'gender' && r.mode === 'require_lead') {
+      // The engine drops when the lead actor's gender != the rule value. The
+      // search row carries the lead `actor_gender`, so dim a KNOWN mismatch;
+      // unknown gender fail-opens (this is a hint, not the authoritative filter).
+      const want = cf(r.value)
+      const have = cf(row.actor_gender)
+      if (want && have && have !== want) return true
     }
     // Other dimensions/modes are not matchable from the search row → no dim.
   }

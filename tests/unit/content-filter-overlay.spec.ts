@@ -34,4 +34,16 @@ describe('isDimmedByRules', () => {
   it('returns false when there are no rules', () => {
     expect(isDimmedByRules(row({ actor_name: 'Jane Doe' }), [])).toBe(false)
   })
+
+  it('dims on gender require_lead when the known lead gender mismatches', () => {
+    expect(isDimmedByRules(row({ actor_gender: 'male' }), [rule({ dimension: 'gender', mode: 'require_lead', value: 'female' })])).toBe(true)
+  })
+
+  it('does not dim require_lead when the lead gender matches', () => {
+    expect(isDimmedByRules(row({ actor_gender: 'female' }), [rule({ dimension: 'gender', mode: 'require_lead', value: 'female' })])).toBe(false)
+  })
+
+  it('fail-opens require_lead when the lead gender is unknown', () => {
+    expect(isDimmedByRules(row({ actor_gender: null }), [rule({ dimension: 'gender', mode: 'require_lead', value: 'female' })])).toBe(false)
+  })
 })
