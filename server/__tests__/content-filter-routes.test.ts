@@ -166,4 +166,18 @@ describe("Content-filter routes", () => {
     );
     expect(res.status).toBe(422);
   });
+
+  it("rejects a non-string value with 422 (not a 500), matching the Python schema", async () => {
+    const { accessToken, csrfToken } = await login();
+    const res = await app.request(
+      "/api/content-filter",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ dimension: "tag", mode: "exclude", value: 123 }),
+      },
+      env,
+    );
+    expect(res.status).toBe(422);
+  });
 });

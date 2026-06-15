@@ -90,7 +90,7 @@ contentFilterRoutes.get("/", async (c) => {
 
 // POST / — add a rule (admin only).
 contentFilterRoutes.post("/", requireRole("admin"), async (c) => {
-  let body: { dimension?: string; mode?: string; value?: string };
+  let body: { dimension?: string; mode?: string; value?: unknown };
   try {
     body = await c.req.json();
   } catch {
@@ -98,7 +98,16 @@ contentFilterRoutes.post("/", requireRole("admin"), async (c) => {
   }
   const dimension = body.dimension ?? "";
   const mode = body.mode ?? "";
-  let value = (body.value ?? "").trim();
+  // Guard the value type before calling .trim() — mirrors the watchlist route's
+  // string-field guard and the Python `value: str` schema (a non-string `value`
+  // is 422 on both backends, never a 500). An omitted value defaults to "".
+  let value = "";
+  if (body.value !== undefined) {
+    if (typeof body.value !== "string") {
+      return c.json(errJson("content_filter.invalid_value", "value must be a string"), 422);
+    }
+    value = body.value.trim();
+  }
   const key = `${dimension}:${mode}`;
   if (!VALID_RULE_MODES.has(key)) {
     return c.json(errJson("content_filter.invalid_mode", `${dimension} rules do not support mode '${mode}'`), 422);
