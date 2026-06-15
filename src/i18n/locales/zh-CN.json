@@ -1426,6 +1426,7 @@
       "recent": "想看清单",
       "untracked": "未追踪",
       "allStatuses": "全部",
+      "statusAriaLabel": "{code} 的观看状态",
       "status": {
         "want": "想看",
         "viewed": "已看"

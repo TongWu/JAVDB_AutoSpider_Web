@@ -64,6 +64,8 @@
     size="small"
     clearable
     style="width: 116px"
+    :aria-label="t('library.watchlist.statusAriaLabel', { code: videoCode })"
+    :title="t('library.watchlist.statusAriaLabel', { code: videoCode })"
     :placeholder="t('library.watchlist.untracked')"
     @update:value="onUpdate"
   />

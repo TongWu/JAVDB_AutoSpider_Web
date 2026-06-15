@@ -41,8 +41,19 @@ const options = computed<MenuOption[]>(() => {
     },
   ]
 
-  // Library: gated by the closed_loop capability (ADR-034 D4)
-  if (!features || features.closed_loop) {
+  // Library: shown when ANY library-suite capability is present. The Library
+  // page gates each tab independently (acquisition always; ownership /
+  // consumption / watchlist by their own flags), so the nav entry must mirror
+  // that union rather than hinge on closed_loop alone — otherwise a deployment
+  // with only WatchIntent (watch_intent=true, closed_loop=false) would hide the
+  // nav while the page has working content (ADR-034 D4 / ADR-054 WS1).
+  if (
+    !features ||
+    features.closed_loop ||
+    features.library_ownership ||
+    features.library_consumption ||
+    features.watch_intent
+  ) {
     items.push({ label: t('nav.library'), key: 'library', icon: () => '📚' })
   }
 

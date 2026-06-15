@@ -3797,6 +3797,11 @@ export interface components {
         } & {
             [key: string]: unknown;
         };
+        /** WatchIntentDeleteResponse */
+        WatchIntentDeleteResponse: {
+            /** Deleted */
+            deleted: boolean;
+        };
         /** WatchIntentListResponse */
         WatchIntentListResponse: {
             /** Items */
@@ -3810,8 +3815,11 @@ export interface components {
             href: string;
             /** Notes */
             notes?: string | null;
-            /** Status */
-            status: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "want" | "viewed";
             /** Status At */
             status_at?: string | null;
             /** Updated At */
@@ -9336,7 +9344,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": unknown;
+                    "application/json": components["schemas"]["WatchIntentDeleteResponse"];
                 };
             };
             /** @description Unauthorized */
