@@ -22,6 +22,7 @@ export interface WatchIntentListResponse {
 
 export async function listWatchIntents(
   params: { status?: WatchStatus | null; limit?: number; offset?: number } = {},
+  opts: { skipErrorToast?: boolean } = {},
 ): Promise<WatchIntentListResponse> {
   const { data } = await http.get<WatchIntentListResponse>('/api/watchlist', {
     params: {
@@ -29,6 +30,7 @@ export async function listWatchIntents(
       limit: params.limit ?? 50,
       offset: params.offset ?? 0,
     },
+    skipErrorToast: opts.skipErrorToast,
   })
   return data
 }

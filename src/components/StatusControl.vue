@@ -1,5 +1,6 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
+  import axios from 'axios'
   import { NSelect, useMessage } from 'naive-ui'
   import { useI18n } from 'vue-i18n'
   import { upsertWatchIntent, deleteWatchIntent, type WatchStatus } from '@/api/watchlist'
@@ -46,9 +47,16 @@
       if (seq !== updateSeq) return
       status.value = value
       emit('change', value)
-    } catch {
+    } catch (err) {
       if (seq !== updateSeq) return
-      message.error(t('library.watchlist.saveError'))
+      // The global interceptor only toasts errors that carry an HTTP response
+      // (4xx/5xx). Transport-level failures (offline, DNS, timeout) have no
+      // response, so it stays silent — surface a local fallback for those,
+      // otherwise the control reverts with no explanation. HTTP errors are
+      // left to the interceptor's more specific, server-detail toast.
+      if (!axios.isAxiosError(err) || !err.response) {
+        message.error(t('library.watchlist.saveError'))
+      }
     } finally {
       if (seq === updateSeq) loading.value = false
     }
