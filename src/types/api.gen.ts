@@ -368,6 +368,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/explore/aggregate-magnets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Explore Aggregate Magnets */
+        post: operations["explore_aggregate_magnets_api_explore_aggregate_magnets_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/explore/download-magnet": {
         parameters: {
             query?: never;
@@ -1984,6 +2001,48 @@ export interface components {
              */
             use_proxy: boolean;
         };
+        /** AggregateMagnetsPayload */
+        AggregateMagnetsPayload: {
+            /** Video Code */
+            video_code: string;
+        };
+        /** AggregateMagnetsResponse */
+        AggregateMagnetsResponse: {
+            /** Magnets */
+            magnets: components["schemas"]["AggregatedMagnet"][];
+            /** Video Code */
+            video_code: string;
+        };
+        /** AggregatedMagnet */
+        AggregatedMagnet: {
+            /**
+             * File Count
+             * @default 0
+             */
+            file_count: number;
+            /** Info Hash */
+            info_hash?: string | null;
+            /** Magnet Uri */
+            magnet_uri: string;
+            /** Name */
+            name: string;
+            /** Quality Reasons */
+            quality_reasons?: string[];
+            /**
+             * Quality Score
+             * @default 0
+             */
+            quality_score: number;
+            /**
+             * Size
+             * @default
+             */
+            size: string;
+            /** Sources */
+            sources?: string[];
+            /** Tags */
+            tags?: string[];
+        };
         /** Build */
         Build: {
             /** Backend Version */
@@ -2549,6 +2608,8 @@ export interface components {
             library_consumption: boolean;
             /** Library Ownership */
             library_ownership: boolean;
+            /** Magnet Aggregation */
+            magnet_aggregation: boolean;
             /** Pikpak */
             pikpak: boolean;
             /** Proxy Pool */
@@ -5227,6 +5288,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpsRemediationProposalSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    explore_aggregate_magnets_api_explore_aggregate_magnets_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AggregateMagnetsPayload"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AggregateMagnetsResponse"];
                 };
             };
             /** @description Unauthorized */
