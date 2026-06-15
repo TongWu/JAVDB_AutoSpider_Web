@@ -33,18 +33,17 @@ async function fetchList(): Promise<void> {
     // The "Tracked" KPI is the grand total of ALL intents, independent of the
     // status filter (mirrors ConsumptionView's stable summary). A cheap
     // unfiltered head request reads that count; the table below stays filtered.
-    const grand = await listWatchIntents({ status: null, limit: 1, offset: 0 })
+    const grand = await listWatchIntents({ status: null, limit: 1, offset: 0 }, { skipErrorToast: true })
     if (seq !== listSeq) return
     // Page through the filtered set so the table never silently omits rows
     // beyond the first page; the NDataTable paginates the result client-side.
     const PAGE = 200
     const all: WatchIntent[] = []
     for (let offset = 0; ; offset += PAGE) {
-      const res = await listWatchIntents({
-        status: statusFilter.value,
-        limit: PAGE,
-        offset,
-      })
+      const res = await listWatchIntents(
+        { status: statusFilter.value, limit: PAGE, offset },
+        { skipErrorToast: true },
+      )
       if (seq !== listSeq) return
       all.push(...res.items)
       if (res.items.length < PAGE) break

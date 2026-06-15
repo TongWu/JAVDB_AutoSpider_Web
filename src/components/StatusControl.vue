@@ -1,6 +1,6 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue'
-  import { NSelect, useMessage } from 'naive-ui'
+  import { NSelect } from 'naive-ui'
   import { useI18n } from 'vue-i18n'
   import { upsertWatchIntent, deleteWatchIntent, type WatchStatus } from '@/api/watchlist'
 
@@ -15,7 +15,6 @@
   }>()
 
   const { t } = useI18n()
-  const message = useMessage()
   const status = ref<WatchStatus | null>(props.initialStatus ?? null)
   const loading = ref(false)
   // Monotonic token: rapid toggles can overlap; only the newest write may
@@ -47,8 +46,8 @@
       status.value = value
       emit('change', value)
     } catch {
-      if (seq !== updateSeq) return
-      message.error(t('library.watchlist.saveError'))
+      // The global response interceptor already surfaces the error toast (with
+      // server detail); a second local toast here would double-notify.
     } finally {
       if (seq === updateSeq) loading.value = false
     }
