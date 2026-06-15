@@ -50,12 +50,23 @@ async function watchIntentEnabled(env: Env): Promise<boolean> {
   }
 }
 
+/** True when the ADR-054 ActorSubscription table is queryable in HISTORY_DB (capability honesty). */
+async function subscriptionsEnabled(env: Env): Promise<boolean> {
+  try {
+    await env.HISTORY_DB.prepare("SELECT 1 FROM ActorSubscription LIMIT 1").first();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 capabilitiesRoutes.get("/", async (c) => {
   const env = c.env;
   const closed_loop = await closedLoopEnabled(env);
   const library_ownership = await libraryOwnershipEnabled(env);
   const library_consumption = await libraryConsumptionEnabled(env);
   const watch_intent = await watchIntentEnabled(env);
+  const subscriptions = await subscriptionsEnabled(env);
 
   return c.json({
     version: "2.0.0",
@@ -77,6 +88,7 @@ capabilitiesRoutes.get("/", async (c) => {
       library_ownership,
       library_consumption,
       watch_intent,
+      subscriptions,
       // ADR-035 Phase 3: gates the frontend site-drift sentinel panel.
       site_drift_sentinel: true,
     },
