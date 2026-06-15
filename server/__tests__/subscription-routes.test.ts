@@ -151,4 +151,21 @@ describe("Subscription routes", () => {
     );
     expect(badOffset.status).toBe(422);
   });
+
+  it("rejects malformed actor hrefs with 422", async () => {
+    const { accessToken, csrfToken } = await login();
+
+    const res = await app.request(
+      "/api/subscriptions/actors/EvkJ/extra",
+      {
+        method: "PUT",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ actor_name: "Malformed" }),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(422);
+    expect((await res.json() as { error: { code: string } }).error.code).toBe("subscriptions.invalid_actor_href");
+  });
 });

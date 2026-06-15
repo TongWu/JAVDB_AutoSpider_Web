@@ -19,7 +19,22 @@ const errJson = (code: string, message: string) => ({ error: { code, message } }
 
 function normActorHref(raw: string): string {
   const trimmed = raw.replace(/^\/+|\/+$/g, "");
-  return trimmed ? `/${trimmed}` : trimmed;
+  const normalized = trimmed ? `/${trimmed}` : trimmed;
+  if (!/^\/actors\/[^/]+$/.test(normalized)) {
+    throw new Error("invalid_actor_href");
+  }
+  return normalized;
+}
+
+function parseActorHref(raw: string): { ok: true; value: string } | { ok: false; error: Response } {
+  try {
+    return { ok: true, value: normActorHref(raw) };
+  } catch {
+    return {
+      ok: false,
+      error: Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+    };
+  }
 }
 
 function parseLimit(
@@ -70,7 +85,8 @@ subscriptionsRoutes.get("/subscriptions", async (c) => {
 });
 
 subscriptionsRoutes.put("/subscriptions/actors/:id", requireRole("admin"), async (c) => {
-  const actorHref = normActorHref(`actors/${c.req.param("id")}`);
+  const actorHref = parseActorHref(`actors/${c.req.param("id")}`);
+  if (!actorHref.ok) return actorHref.error;
   let body: { actor_name?: string | null; active?: boolean };
   try {
     body = await c.req.json();
@@ -86,7 +102,7 @@ subscriptionsRoutes.put("/subscriptions/actors/:id", requireRole("admin"), async
 
   const row = await upsertSubscription(
     c.env.HISTORY_DB,
-    actorHref,
+    actorHref.value,
     body.actor_name ?? null,
     body.active === false ? 0 : 1,
   );
@@ -94,9 +110,11 @@ subscriptionsRoutes.put("/subscriptions/actors/:id", requireRole("admin"), async
 });
 
 subscriptionsRoutes.get("/subscriptions/actors/:id", async (c) => {
+  const actorHref = parseActorHref(`actors/${c.req.param("id")}`);
+  if (!actorHref.ok) return actorHref.error;
   const row = await getSubscription(
     c.env.HISTORY_DB,
-    normActorHref(`actors/${c.req.param("id")}`),
+    actorHref.value,
   );
   if (row === null) {
     return c.json(errJson("subscriptions.not_found", "Record not found"), 404);
@@ -105,12 +123,24 @@ subscriptionsRoutes.get("/subscriptions/actors/:id", async (c) => {
 });
 
 subscriptionsRoutes.delete("/subscriptions/actors/:id", requireRole("admin"), async (c) => {
+  const actorHref = parseActorHref(`actors/${c.req.param("id")}`);
+  if (!actorHref.ok) return actorHref.error;
   const deleted = await deleteSubscription(
     c.env.HISTORY_DB,
-    normActorHref(`actors/${c.req.param("id")}`),
+    actorHref.value,
   );
   return c.json({ deleted });
 });
+
+subscriptionsRoutes.get("/subscriptions/actors/*", () =>
+  Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+);
+subscriptionsRoutes.put("/subscriptions/actors/*", requireRole("admin"), () =>
+  Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+);
+subscriptionsRoutes.delete("/subscriptions/actors/*", requireRole("admin"), () =>
+  Response.json(errJson("subscriptions.invalid_actor_href", "actor_href must match /actors/<id>"), { status: 422 }),
+);
 
 subscriptionsRoutes.get("/new-works", async (c) => {
   const limit = parseLimit(c.req.query("limit"), 50, 200);
