@@ -1387,7 +1387,9 @@
       "acquisition": "获取",
       "ownership": "拥有",
       "consumption": "消费",
-      "watchlist": "想看清单"
+      "watchlist": "想看清单",
+      "subscriptions": "订阅",
+      "newWorks": "新作"
     },
     "loadError": "加载获取数据失败。",
     "comingSoon": "敬请期待",
@@ -1458,6 +1460,35 @@
         "videoCode": "番号",
         "status": "状态",
         "updatedAt": "更新时间"
+      }
+    },
+    "subscriptions": {
+      "loadError": "加载订阅失败。",
+      "saveError": "更新订阅失败。",
+      "total": "已关注",
+      "followed": "已关注演员",
+      "add": "关注",
+      "unfollow": "取消关注",
+      "addPlaceholder": "演员 href，例如 /actors/EvkJ",
+      "col": {
+        "actor": "演员",
+        "active": "启用",
+        "lastChecked": "上次检查",
+        "actions": "操作"
+      }
+    },
+    "newWorks": {
+      "loadError": "加载新作失败。",
+      "dismissError": "忽略失败。",
+      "total": "新作",
+      "recent": "新作动态",
+      "dismiss": "忽略",
+      "col": {
+        "videoCode": "番号",
+        "title": "标题",
+        "releaseDate": "上映日期",
+        "status": "状态",
+        "actions": "操作"
       }
     },
     "consumption": {

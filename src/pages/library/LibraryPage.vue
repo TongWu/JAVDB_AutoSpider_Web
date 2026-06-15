@@ -8,6 +8,8 @@ import AcquisitionView from './AcquisitionView.vue'
 import OwnershipView from './OwnershipView.vue'
 import ConsumptionView from './ConsumptionView.vue'
 import WatchlistView from './WatchlistView.vue'
+import SubscriptionsView from './SubscriptionsView.vue'
+import NewWorksView from './NewWorksView.vue'
 
 const { t } = useI18n()
 const cap = useCapabilitiesStore()
@@ -22,11 +24,17 @@ const showOwnership = computed(() => !!features.value?.library_ownership)
 const showConsumption = computed(() => !!features.value?.library_consumption)
 const showWatchlist = computed(() => !!features.value?.watch_intent)
 
+const showSubscriptions = computed(() => !!features.value?.subscriptions)
+
 const visibleTabs = computed(() => {
   const tabs = ['acquisition']
   if (showOwnership.value) tabs.push('ownership')
   if (showConsumption.value) tabs.push('consumption')
   if (showWatchlist.value) tabs.push('watchlist')
+  if (showSubscriptions.value) {
+    tabs.push('subscriptions')
+    tabs.push('new-works')
+  }
   return tabs
 })
 
@@ -78,6 +86,20 @@ watch(
         :tab="t('library.tabs.watchlist')"
       >
         <WatchlistView />
+      </NTabPane>
+      <NTabPane
+        v-if="showSubscriptions"
+        name="subscriptions"
+        :tab="t('library.tabs.subscriptions')"
+      >
+        <SubscriptionsView />
+      </NTabPane>
+      <NTabPane
+        v-if="showSubscriptions"
+        name="new-works"
+        :tab="t('library.tabs.newWorks')"
+      >
+        <NewWorksView />
       </NTabPane>
     </NTabs>
   </div>
