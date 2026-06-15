@@ -7,6 +7,8 @@ import { createGhClient } from "../services/gh-client";
 import { cursorEncode, cursorDecode } from "../services/cursor";
 import { validateWorkflowInputs } from "../services/workflow-registry";
 import { createJobRunsRepo } from "../services/job-runs";
+import { REPORT_SESSION_COLUMNS } from "../contract/sql-contract.gen";
+export { REPORT_SESSION_COLUMNS };
 
 type SessEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -23,16 +25,6 @@ export interface SessionRow {
   ReportDate: string;
   FailureReason: string | null;
 }
-
-// Canonical ReportSessions projection shared by the two full-row reads — the
-// buildSessionQuery list builder and the GET /:session_id handler — so the
-// column set lives in one place and both stay aligned with `mapSession` (which
-// reads each field by name). The buildSessionQuery output is pinned byte-for-
-// byte by the ADR-018 query Contract Golden, so the column order/spelling here
-// MUST NOT change. The narrower commit/rollback probes ("SELECT Id, Status" /
-// "SELECT Id") intentionally project fewer columns and do not use this.
-export const REPORT_SESSION_COLUMNS =
-  "Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated, ReportType, ReportDate, FailureReason";
 
 export function mapSession(row: SessionRow) {
   return {
@@ -77,7 +69,7 @@ export function buildSessionQuery(input: SessionQueryInput): { sql: string; bind
   const where = clauses.length > 0 ? ` WHERE ${clauses.join(" AND ")}` : "";
   const sql =
     "SELECT " +
-    REPORT_SESSION_COLUMNS +
+    REPORT_SESSION_COLUMNS.join(", ") +
     " FROM ReportSessions" +
     where +
     " ORDER BY Id DESC LIMIT ?";
@@ -114,7 +106,7 @@ sessionsRoutes.get("/:session_id", async (c) => {
   const sessionId = c.req.param("session_id");
 
   const session = await c.env.REPORTS_DB
-    .prepare(`SELECT ${REPORT_SESSION_COLUMNS} FROM ReportSessions WHERE Id = ?`)
+    .prepare(`SELECT ${REPORT_SESSION_COLUMNS.join(", ")} FROM ReportSessions WHERE Id = ?`)
     .bind(sessionId)
     .first<SessionRow>();
 
