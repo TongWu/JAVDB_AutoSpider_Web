@@ -242,9 +242,12 @@ diagnosticsRoutes.put("/alert-policies/:incident_type", requireRole("admin"), as
     enabled?: unknown
     channels?: unknown
   };
-  const minConfidence = body.min_confidence ?? "medium";
-  const enabled = body.enabled ?? true;
-  const channels = body.channels ?? [];
+  const hasMinConfidence = Object.prototype.hasOwnProperty.call(body, "min_confidence");
+  const hasEnabled = Object.prototype.hasOwnProperty.call(body, "enabled");
+  const hasChannels = Object.prototype.hasOwnProperty.call(body, "channels");
+  const minConfidence = hasMinConfidence ? body.min_confidence : "medium";
+  const enabled = hasEnabled ? body.enabled : true;
+  const channels = hasChannels ? body.channels : [];
   const allowedConfidence = ["low", "medium", "high"];
 
   if (typeof minConfidence !== "string" || !allowedConfidence.includes(minConfidence)) {

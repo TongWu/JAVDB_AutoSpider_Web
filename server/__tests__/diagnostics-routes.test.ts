@@ -415,6 +415,32 @@ describe("Diagnostics routes", () => {
   });
 
   it.each([
+    ["min_confidence", { min_confidence: null }],
+    ["enabled", { enabled: null }],
+    ["channels", { channels: null }],
+  ])("PUT /api/diag/alert-policies/:incident_type rejects explicit null %s with 422", async (_label, body) => {
+    await seedAlertTables(env.REPORTS_DB);
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+
+    const res = await app.request(
+      "/api/diag/alert-policies/failed_ingestion",
+      {
+        method: "PUT",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken,
+          Cookie: csrfCookie,
+        },
+        body: JSON.stringify(body),
+      },
+      env,
+    );
+
+    expect(res.status).toBe(422);
+  });
+
+  it.each([
     ["malformed JSON", "{not-json"],
     ["null JSON", "null"],
     ["array JSON", "[]"],
