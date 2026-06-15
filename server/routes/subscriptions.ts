@@ -87,12 +87,16 @@ subscriptionsRoutes.get("/subscriptions", async (c) => {
 subscriptionsRoutes.put("/subscriptions/actors/:id", requireRole("admin"), async (c) => {
   const actorHref = parseActorHref(`actors/${c.req.param("id")}`);
   if (!actorHref.ok) return actorHref.error;
-  let body: { actor_name?: string | null; active?: boolean };
+  let rawBody: unknown;
   try {
-    body = await c.req.json();
+    rawBody = await c.req.json();
   } catch {
     return c.json(errJson("subscriptions.invalid_body", "Request body must be valid JSON"), 422);
   }
+  if (rawBody === null || typeof rawBody !== "object" || Array.isArray(rawBody)) {
+    return c.json(errJson("subscriptions.invalid_body", "Request body must be a JSON object"), 422);
+  }
+  const body = rawBody as { actor_name?: string | null; active?: boolean };
   if (body.actor_name !== undefined && body.actor_name !== null && typeof body.actor_name !== "string") {
     return c.json(errJson("subscriptions.invalid_actor_name", "actor_name must be a string or null"), 422);
   }

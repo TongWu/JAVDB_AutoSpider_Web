@@ -152,6 +152,64 @@ describe("Subscription routes", () => {
     expect(badOffset.status).toBe(422);
   });
 
+  it("rejects non-object subscription bodies without creating or reactivating subscriptions", async () => {
+    const { accessToken, csrfToken } = await login();
+    const invalidBodies = [
+      { label: "null", value: null },
+      { label: "array", value: [] },
+      { label: "string", value: "Some Name" },
+      { label: "number", value: 1 },
+      { label: "boolean", value: true },
+    ];
+
+    for (const { label, value } of invalidBodies) {
+      const actorId = `invalid-${label}`;
+      const create = await app.request(
+        `/api/subscriptions/actors/${actorId}`,
+        {
+          method: "PUT",
+          headers: mutationHeaders(accessToken, csrfToken),
+          body: JSON.stringify(value),
+        },
+        env,
+      );
+      expect(create.status, `${label} should fail validation`).toBe(422);
+      expect((await create.json() as { error: { code: string } }).error.code).toBe("subscriptions.invalid_body");
+
+      const missing = await env.HISTORY_DB.prepare(
+        "SELECT COUNT(*) AS count FROM ActorSubscription WHERE actor_href = ?",
+      )
+        .bind(`/actors/${actorId}`)
+        .first<{ count: number }>();
+      expect(missing?.count).toBe(0);
+
+      await env.HISTORY_DB.prepare(
+        `INSERT OR REPLACE INTO ActorSubscription (actor_href, actor_name, active)
+         VALUES (?, ?, 0)`,
+      )
+        .bind(`/actors/reactivate-${label}`, "Inactive Actor")
+        .run();
+
+      const reactivate = await app.request(
+        `/api/subscriptions/actors/reactivate-${label}`,
+        {
+          method: "PUT",
+          headers: mutationHeaders(accessToken, csrfToken),
+          body: JSON.stringify(value),
+        },
+        env,
+      );
+      expect(reactivate.status, `${label} should not reactivate`).toBe(422);
+
+      const inactive = await env.HISTORY_DB.prepare(
+        "SELECT active FROM ActorSubscription WHERE actor_href = ?",
+      )
+        .bind(`/actors/reactivate-${label}`)
+        .first<{ active: number }>();
+      expect(inactive?.active).toBe(0);
+    }
+  });
+
   it("rejects malformed actor hrefs with 422", async () => {
     const { accessToken, csrfToken } = await login();
 
