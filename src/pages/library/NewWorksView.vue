@@ -7,6 +7,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import StatusControl from '@/components/StatusControl.vue'
 import { listNewWorks, dismissNewWork, type NewWork } from '@/api/new-works'
+import { isNetworkError } from '@/api/client'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -16,6 +17,12 @@ const total = ref(0)
 const loading = ref(false)
 const error = ref<string | null>(null)
 
+// Surface a distinct localized message for connectivity/timeout failures (which
+// carry no HTTP status) instead of the generic load error.
+function loadErrorMessage(err: unknown): string {
+  return isNetworkError(err) ? t('common.networkError') : t('library.newWorks.loadError')
+}
+
 async function fetchList(): Promise<void> {
   loading.value = true
   error.value = null
@@ -23,8 +30,8 @@ async function fetchList(): Promise<void> {
     const res = await listNewWorks({ limit: 200 })
     items.value = res.items
     total.value = res.total
-  } catch {
-    error.value = t('library.newWorks.loadError')
+  } catch (err) {
+    error.value = loadErrorMessage(err)
   } finally {
     loading.value = false
   }

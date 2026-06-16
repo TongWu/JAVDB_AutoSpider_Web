@@ -14,6 +14,7 @@ import {
   getAcquisitionSummary, getAcquisitionRecent, getAcquisitionTrend,
   type AcquisitionSummary, type AcquisitionRecentItem, type AcquisitionTrendPoint,
 } from '@/api/library'
+import { isNetworkError } from '@/api/client'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -87,14 +88,20 @@ const trendChartOptions = {
   scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true } },
 }
 
+// Surface a distinct localized message for connectivity/timeout failures (which
+// carry no HTTP status) instead of the generic load error.
+function loadErrorMessage(err: unknown): string {
+  return isNetworkError(err) ? t('common.networkError') : t('library.loadError')
+}
+
 async function fetchRecent() {
   const seq = ++recentSeq
   error.value = null // a fresh filter request clears any prior error
   try {
     const rows = await getAcquisitionRecent({ state: stateFilter.value, limit: 50 })
     if (seq === recentSeq) recent.value = rows // ignore stale out-of-order responses
-  } catch {
-    if (seq === recentSeq) error.value = t('library.loadError')
+  } catch (err) {
+    if (seq === recentSeq) error.value = loadErrorMessage(err)
   }
 }
 
@@ -111,8 +118,10 @@ async function fetchAll() {
     summary.value = s
     if (seq === recentSeq) recent.value = r // a filter change during load wins
     trend.value = tr
-  } catch {
-    error.value = t('library.loadError')
+  } catch (err) {
+    // Guard the banner against stale overwrites; loading stays unguarded (only
+    // fetchAll owns it, so a seq-gated clear could strand the spinner).
+    if (seq === recentSeq) error.value = loadErrorMessage(err)
   } finally {
     loading.value = false
   }

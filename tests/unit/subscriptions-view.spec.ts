@@ -5,7 +5,7 @@ import { NInput } from 'naive-ui'
 
 // ADR-054 WS2 frontend coverage (Sprint-3 verification gap): pin the
 // SubscriptionsView admin-gating + the follow/unfollow store calls.
-const { ROWS, defaultListImpl, authState } = vi.hoisted(() => {
+const { defaultListImpl, authState } = vi.hoisted(() => {
   const ROWS = [
     {
       actor_href: '/actors/AAA',
@@ -19,7 +19,7 @@ const { ROWS, defaultListImpl, authState } = vi.hoisted(() => {
   ]
   const defaultListImpl = async () => ({ items: ROWS, total: ROWS.length })
   // Mutable so each test can pick the role BEFORE mounting (computed reads it).
-  return { ROWS, defaultListImpl, authState: { role: 'admin' } }
+  return { defaultListImpl, authState: { role: 'admin' } }
 })
 
 vi.mock('@/api/subscriptions', () => ({
