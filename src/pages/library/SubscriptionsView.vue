@@ -10,7 +10,7 @@ import {
   listSubscriptions, upsertSubscription, deleteSubscription,
   type ActorSubscription,
 } from '@/api/subscriptions'
-import { isNetworkError } from '@/api/client'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -26,12 +26,6 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const newActorHref = ref('')
 
-// Surface a distinct localized message for connectivity/timeout failures (which
-// carry no HTTP status) instead of the generic load error.
-function loadErrorMessage(err: unknown): string {
-  return isNetworkError(err) ? t('common.networkError') : t('library.subscriptions.loadError')
-}
-
 async function fetchList(): Promise<void> {
   loading.value = true
   error.value = null
@@ -40,7 +34,7 @@ async function fetchList(): Promise<void> {
     items.value = res.items
     total.value = res.total
   } catch (err) {
-    error.value = loadErrorMessage(err)
+    error.value = loadErrorMessage(err, t, 'library.subscriptions.loadError')
   } finally {
     loading.value = false
   }

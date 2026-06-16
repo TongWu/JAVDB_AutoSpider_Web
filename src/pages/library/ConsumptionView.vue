@@ -15,7 +15,7 @@ import {
   getConsumptionSummary, getConsumptionRecent, getConsumptionTrend, getConsumptionUnresolved,
   type ConsumptionSummary, type ConsumptionRecentItem, type ConsumptionTrendPoint, type UnresolvedItem,
 } from '@/api/library_consumption'
-import { isNetworkError } from '@/api/client'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -139,12 +139,6 @@ const unresolvedColumns = computed<DataTableColumns<UnresolvedItem>>(() => [
   },
 ])
 
-// Surface a distinct localized message for connectivity/timeout failures (which
-// carry no HTTP status) instead of the generic load error.
-function loadErrorMessage(err: unknown): string {
-  return isNetworkError(err) ? t('common.networkError') : t('library.consumption.loadError')
-}
-
 async function fetchRecent() {
   const seq = ++recentSeq
   error.value = null
@@ -156,7 +150,7 @@ async function fetchRecent() {
     })
     if (seq === recentSeq) recent.value = rows
   } catch (err) {
-    if (seq === recentSeq) error.value = loadErrorMessage(err)
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.consumption.loadError')
   }
 }
 
@@ -178,7 +172,7 @@ async function fetchAll() {
   } catch (err) {
     // Guard the banner against stale overwrites; loading stays unguarded (only
     // fetchAll owns it, so a seq-gated clear could strand the spinner).
-    if (seq === recentSeq) error.value = loadErrorMessage(err)
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.consumption.loadError')
   } finally {
     loading.value = false
   }

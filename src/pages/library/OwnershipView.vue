@@ -14,7 +14,7 @@ import {
   getOwnershipSummary, getOwnershipRecent,
   type OwnershipSummary, type OwnershipRecentItem,
 } from '@/api/library_ownership'
-import { isNetworkError } from '@/api/client'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -83,12 +83,6 @@ const columns = computed<DataTableColumns<OwnershipRecentItem>>(() => [
   { title: t('library.ownership.col.observedAt'), key: 'observed_at', render: (row) => row.observed_at ?? '—' },
 ])
 
-// Surface a distinct localized message for connectivity/timeout failures (which
-// carry no HTTP status) instead of the generic load error.
-function loadErrorMessage(err: unknown): string {
-  return isNetworkError(err) ? t('common.networkError') : t('library.ownership.loadError')
-}
-
 async function fetchRecent() {
   const seq = ++recentSeq
   error.value = null
@@ -96,7 +90,7 @@ async function fetchRecent() {
     const rows = await getOwnershipRecent({ source: sourceFilter.value, limit: 50 })
     if (seq === recentSeq) recent.value = rows
   } catch (err) {
-    if (seq === recentSeq) error.value = loadErrorMessage(err)
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.ownership.loadError')
   }
 }
 
@@ -114,7 +108,7 @@ async function fetchAll() {
     summary.value = s
     recent.value = r
   } catch (err) {
-    if (seq === recentSeq) error.value = loadErrorMessage(err)
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.ownership.loadError')
   } finally {
     if (seq === recentSeq) loading.value = false
   }

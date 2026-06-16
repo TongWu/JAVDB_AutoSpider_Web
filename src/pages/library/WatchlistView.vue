@@ -7,7 +7,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import StatusControl from '@/components/StatusControl.vue'
 import { listWatchIntents, type WatchIntent, type WatchStatus } from '@/api/watchlist'
-import { isNetworkError } from '@/api/client'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 const { t } = useI18n()
 
@@ -25,12 +25,6 @@ const statusOptions = computed(() => [
   { label: t('library.watchlist.status.want'), value: 'want' },
   { label: t('library.watchlist.status.viewed'), value: 'viewed' },
 ])
-
-// Surface a distinct localized message for connectivity/timeout failures (which
-// carry no HTTP status) instead of the generic load error.
-function loadErrorMessage(err: unknown): string {
-  return isNetworkError(err) ? t('common.networkError') : t('library.watchlist.loadError')
-}
 
 async function fetchList(): Promise<void> {
   const seq = ++listSeq
@@ -59,7 +53,7 @@ async function fetchList(): Promise<void> {
     total.value = grand.total
   } catch (err) {
     if (seq !== listSeq) return
-    error.value = loadErrorMessage(err)
+    error.value = loadErrorMessage(err, t, 'library.watchlist.loadError')
   } finally {
     if (seq === listSeq) loading.value = false
   }
