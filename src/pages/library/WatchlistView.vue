@@ -7,6 +7,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import StatusControl from '@/components/StatusControl.vue'
 import { listWatchIntents, type WatchIntent, type WatchStatus } from '@/api/watchlist'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 const { t } = useI18n()
 
@@ -52,7 +53,7 @@ async function fetchList(): Promise<void> {
     total.value = grand.total
   } catch (err) {
     if (seq !== listSeq) return
-    error.value = err instanceof Error ? err.message : t('library.watchlist.loadError')
+    error.value = loadErrorMessage(err, t, 'library.watchlist.loadError')
   } finally {
     if (seq === listSeq) loading.value = false
   }

@@ -62,6 +62,16 @@ function readCsrfCookie(): string | null {
   return match ? decodeURIComponent(match[1]) : null
 }
 
+// Distinguishes a connectivity failure (the request never received a response —
+// offline, DNS failure, CORS, or a client-side timeout) from a server error
+// response that carries an HTTP status. The global toast interceptor below only
+// fires for status-bearing errors, so views that render their own inline error
+// (and opt out via skipErrorToast) call this to show a localized "network error"
+// message distinct from a generic load failure.
+export function isNetworkError(err: unknown): boolean {
+  return axios.isAxiosError(err) && err.response === undefined
+}
+
 // === Global error toast (non-401) ======================================
 // Shows a NaiveUI message for 4xx/5xx responses unless the request opted out
 // via config.skipErrorToast = true (used by forms that render their own error UI).

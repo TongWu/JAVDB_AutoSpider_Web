@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { NSelect } from 'naive-ui'
+import { AxiosError, type AxiosResponse } from 'axios'
 
 // Two intents: one 'want' (A-1), one 'viewed' (B-2). The grand-total head
 // request (limit:1, unfiltered) reports total=2 regardless of the filter.
@@ -53,7 +54,7 @@ const i18n = createI18n({
   locale: 'en',
   messages: {
     en: {
-      common: { retry: 'Retry' },
+      common: { retry: 'Retry', networkError: 'Network error. Please check your connection.' },
       library: {
         watchlist: {
           loadError: 'Failed to load watchlist.',
@@ -191,5 +192,33 @@ describe('WatchlistView', () => {
     }
     expect(wrapper.text()).not.toContain('A-1')
     expect(trackedValue(wrapper)).toContain('1')
+  })
+
+  it('shows a localized network-error message when the request has no response', async () => {
+    listMock.mockRejectedValue(new AxiosError('Network Error', AxiosError.ERR_NETWORK))
+    const wrapper = mount(WatchlistView, { global: { plugins: [i18n] } })
+    await flushPromises()
+
+    const alert = wrapper.find('.load-error')
+    expect(alert.exists()).toBe(true)
+    expect(alert.text()).toContain('Network error')
+    expect(alert.text()).not.toContain('Failed to load watchlist')
+  })
+
+  it('shows the generic localized load-error for a server error response', async () => {
+    const response = {
+      status: 500,
+      statusText: 'Internal Server Error',
+      data: {},
+      headers: {},
+    } as unknown as AxiosResponse
+    listMock.mockRejectedValue(
+      new AxiosError('Request failed', AxiosError.ERR_BAD_RESPONSE, undefined, undefined, response),
+    )
+    const wrapper = mount(WatchlistView, { global: { plugins: [i18n] } })
+    await flushPromises()
+
+    const alert = wrapper.find('.load-error')
+    expect(alert.text()).toContain('Failed to load watchlist')
   })
 })

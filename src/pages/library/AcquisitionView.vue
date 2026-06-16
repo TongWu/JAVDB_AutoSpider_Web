@@ -14,6 +14,7 @@ import {
   getAcquisitionSummary, getAcquisitionRecent, getAcquisitionTrend,
   type AcquisitionSummary, type AcquisitionRecentItem, type AcquisitionTrendPoint,
 } from '@/api/library'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -94,7 +95,7 @@ async function fetchRecent() {
     const rows = await getAcquisitionRecent({ state: stateFilter.value, limit: 50 })
     if (seq === recentSeq) recent.value = rows // ignore stale out-of-order responses
   } catch (err) {
-    if (seq === recentSeq) error.value = err instanceof Error ? err.message : t('library.loadError')
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.loadError')
   }
 }
 
@@ -112,7 +113,9 @@ async function fetchAll() {
     if (seq === recentSeq) recent.value = r // a filter change during load wins
     trend.value = tr
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.loadError')
+    // Guard the banner against stale overwrites; loading stays unguarded (only
+    // fetchAll owns it, so a seq-gated clear could strand the spinner).
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.loadError')
   } finally {
     loading.value = false
   }

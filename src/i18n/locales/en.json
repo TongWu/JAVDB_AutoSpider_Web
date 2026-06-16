@@ -48,6 +48,7 @@
     "skip": "Skip",
     "retry": "Retry",
     "loading": "Loading...",
+    "networkError": "Network error. Please check your connection.",
     "ok": "OK",
     "yes": "Yes",
     "no": "No",

@@ -15,6 +15,7 @@ import {
   getConsumptionSummary, getConsumptionRecent, getConsumptionTrend, getConsumptionUnresolved,
   type ConsumptionSummary, type ConsumptionRecentItem, type ConsumptionTrendPoint, type UnresolvedItem,
 } from '@/api/library_consumption'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale)
 
@@ -149,8 +150,7 @@ async function fetchRecent() {
     })
     if (seq === recentSeq) recent.value = rows
   } catch (err) {
-    if (seq === recentSeq)
-      error.value = err instanceof Error ? err.message : t('library.consumption.loadError')
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.consumption.loadError')
   }
 }
 
@@ -170,7 +170,9 @@ async function fetchAll() {
     trend.value = tr
     unresolved.value = u
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.consumption.loadError')
+    // Guard the banner against stale overwrites; loading stays unguarded (only
+    // fetchAll owns it, so a seq-gated clear could strand the spinner).
+    if (seq === recentSeq) error.value = loadErrorMessage(err, t, 'library.consumption.loadError')
   } finally {
     loading.value = false
   }

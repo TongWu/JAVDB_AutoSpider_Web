@@ -10,6 +10,7 @@ import {
   listSubscriptions, upsertSubscription, deleteSubscription,
   type ActorSubscription,
 } from '@/api/subscriptions'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -33,7 +34,7 @@ async function fetchList(): Promise<void> {
     items.value = res.items
     total.value = res.total
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.subscriptions.loadError')
+    error.value = loadErrorMessage(err, t, 'library.subscriptions.loadError')
   } finally {
     loading.value = false
   }

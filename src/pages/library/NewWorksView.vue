@@ -7,6 +7,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import StatusControl from '@/components/StatusControl.vue'
 import { listNewWorks, dismissNewWork, type NewWork } from '@/api/new-works'
+import { loadErrorMessage } from '@/pages/library/loadError'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -24,7 +25,7 @@ async function fetchList(): Promise<void> {
     items.value = res.items
     total.value = res.total
   } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.newWorks.loadError')
+    error.value = loadErrorMessage(err, t, 'library.newWorks.loadError')
   } finally {
     loading.value = false
   }
