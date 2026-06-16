@@ -1,6 +1,8 @@
 // Actor-subscription + new-works D1 queries (ADR-054 WS2).
 // Keep this module free of Hono / c.env references; callers pass the binding.
 
+import { prepareActorSubscriptionUpsert } from "../contract/sql-contract.gen";
+
 export interface ActorSubscriptionRow {
   actor_href: string;
   actor_name: string | null;
@@ -21,30 +23,13 @@ export interface NewWorkRow {
   dismissed: number;
 }
 
-// Byte-mirrored with javdb/storage/repos/subscription_repo.py
-// ACTOR_SUBSCRIPTION_UPSERT_SQL (ADR-017 dual-backend parity). Cursor columns
-// are advanced by the monitor, not follow/unfollow, so they stay untouched.
-export const ACTOR_SUBSCRIPTION_UPSERT_SQL = `
-    INSERT INTO ActorSubscription
-        (actor_href, actor_name, active, created_at, updated_at)
-    VALUES (?, ?, ?,
-        strftime('%Y-%m-%dT%H:%M:%fZ','now'),
-        strftime('%Y-%m-%dT%H:%M:%fZ','now'))
-    ON CONFLICT(actor_href) DO UPDATE SET
-        actor_name = excluded.actor_name,
-        active     = excluded.active,
-        updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now')`;
-
 export async function upsertSubscription(
   db: D1Database,
   actorHref: string,
   actorName: string | null,
   active: number,
 ): Promise<ActorSubscriptionRow> {
-  await db
-    .prepare(ACTOR_SUBSCRIPTION_UPSERT_SQL)
-    .bind(actorHref, actorName, active)
-    .run();
+  await prepareActorSubscriptionUpsert(db, { actorHref, actorName, active }).run();
   return (await getSubscription(db, actorHref))!;
 }
 

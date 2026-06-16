@@ -310,6 +310,7 @@ describe("API Contract Compliance", () => {
         "watch_intent",
         "magnet_aggregation",
         "site_drift_sentinel",
+        "ops_alerting",
       ];
       assertHasKeys(features, featureKeys, `${label}.features`);
       for (const fk of featureKeys) {

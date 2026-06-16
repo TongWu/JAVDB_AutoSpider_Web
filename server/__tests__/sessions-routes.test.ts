@@ -41,7 +41,7 @@ async function seedSessions(db: D1Database) {
 // builder reuses it verbatim so the two stay in lock-step.
 describe("REPORT_SESSION_COLUMNS shared projection", () => {
   it("matches the canonical ReportSessions column list", () => {
-    expect(REPORT_SESSION_COLUMNS).toBe(
+    expect(REPORT_SESSION_COLUMNS.join(", ")).toBe(
       "Id, Status, WriteMode, RunId, RunAttempt, DateTimeCreated, ReportType, ReportDate, FailureReason",
     );
   });
@@ -49,7 +49,7 @@ describe("REPORT_SESSION_COLUMNS shared projection", () => {
   it("is reused verbatim by buildSessionQuery", () => {
     const { sql } = buildSessionQuery({ limit: 50 });
     expect(sql).toBe(
-      `SELECT ${REPORT_SESSION_COLUMNS} FROM ReportSessions ORDER BY Id DESC LIMIT ?`,
+      `SELECT ${REPORT_SESSION_COLUMNS.join(", ")} FROM ReportSessions ORDER BY Id DESC LIMIT ?`,
     );
   });
 });

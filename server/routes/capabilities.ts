@@ -1,6 +1,10 @@
 import { Hono } from "hono";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
+import {
+  prepareOpsAlertEventProbe,
+  prepareOpsAlertPolicyProbe,
+} from "../contract/sql-contract.gen";
 
 type CapEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -71,6 +75,17 @@ async function subscriptionsEnabled(env: Env): Promise<boolean> {
   }
 }
 
+/** True when ADR-026 Phase 4 alert policy/event tables are queryable in REPORTS_DB (capability honesty). */
+async function opsAlertingEnabled(env: Env): Promise<boolean> {
+  try {
+    await prepareOpsAlertPolicyProbe(env.REPORTS_DB, {}).first();
+    await prepareOpsAlertEventProbe(env.REPORTS_DB, {}).first();
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 capabilitiesRoutes.get("/", async (c) => {
   const env = c.env;
   const closed_loop = await closedLoopEnabled(env);
@@ -79,6 +94,7 @@ capabilitiesRoutes.get("/", async (c) => {
   const watch_intent = await watchIntentEnabled(env);
   const content_filter = await contentFilterEnabled(env);
   const subscriptions = await subscriptionsEnabled(env);
+  const ops_alerting = await opsAlertingEnabled(env);
 
   return c.json({
     version: "2.0.0",
@@ -102,6 +118,7 @@ capabilitiesRoutes.get("/", async (c) => {
       watch_intent,
       content_filter,
       subscriptions,
+      ops_alerting,
       // ADR-054 WS3: aggregation runs in the Python backend only; the Worker cannot reach/clear external indexers, so it is capability-honestly false.
       magnet_aggregation: false,
       // ADR-035 Phase 3: gates the frontend site-drift sentinel panel.

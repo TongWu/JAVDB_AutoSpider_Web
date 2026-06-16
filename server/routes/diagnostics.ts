@@ -5,6 +5,15 @@ import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { loadConfigStore, saveConfigKeys } from "../services/config-store";
 import {
+  OPS_ALERT_POLICY_ID_HASH_LENGTH,
+  OPS_ALERT_POLICY_ID_PREFIX,
+  OPS_ALERT_POLICY_ID_SALT,
+  prepareOpsAlertEventsListByIncident,
+  prepareOpsAlertPoliciesList,
+  prepareOpsAlertPolicyGetByIncidentType,
+  prepareOpsAlertPolicyUpsert,
+} from "../contract/sql-contract.gen";
+import {
   PARSE_CONTRACT,
   SENTINEL_BASELINE_WINDOW,
   computeFieldHealth,
@@ -60,6 +69,10 @@ function parseJsonArray(value: string | null): unknown[] {
   }
 }
 
+function parseStringArray(value: string | null): string[] {
+  return parseJsonArray(value).filter((item): item is string => typeof item === "string");
+}
+
 interface OpsIncidentRow {
   incident_id: string
   trigger_source: string
@@ -81,6 +94,26 @@ interface OpsIncidentRow {
   created_at: string
   updated_at: string
   resolved_at: string | null
+}
+
+interface OpsAlertPolicyRow {
+  policy_id: string
+  incident_type: string
+  min_confidence: string
+  enabled: number | boolean
+  channels_json: string | null
+  updated_by: string | null
+  created_at: string
+  updated_at: string
+}
+
+interface OpsAlertEventRow {
+  alert_id: string
+  incident_id: string
+  policy_id: string | null
+  status: string
+  reason: string | null
+  fired_at: string
 }
 
 // bundle_schema_version is storage-internal and intentionally excluded from the API surface (matches Python OpsIncidentSchema).
@@ -107,6 +140,40 @@ function mapOpsIncident(row: OpsIncidentRow) {
     updated_at: row.updated_at,
     resolved_at: row.resolved_at ?? null,
   };
+}
+
+function mapAlertPolicy(row: OpsAlertPolicyRow) {
+  return {
+    policy_id: row.policy_id,
+    incident_type: row.incident_type,
+    min_confidence: row.min_confidence,
+    enabled: row.enabled === 1 || row.enabled === true,
+    channels: parseStringArray(row.channels_json),
+    updated_by: row.updated_by ?? null,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+function mapAlertEvent(row: OpsAlertEventRow) {
+  return {
+    alert_id: row.alert_id,
+    incident_id: row.incident_id,
+    policy_id: row.policy_id ?? null,
+    status: row.status,
+    reason: row.reason ?? null,
+    fired_at: row.fired_at,
+  };
+}
+
+function toHex(bytes: ArrayBuffer): string {
+  return [...new Uint8Array(bytes)].map((b) => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function buildAlertPolicyId(incidentType: string): Promise<string> {
+  const bytes = new TextEncoder().encode(`${OPS_ALERT_POLICY_ID_SALT}${incidentType}`);
+  const digest = await crypto.subtle.digest("SHA-256", bytes);
+  return `${OPS_ALERT_POLICY_ID_PREFIX}${toHex(digest).slice(0, OPS_ALERT_POLICY_ID_HASH_LENGTH)}`;
 }
 
 diagnosticsRoutes.get("/ops-incidents", async (c) => {
@@ -152,6 +219,61 @@ diagnosticsRoutes.get("/ops-incidents", async (c) => {
     .bind(...bindings, limit)
     .all<OpsIncidentRow>();
   return c.json({ items: rows.results.map(mapOpsIncident) });
+});
+
+diagnosticsRoutes.get("/alert-policies", async (c) => {
+  const rows = await prepareOpsAlertPoliciesList(c.env.REPORTS_DB, {}).all<OpsAlertPolicyRow>();
+  return c.json({ items: rows.results.map(mapAlertPolicy) });
+});
+
+diagnosticsRoutes.put("/alert-policies/:incident_type", requireRole("admin"), async (c) => {
+  const incidentType = c.req.param("incident_type");
+  let parsedBody: unknown;
+  try {
+    parsedBody = await c.req.json();
+  } catch {
+    throw new HTTPException(422, { message: "Request body must be valid JSON" });
+  }
+  if (parsedBody === null || typeof parsedBody !== "object" || Array.isArray(parsedBody)) {
+    throw new HTTPException(422, { message: "Request body must be a JSON object" });
+  }
+  const body = parsedBody as {
+    min_confidence?: unknown
+    enabled?: unknown
+    channels?: unknown
+  };
+  const hasMinConfidence = Object.prototype.hasOwnProperty.call(body, "min_confidence");
+  const hasEnabled = Object.prototype.hasOwnProperty.call(body, "enabled");
+  const hasChannels = Object.prototype.hasOwnProperty.call(body, "channels");
+  const minConfidence = hasMinConfidence ? body.min_confidence : "medium";
+  const enabled = hasEnabled ? body.enabled : true;
+  const channels = hasChannels ? body.channels : [];
+  const allowedConfidence = ["low", "medium", "high"];
+
+  if (typeof minConfidence !== "string" || !allowedConfidence.includes(minConfidence)) {
+    throw new HTTPException(422, { message: `min_confidence must be one of: ${allowedConfidence.join(", ")}` });
+  }
+  if (typeof enabled !== "boolean") {
+    throw new HTTPException(422, { message: "enabled must be a boolean" });
+  }
+  if (!Array.isArray(channels) || !channels.every((item) => typeof item === "string")) {
+    throw new HTTPException(422, { message: "channels must be an array of strings" });
+  }
+
+  await prepareOpsAlertPolicyUpsert(c.env.REPORTS_DB, {
+    policyId: await buildAlertPolicyId(incidentType),
+    incidentType,
+    minConfidence,
+    enabled: enabled ? 1 : 0,
+    channelsJson: JSON.stringify(channels),
+    updatedBy: c.get("user").sub,
+  }).run();
+
+  const row = await prepareOpsAlertPolicyGetByIncidentType(c.env.REPORTS_DB, { incidentType }).first<OpsAlertPolicyRow>();
+  if (!row) {
+    throw new HTTPException(500, { message: "Failed to persist alert policy" });
+  }
+  return c.json(mapAlertPolicy(row));
 });
 
 diagnosticsRoutes.get("/ops-incidents/analytics", async (c) => {
@@ -224,6 +346,12 @@ diagnosticsRoutes.get("/ops-incidents/:incident_id/remediation-proposals", async
     .bind(incidentId)
     .all<OpsRemediationProposalRow>();
   return c.json({ items: rows.results.map(mapRemediationProposal) });
+});
+
+diagnosticsRoutes.get("/ops-incidents/:incident_id/alert-events", async (c) => {
+  const incidentId = c.req.param("incident_id");
+  const rows = await prepareOpsAlertEventsListByIncident(c.env.REPORTS_DB, { incidentId }).all<OpsAlertEventRow>();
+  return c.json({ items: rows.results.map(mapAlertEvent) });
 });
 
 diagnosticsRoutes.post("/remediation-proposals/:proposal_id/decision", requireRole("admin"), async (c) => {
@@ -351,7 +479,7 @@ diagnosticsRoutes.get("/parse-field-health", async (c) => {
     .bind(SENTINEL_BASELINE_WINDOW + 1)
     .all<RankedFillRow>();
   for (const row of ranked.results) {
-    const key = `${row.page_type} ${row.field}`;
+    const key = `${row.page_type}\u0000${row.field}`;
     const bucket = historyByGroup.get(key);
     if (bucket) bucket.push(row.fill_rate);
     else historyByGroup.set(key, [row.fill_rate]);
@@ -359,7 +487,7 @@ diagnosticsRoutes.get("/parse-field-health", async (c) => {
   for (const fill of fills) {
     const entry = PARSE_CONTRACT[fill.page_type]?.[fill.field];
     if (!entry || entry.severity !== "soft") continue;
-    const history = historyByGroup.get(`${fill.page_type} ${fill.field}`) ?? [];
+    const history = historyByGroup.get(`${fill.page_type}\u0000${fill.field}`) ?? [];
     (baselines[fill.page_type] ??= {})[fill.field] = median(history);
   }
 
