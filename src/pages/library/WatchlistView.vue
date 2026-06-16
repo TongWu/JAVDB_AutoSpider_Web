@@ -50,9 +50,9 @@ async function fetchList(): Promise<void> {
     }
     items.value = all
     total.value = grand.total
-  } catch (err) {
+  } catch {
     if (seq !== listSeq) return
-    error.value = err instanceof Error ? err.message : t('library.watchlist.loadError')
+    error.value = t('library.watchlist.loadError')
   } finally {
     if (seq === listSeq) loading.value = false
   }

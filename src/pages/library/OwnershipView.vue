@@ -88,8 +88,8 @@ async function fetchRecent() {
   try {
     const rows = await getOwnershipRecent({ source: sourceFilter.value, limit: 50 })
     if (seq === recentSeq) recent.value = rows
-  } catch (err) {
-    if (seq === recentSeq) error.value = err instanceof Error ? err.message : t('library.ownership.loadError')
+  } catch {
+    if (seq === recentSeq) error.value = t('library.ownership.loadError')
   }
 }
 
@@ -106,9 +106,8 @@ async function fetchAll() {
     if (seq !== recentSeq) return
     summary.value = s
     recent.value = r
-  } catch (err) {
-    if (seq === recentSeq)
-      error.value = err instanceof Error ? err.message : t('library.ownership.loadError')
+  } catch {
+    if (seq === recentSeq) error.value = t('library.ownership.loadError')
   } finally {
     if (seq === recentSeq) loading.value = false
   }

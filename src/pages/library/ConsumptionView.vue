@@ -148,9 +148,8 @@ async function fetchRecent() {
       limit: 50,
     })
     if (seq === recentSeq) recent.value = rows
-  } catch (err) {
-    if (seq === recentSeq)
-      error.value = err instanceof Error ? err.message : t('library.consumption.loadError')
+  } catch {
+    if (seq === recentSeq) error.value = t('library.consumption.loadError')
   }
 }
 
@@ -169,8 +168,8 @@ async function fetchAll() {
     if (seq === recentSeq) recent.value = r
     trend.value = tr
     unresolved.value = u
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.consumption.loadError')
+  } catch {
+    error.value = t('library.consumption.loadError')
   } finally {
     loading.value = false
   }

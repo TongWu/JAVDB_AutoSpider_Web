@@ -93,8 +93,8 @@ async function fetchRecent() {
   try {
     const rows = await getAcquisitionRecent({ state: stateFilter.value, limit: 50 })
     if (seq === recentSeq) recent.value = rows // ignore stale out-of-order responses
-  } catch (err) {
-    if (seq === recentSeq) error.value = err instanceof Error ? err.message : t('library.loadError')
+  } catch {
+    if (seq === recentSeq) error.value = t('library.loadError')
   }
 }
 
@@ -111,8 +111,8 @@ async function fetchAll() {
     summary.value = s
     if (seq === recentSeq) recent.value = r // a filter change during load wins
     trend.value = tr
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.loadError')
+  } catch {
+    error.value = t('library.loadError')
   } finally {
     loading.value = false
   }

@@ -23,8 +23,8 @@ async function fetchList(): Promise<void> {
     const res = await listNewWorks({ limit: 200 })
     items.value = res.items
     total.value = res.total
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.newWorks.loadError')
+  } catch {
+    error.value = t('library.newWorks.loadError')
   } finally {
     loading.value = false
   }

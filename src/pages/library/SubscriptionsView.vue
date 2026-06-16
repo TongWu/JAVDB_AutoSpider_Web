@@ -32,8 +32,8 @@ async function fetchList(): Promise<void> {
     const res = await listSubscriptions({ limit: 200 })
     items.value = res.items
     total.value = res.total
-  } catch (err) {
-    error.value = err instanceof Error ? err.message : t('library.subscriptions.loadError')
+  } catch {
+    error.value = t('library.subscriptions.loadError')
   } finally {
     loading.value = false
   }
