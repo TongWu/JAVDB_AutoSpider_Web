@@ -60,7 +60,13 @@ const confidenceOptions = [
   { label: 'medium', value: 'medium' },
   { label: 'high', value: 'high' },
 ]
-const channelOptions = [{ label: 'email', value: 'email' }]
+// Presets mirror the registered ADR-039 notify plugins (email, telegram). The
+// select is tag/filterable, so an operator can still type any channel a future
+// plugin adds — these are just the one-click defaults.
+const channelOptions = [
+  { label: 'email', value: 'email' },
+  { label: 'telegram', value: 'telegram' },
+]
 
 const rows = computed<PolicyRow[]>(() => INCIDENT_TYPES.map((type) => ({ type })))
 
