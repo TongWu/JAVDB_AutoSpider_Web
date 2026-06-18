@@ -194,6 +194,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/diag/alert-policies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Alert Policies */
+        get: operations["list_alert_policies_api_diag_alert_policies_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/alert-policies/{incident_type}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Upsert Alert Policy
+         * @description Upsert alert policy for an incident type (admin only).
+         */
+        put: operations["upsert_alert_policy_api_diag_alert_policies__incident_type__put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/diag/javdb-session": {
         parameters: {
             query?: never;
@@ -286,6 +323,23 @@ export interface paths {
          * @description Return one persisted read-only operations diagnosis incident.
          */
         get: operations["get_ops_incident_api_diag_ops_incidents__incident_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/diag/ops-incidents/{incident_id}/alert-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Alert Events */
+        get: operations["list_alert_events_api_diag_ops_incidents__incident_id__alert_events_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2610,6 +2664,8 @@ export interface components {
             library_ownership: boolean;
             /** Magnet Aggregation */
             magnet_aggregation: boolean;
+            /** Ops Alerting */
+            ops_alerting: boolean;
             /** Pikpak */
             pikpak: boolean;
             /** Proxy Pool */
@@ -3086,6 +3142,72 @@ export interface components {
             message: string;
             /** Ok */
             ok: boolean;
+        };
+        /** OpsAlertEventListResponse */
+        OpsAlertEventListResponse: {
+            /** Items */
+            items: components["schemas"]["OpsAlertEventSchema"][];
+        };
+        /** OpsAlertEventSchema */
+        OpsAlertEventSchema: {
+            /** Alert Id */
+            alert_id: string;
+            /** Fired At */
+            fired_at: string;
+            /** Incident Id */
+            incident_id: string;
+            /** Policy Id */
+            policy_id?: string | null;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "fired" | "suppressed" | "skipped";
+        };
+        /** OpsAlertPolicyListResponse */
+        OpsAlertPolicyListResponse: {
+            /** Items */
+            items: components["schemas"]["OpsAlertPolicySchema"][];
+        };
+        /** OpsAlertPolicySchema */
+        OpsAlertPolicySchema: {
+            /** Channels */
+            channels: string[];
+            /** Created At */
+            created_at: string;
+            /** Enabled */
+            enabled: boolean;
+            /** Incident Type */
+            incident_type: string;
+            /**
+             * Min Confidence
+             * @enum {string}
+             */
+            min_confidence: "low" | "medium" | "high";
+            /** Policy Id */
+            policy_id: string;
+            /** Updated At */
+            updated_at: string;
+            /** Updated By */
+            updated_by?: string | null;
+        };
+        /** OpsAlertPolicyUpsertRequest */
+        OpsAlertPolicyUpsertRequest: {
+            /** Channels */
+            channels?: string[];
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /**
+             * Min Confidence
+             * @default medium
+             * @enum {string}
+             */
+            min_confidence: "low" | "medium" | "high";
         };
         /** OpsIncidentAnalyticsResponse */
         OpsIncidentAnalyticsResponse: {
@@ -4833,6 +4955,105 @@ export interface operations {
             };
         };
     };
+    list_alert_policies_api_diag_alert_policies_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsAlertPolicyListResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+        };
+    };
+    upsert_alert_policy_api_diag_alert_policies__incident_type__put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_type: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OpsAlertPolicyUpsertRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsAlertPolicySchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_javdb_session_status_api_diag_javdb_session_get: {
         parameters: {
             query?: never;
@@ -5059,6 +5280,59 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OpsIncidentSchema"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_alert_events_api_diag_ops_incidents__incident_id__alert_events_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                incident_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OpsAlertEventListResponse"];
                 };
             };
             /** @description Unauthorized */
