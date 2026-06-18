@@ -36,6 +36,7 @@ import { extractErrorMessage } from '@/api/errors'
 import { useAuthStore } from '@/stores/auth'
 import { useCapabilitiesStore } from '@/stores/capabilities'
 import AlertPolicyPanel from '@/components/diagnostics/AlertPolicyPanel.vue'
+import { OPS_INCIDENT_TYPES } from '@/constants/ops-incidents'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -188,12 +189,7 @@ const statusOptions = [
   { label: 'suppressed', value: 'suppressed' },
 ]
 
-const typeOptions = [
-  { label: 'failed_ingestion', value: 'failed_ingestion' },
-  { label: 'stale_session', value: 'stale_session' },
-  { label: 'proxy_exhaustion', value: 'proxy_exhaustion' },
-  { label: 'login_failure', value: 'login_failure' },
-]
+const typeOptions = OPS_INCIDENT_TYPES.map((value) => ({ label: value, value }))
 
 const confidenceOptions = [
   { label: 'low', value: 'low' },
@@ -300,6 +296,19 @@ watch(selected, (inc) => {
     proposals.value = []
     proposalsError.value = null
     alertEvents.value = []
+  }
+})
+
+// Capabilities resolve asynchronously: if ops_alerting flips on while an incident
+// is already open, fetch its events (and clear them if the capability goes away)
+// so the alert-status badge never shows stale "no alert".
+watch(alertingEnabled, (enabled) => {
+  if (!enabled) {
+    alertEvents.value = []
+    return
+  }
+  if (selected.value) {
+    void fetchAlertEvents(selected.value.incident_id)
   }
 })
 

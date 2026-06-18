@@ -1074,18 +1074,18 @@
   "diag": {
     "alerting": {
       "title": "事件告警",
-      "subtitle": "配置哪些事件类型会主动告警 operator。投递由现有的通知分发机制处理。",
+      "subtitle": "配置哪些事件类型会主动告警运维人员。投递由现有通知分发机制处理。",
       "readonlyHint": "你只有只读权限。告警策略只能由管理员修改。",
       "loadError": "加载告警策略失败。",
       "saveSuccess": "告警策略已保存。",
       "saveError": "保存告警策略失败。",
       "save": "保存",
-      "channelsPlaceholder": "选择 channel",
+      "channelsPlaceholder": "选择渠道",
       "col": {
         "type": "事件类型",
         "enabled": "启用",
         "minConfidence": "最低置信度",
-        "channels": "Channel",
+        "channels": "渠道",
         "actions": "操作"
       }
     },

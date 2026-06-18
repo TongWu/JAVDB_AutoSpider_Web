@@ -222,13 +222,14 @@ export async function upsertAlertPolicy(
   incidentType: string,
   body: AlertPolicyUpsertRequest,
 ): Promise<OpsAlertPolicy> {
-  const { data } = await http.put<OpsAlertPolicy>(`/api/diag/alert-policies/${incidentType}`, body)
+  const path = `/api/diag/alert-policies/${encodeURIComponent(incidentType)}`
+  const { data } = await http.put<OpsAlertPolicy>(path, body)
   return data
 }
 
 export async function listAlertEvents(incidentId: string): Promise<OpsAlertEventListResponse> {
   const { data } = await http.get<OpsAlertEventListResponse>(
-    `/api/diag/ops-incidents/${incidentId}/alert-events`,
+    `/api/diag/ops-incidents/${encodeURIComponent(incidentId)}/alert-events`,
   )
   return data
 }

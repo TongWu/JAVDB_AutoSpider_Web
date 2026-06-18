@@ -56,4 +56,27 @@ describe('ops alerting config API', () => {
 
     expect(getSpy).toHaveBeenCalledWith('/api/diag/ops-incidents/opsinc_test/alert-events')
   })
+
+  it('encodes the incident type when upserting an alert policy', async () => {
+    putSpy.mockResolvedValueOnce({ data: {} })
+
+    await upsertAlertPolicy('type/with space', {
+      min_confidence: 'low',
+      enabled: true,
+      channels: ['email'],
+    })
+
+    expect(putSpy).toHaveBeenCalledWith(
+      '/api/diag/alert-policies/type%2Fwith%20space',
+      expect.any(Object),
+    )
+  })
+
+  it('encodes the incident id when listing alert events', async () => {
+    getSpy.mockResolvedValueOnce({ data: { items: [] } })
+
+    await listAlertEvents('opsinc/a b')
+
+    expect(getSpy).toHaveBeenCalledWith('/api/diag/ops-incidents/opsinc%2Fa%20b/alert-events')
+  })
 })

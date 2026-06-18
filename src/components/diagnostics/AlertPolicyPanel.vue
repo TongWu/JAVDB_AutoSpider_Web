@@ -11,6 +11,7 @@ import {
   listAlertPolicies, upsertAlertPolicy,
   type AlertPolicyUpsertRequest, type OpsAlertPolicy,
 } from '@/api/diagnostics'
+import { OPS_INCIDENT_TYPES } from '@/constants/ops-incidents'
 
 type Confidence = 'low' | 'medium' | 'high'
 
@@ -43,9 +44,10 @@ const alertingEnabled = computed(
 // shown inputs/buttons that would 403.
 const isAdmin = computed(() => auth.role === 'admin')
 
-// Canonical incident-type catalog (mirrors OpsIncidentsPage's filter options). A
-// type with no persisted policy shows as disabled until an admin enables + saves.
-const INCIDENT_TYPES = ['failed_ingestion', 'stale_session', 'proxy_exhaustion', 'login_failure']
+// Canonical incident-type catalog (shared with OpsIncidentsPage's filter via
+// @/constants/ops-incidents). A type with no persisted policy shows as disabled
+// until an admin enables + saves.
+const INCIDENT_TYPES = OPS_INCIDENT_TYPES
 
 const policies = ref<OpsAlertPolicy[]>([])
 const drafts = ref<Record<string, DraftPolicy>>({})
