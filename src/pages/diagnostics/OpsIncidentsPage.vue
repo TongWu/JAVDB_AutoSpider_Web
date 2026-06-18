@@ -22,9 +22,11 @@ import type { DataTableColumns } from 'naive-ui'
 import {
   decideRemediationProposal,
   getOpsIncidentAnalytics,
+  listAlertEvents,
   listOpsIncidents,
   listRemediationProposals,
   type ListOpsIncidentParams,
+  type OpsAlertEvent,
   type OpsIncident,
   type OpsIncidentAnalytics,
   type OpsRemediationProposal,
@@ -32,6 +34,9 @@ import {
 } from '@/api/diagnostics'
 import { extractErrorMessage } from '@/api/errors'
 import { useAuthStore } from '@/stores/auth'
+import { useCapabilitiesStore } from '@/stores/capabilities'
+import AlertPolicyPanel from '@/components/diagnostics/AlertPolicyPanel.vue'
+import { OPS_INCIDENT_TYPES } from '@/constants/ops-incidents'
 
 const { t } = useI18n()
 const message = useMessage()
@@ -39,6 +44,15 @@ const auth = useAuthStore()
 // The decision POST requires the 'admin' role; only admins see the controls so
 // read-only users aren't invited into a confirmation flow that would 403.
 const isAdmin = computed(() => auth.role === 'admin')
+
+const cap = useCapabilitiesStore()
+// ADR-026 Phase 4 alert-status badge: only consult the alert ledger when the
+// backend exposes the alerting capability (ops_alerting), so a deployment without
+// the alert tables never tries to read them. Read via a string-indexed cast since
+// the flag is not yet in the generated Features type.
+const alertingEnabled = computed(
+  () => (cap.data?.features as Record<string, boolean> | undefined)?.ops_alerting === true,
+)
 
 // ── Filter state ────────────────────────────────────────────────────
 const filterStatus = ref<string | null>(null)
@@ -175,12 +189,7 @@ const statusOptions = [
   { label: 'suppressed', value: 'suppressed' },
 ]
 
-const typeOptions = [
-  { label: 'failed_ingestion', value: 'failed_ingestion' },
-  { label: 'stale_session', value: 'stale_session' },
-  { label: 'proxy_exhaustion', value: 'proxy_exhaustion' },
-  { label: 'login_failure', value: 'login_failure' },
-]
+const typeOptions = OPS_INCIDENT_TYPES.map((value) => ({ label: value, value }))
 
 const confidenceOptions = [
   { label: 'low', value: 'low' },
@@ -250,12 +259,56 @@ async function fetchProposals(incidentId: string) {
   }
 }
 
+// ── Alert events (ADR-026 Phase 4) ───────────────────────────────────
+const alertEvents = ref<OpsAlertEvent[]>([])
+let alertEventsReqSeq = 0
+
+async function fetchAlertEvents(incidentId: string) {
+  const reqSeq = ++alertEventsReqSeq
+  alertEvents.value = []
+  if (!alertingEnabled.value) return
+  try {
+    const res = await listAlertEvents(incidentId)
+    if (reqSeq === alertEventsReqSeq) {
+      alertEvents.value = res.items
+    }
+  } catch {
+    // Best-effort: the alert-status badge is informational. If the read fails,
+    // fall back to "no alert" rather than disrupting the incident detail drawer.
+    if (reqSeq === alertEventsReqSeq) alertEvents.value = []
+  }
+}
+
+// Events come back ordered by fired_at ASC, so the last item is the latest.
+const latestAlertEvent = computed<OpsAlertEvent | null>(() =>
+  alertEvents.value.length ? alertEvents.value[alertEvents.value.length - 1] : null,
+)
+
+function alertStatusTagType(status: OpsAlertEvent['status']): 'success' | 'default' {
+  return status === 'fired' ? 'success' : 'default'
+}
+
 watch(selected, (inc) => {
   if (inc) {
     void fetchProposals(inc.incident_id)
+    void fetchAlertEvents(inc.incident_id)
   } else {
     proposals.value = []
     proposalsError.value = null
+    alertEvents.value = []
+  }
+})
+
+// Capabilities resolve asynchronously: if ops_alerting flips on while an incident
+// is already open, fetch its events (and clear them if the capability goes away)
+// so the alert-status badge never shows stale "no alert".
+watch(alertingEnabled, (enabled) => {
+  if (!enabled) {
+    alertEvents.value = []
+    return
+  }
+  if (selected.value) {
+    void fetchAlertEvents(selected.value.incident_id)
   }
 })
 
@@ -339,6 +392,9 @@ async function submitDecision() {
         {{ t('common.retry') }}
       </NButton>
     </header>
+
+    <!-- Operator alerting config (capability-gated; renders nothing when off) -->
+    <AlertPolicyPanel />
 
     <!-- Analytics summary -->
     <NCard :title="t('diag.opsIncidents.analytics')">
@@ -557,6 +613,19 @@ async function submitDecision() {
             >
               {{ selected.confidence }}
             </NTag>
+          </NDescriptionsItem>
+          <NDescriptionsItem
+            v-if="alertingEnabled"
+            :label="t('diag.opsIncidents.alertStatus.label')"
+          >
+            <NTag
+              v-if="latestAlertEvent"
+              size="small"
+              :type="alertStatusTagType(latestAlertEvent.status)"
+            >
+              {{ t(`diag.opsIncidents.alertStatus.${latestAlertEvent.status}`, latestAlertEvent.status) }}
+            </NTag>
+            <span v-else>{{ t('diag.opsIncidents.alertStatus.none') }}</span>
           </NDescriptionsItem>
           <NDescriptionsItem :label="t('diag.opsIncidents.col.runId')">
             {{ selected.run_id ?? '—' }}

@@ -1073,6 +1073,23 @@
     }
   },
   "diag": {
+    "alerting": {
+      "title": "Incident Alerting",
+      "subtitle": "Configure which incident types proactively alert operators. Delivery is handled by the existing notification dispatch.",
+      "readonlyHint": "You have read-only access. Alert policies can only be changed by an admin.",
+      "loadError": "Failed to load alert policies.",
+      "saveSuccess": "Alert policy saved.",
+      "saveError": "Failed to save alert policy.",
+      "save": "Save",
+      "channelsPlaceholder": "Select channels",
+      "col": {
+        "type": "Incident type",
+        "enabled": "Enabled",
+        "minConfidence": "Min confidence",
+        "channels": "Channels",
+        "actions": "Actions"
+      }
+    },
     "health": {
       "subtitle": "Check backend subsystem health and connectivity.",
       "quickStatus": "Quick Status",
@@ -1128,6 +1145,13 @@
         "runId": "Run ID",
         "sessionId": "Session ID",
         "topFinding": "Top Finding"
+      },
+      "alertStatus": {
+        "label": "Alert status",
+        "none": "No alert",
+        "fired": "Fired",
+        "suppressed": "Suppressed",
+        "skipped": "Skipped"
       },
       "proposals": {
         "title": "Remediation Proposals",
