@@ -156,15 +156,38 @@ watch(
         :title="t('settings.filterRules.addTitle')"
         size="small"
       >
-        <NSpace v-if="isAdmin" align="center">
-          <NSelect v-model:value="draftDimension" :options="dimensionOptions" style="width: 130px" />
-          <NSelect v-model:value="draftMode" :options="modeOptions" style="width: 170px" />
-          <NInput v-model:value="draftValue" :placeholder="t('settings.filterRules.valuePlaceholder')" style="width: 260px" />
-          <NButton type="primary" :loading="saving" @click="onAdd">
+        <NSpace
+          v-if="isAdmin"
+          align="center"
+        >
+          <NSelect
+            v-model:value="draftDimension"
+            :options="dimensionOptions"
+            style="width: 130px"
+          />
+          <NSelect
+            v-model:value="draftMode"
+            :options="modeOptions"
+            style="width: 170px"
+          />
+          <NInput
+            v-model:value="draftValue"
+            :placeholder="t('settings.filterRules.valuePlaceholder')"
+            style="width: 260px"
+          />
+          <NButton
+            type="primary"
+            :loading="saving"
+            @click="onAdd"
+          >
             {{ t('settings.filterRules.add') }}
           </NButton>
         </NSpace>
-        <NAlert v-else type="warning" :show-icon="true">
+        <NAlert
+          v-else
+          type="warning"
+          :show-icon="true"
+        >
           {{ t('settings.filterRules.adminOnly') }}
         </NAlert>
       </NCard>
