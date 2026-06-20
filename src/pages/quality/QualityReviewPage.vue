@@ -57,9 +57,11 @@ onMounted(() => {
 // ── Formatting helpers ──────────────────────────────────────────────
 function formatBytes(bytes: number | null): string {
   if (bytes === null || bytes === undefined) return DASH
-  if (bytes <= 0) return '0 B'
+  // `< 1` (not `<= 0`) also guards fractional bytes 0<b<1, where log() would make
+  // the unit index negative and yield "undefined".
+  if (bytes < 1) return '0 B'
   const units = ['B', 'KB', 'MB', 'GB', 'TB']
-  const i = Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024)))
+  const i = Math.max(0, Math.min(units.length - 1, Math.floor(Math.log(bytes) / Math.log(1024))))
   return `${(bytes / Math.pow(1024, i)).toFixed(i === 0 ? 0 : 2)} ${units[i]}`
 }
 

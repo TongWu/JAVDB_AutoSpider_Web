@@ -153,14 +153,16 @@ function toEvidenceResponse(r: TorrentQualityEvidenceRow): EvidenceResponse {
 // GET /evaluations?limit=&movie_href=
 //   movie_href present -> list_evaluations_for_movie (ORDER BY shadow_rank ASC)
 //   otherwise          -> list_recent_evaluations(min(limit, 200))
-// `limit <= 0` -> 400 (checked before branching, mirroring the Python router). A
-// non-numeric limit is also rejected here as 400 to avoid binding NaN to SQL
-// (FastAPI would 422 on the int coercion; the prompt-pinned behaviour is the
-// limit<=0 -> 400 + cap-at-200 contract, which this preserves).
+// `limit` must be a positive integer (checked before branching, mirroring the
+// Python router). Non-integers — NaN ("abc"), fractional (1.5), Infinity — are
+// rejected here as 400 rather than reaching the SQL `LIMIT ?` binding, where a
+// float would turn a client error into a 500. FastAPI coerces the param to int
+// and 422s on a non-integer; we collapse both that and the <=0 case to the
+// prompt-pinned 400 + cap-at-200 contract.
 qualityRoutes.get("/evaluations", async (c) => {
   const rawLimit = c.req.query("limit");
   const limit = rawLimit === undefined ? LIMIT_DEFAULT : Number(rawLimit);
-  if (!Number.isFinite(limit) || limit <= 0) {
+  if (!Number.isInteger(limit) || limit <= 0) {
     return c.json(errJson("quality.invalid_limit", "limit must be a positive integer"), 400);
   }
 

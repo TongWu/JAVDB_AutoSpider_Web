@@ -223,6 +223,21 @@ describe("Quality review routes", () => {
   });
 
   // -----------------------------------------------------------------------
+  // 5b. Fractional / non-integer limit -> 400 (never bound to SQL LIMIT).
+  // -----------------------------------------------------------------------
+  it("rejects a fractional limit with 400", async () => {
+    const { accessToken } = await login();
+    const res = await app.request(
+      "/api/quality/evaluations?limit=1.5",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("quality.invalid_limit");
+  });
+
+  // -----------------------------------------------------------------------
   // 6. Evidence lookup normalizes info_hash and pins role/version.
   // -----------------------------------------------------------------------
   it("returns production evidence for an upper-cased info_hash", async () => {
