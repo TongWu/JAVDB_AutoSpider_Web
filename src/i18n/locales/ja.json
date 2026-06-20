@@ -37,7 +37,8 @@
     "config": "構成",
     "auth": "認証",
     "capabilities": "機能権限",
-    "appearance": "外観"
+    "appearance": "外観",
+    "qualityReview": "品質レビュー"
   },
   "common": {
     "save": "保存",
@@ -1550,6 +1551,77 @@
         "rawTitle": "元タイトル",
         "filePath": "ファイルパス",
         "observedAt": "観測日時"
+      }
+    }
+  },
+  "quality": {
+    "title": "トレント品質レビュー",
+    "subtitle": "各作品の本番ダウンロードと、プローブした次点候補の証拠を比較します（ADR-024）。",
+    "shadowNote": "品質証拠の読み取り専用レビューです。スコアリング列（シャドウランク・置換可否・判定）は未設定の場合「未スコアリング」と表示されます。",
+    "filter": {
+      "movieHref": "作品 href で絞り込み（例: /v/ABC-123）",
+      "apply": "適用"
+    },
+    "empty": "評価が見つかりません。",
+    "notScored": "未スコアリング",
+    "col": {
+      "movie": "作品",
+      "category": "カテゴリ（JavDB → 推定）",
+      "consistent": "一致性",
+      "score": "スコア",
+      "shadowRank": "シャドウランク",
+      "wouldReplace": "置換可否",
+      "decision": "判定",
+      "reasons": "理由",
+      "infoHash": "Info hash"
+    },
+    "consistent": {
+      "yes": "一致",
+      "no": "不一致"
+    },
+    "detail": {
+      "evaluation": "評価",
+      "reasons": "理由コード",
+      "evidence": "本番ダウンロードの証拠",
+      "evidenceMissing": "このトレントの本番ダウンロード証拠はまだ記録されていません。"
+    },
+    "field": {
+      "videoCode": "品番",
+      "movieHref": "作品 href",
+      "scoringVersion": "スコアリングバージョン",
+      "javdbCategory": "JavDB カテゴリ",
+      "inferredCategory": "推定カテゴリ",
+      "magnetName": "マグネット名",
+      "subtitleEvidence": "字幕の証拠",
+      "policyMode": "ポリシーモード"
+    },
+    "evidence": {
+      "probeTarget": "プローブ対象",
+      "metadataStatus": "メタデータ状態",
+      "totalSize": "合計サイズ",
+      "mainVideoSize": "メイン動画サイズ",
+      "mainVideoRatio": "メイン動画比率",
+      "videoFiles": "動画ファイル数",
+      "subtitleFiles": "字幕ファイル数",
+      "nonVideoFiles": "非動画ファイル数",
+      "junkSize": "ジャンクサイズ",
+      "junkRatio": "ジャンク比率",
+      "suspiciousFiles": "不審ファイル数"
+    },
+    "review": {
+      "title": "オペレーターレビュー",
+      "accept": "承認",
+      "reject": "却下",
+      "skip": "スキップ",
+      "notePlaceholder": "メモ（承認 / 却下 / スキップの理由・任意）",
+      "recorded": "記録済み: {label}",
+      "success": "レビューを記録しました",
+      "error": "レビューの記録に失敗しました",
+      "recommendation": {
+        "title": "アシスト推奨",
+        "betterCandidate": "このカテゴリで別の候補がより高いスコアです。",
+        "recommended": "推奨",
+        "extraReasons": "追加の理由"
       }
     }
   }

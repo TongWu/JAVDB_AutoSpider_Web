@@ -89,6 +89,7 @@ const options = computed<MenuOption[]>(() => {
       { label: t('nav.parseTester'), key: 'parseTester' },
       { label: t('nav.javdbSession'), key: 'javdbSession' },
       { label: t('nav.opsIncidents'), key: 'opsIncidents' },
+      { label: t('nav.qualityReview'), key: 'qualityReview' },
     ],
   })
 
@@ -157,6 +158,7 @@ const routeMap: Record<string, string> = {
   parseTester: '/diag/parse',
   javdbSession: '/diag/javdb',
   opsIncidents: '/diag/ops-incidents',
+  qualityReview: '/quality/review',
   runs: '/gh-actions',
   workflows: '/gh-actions/workflows',
   secrets: '/gh-actions/secrets',

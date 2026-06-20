@@ -24,6 +24,11 @@ const FE_CONSUMED: Array<[keyof PathItem, string]> = [
   ['post', '/api/auth/logout'],
   ['get', '/api/capabilities'],
   ['get', '/api/health'],
+  // ADR-024 Phase 2 torrent quality review surface (read + assist).
+  ['get', '/api/quality/evaluations'],
+  ['get', '/api/quality/evidence/{info_hash}'],
+  ['get', '/api/quality/recommendations'],
+  ['post', '/api/quality/review-labels'],
 ]
 
 describe('OpenAPI contract — FE-consumed endpoints', () => {

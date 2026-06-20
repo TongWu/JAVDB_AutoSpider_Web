@@ -212,6 +212,12 @@ export const routes: RouteRecordRaw[] = [
     meta: { requiresAuth: true },
   },
   {
+    path: '/quality/review',
+    name: 'quality-review',
+    component: () => import('@/pages/quality/QualityReviewPage.vue'),
+    meta: { requiresAuth: true },
+  },
+  {
     path: '/:pathMatch(.*)*',
     redirect: '/404',
   },
