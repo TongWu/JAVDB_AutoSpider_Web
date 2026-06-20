@@ -90,7 +90,7 @@ interface EvidenceResponse {
 
 // Mirror router `_optional_bool`: null stays null, otherwise 0 -> false, 1 -> true.
 function optionalBool(value: number | null): boolean | null {
-  return value === null || value === undefined ? null : Boolean(value);
+  return value === null ? null : Boolean(value);
 }
 
 // Mirror router `_list_from_jsonish` / `_row_reasons`: parse the JSON string and
