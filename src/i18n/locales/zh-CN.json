@@ -37,7 +37,8 @@
     "logs": "日志",
     "stats": "统计",
     "library": "资源库",
-    "filterRules": "过滤规则"
+    "filterRules": "过滤规则",
+    "qualityReview": "质量审查"
   },
   "common": {
     "save": "保存",
@@ -1551,6 +1552,67 @@
         "filePath": "文件路径",
         "observedAt": "观测时间"
       }
+    }
+  },
+  "quality": {
+    "title": "种子质量审查",
+    "subtitle": "对比每部影片的正式下载与探测到的候补证据（ADR-024）。",
+    "shadowNote": "对影子证据的只读审查。评分（影子排名、是否替换、决策）尚未生成 — 等待 Python IMP-08。",
+    "filter": {
+      "movieHref": "按影片 href 过滤（如 /v/ABC-123）",
+      "apply": "应用"
+    },
+    "empty": "未找到评估记录。",
+    "notScored": "尚未评分",
+    "col": {
+      "movie": "影片",
+      "category": "分类（JavDB → 推断）",
+      "consistent": "一致性",
+      "score": "评分",
+      "shadowRank": "影子排名",
+      "wouldReplace": "是否替换",
+      "decision": "决策",
+      "reasons": "原因",
+      "infoHash": "Info hash"
+    },
+    "consistent": {
+      "yes": "一致",
+      "no": "不一致"
+    },
+    "detail": {
+      "evaluation": "评估",
+      "reasons": "原因代码",
+      "evidence": "正式下载证据",
+      "evidenceMissing": "尚未记录该种子的正式下载证据。"
+    },
+    "field": {
+      "videoCode": "番号",
+      "movieHref": "影片 href",
+      "scoringVersion": "评分版本",
+      "javdbCategory": "JavDB 分类",
+      "inferredCategory": "推断分类",
+      "magnetName": "磁力名称",
+      "subtitleEvidence": "字幕证据",
+      "policyMode": "策略模式"
+    },
+    "evidence": {
+      "probeTarget": "探测目标",
+      "metadataStatus": "元数据状态",
+      "totalSize": "总大小",
+      "mainVideoSize": "主视频大小",
+      "mainVideoRatio": "主视频占比",
+      "videoFiles": "视频文件数",
+      "subtitleFiles": "字幕文件数",
+      "nonVideoFiles": "非视频文件数",
+      "junkSize": "垃圾文件大小",
+      "junkRatio": "垃圾文件占比",
+      "suspiciousFiles": "可疑文件数"
+    },
+    "review": {
+      "title": "运维审核",
+      "comingSoon": "接受 / 拒绝即将推出（等待 Python IMP-08）。",
+      "accept": "接受",
+      "reject": "拒绝"
     }
   }
 }

@@ -37,7 +37,8 @@
     "config": "構成",
     "auth": "認証",
     "capabilities": "機能権限",
-    "appearance": "外観"
+    "appearance": "外観",
+    "qualityReview": "品質レビュー"
   },
   "common": {
     "save": "保存",
@@ -1551,6 +1552,67 @@
         "filePath": "ファイルパス",
         "observedAt": "観測日時"
       }
+    }
+  },
+  "quality": {
+    "title": "トレント品質レビュー",
+    "subtitle": "各作品の本番ダウンロードと、プローブした次点候補の証拠を比較します（ADR-024）。",
+    "shadowNote": "シャドウ証拠の読み取り専用レビューです。スコアリング（シャドウランク・置換可否・判定）はまだ未生成です — Python IMP-08 待ち。",
+    "filter": {
+      "movieHref": "作品 href で絞り込み（例: /v/ABC-123）",
+      "apply": "適用"
+    },
+    "empty": "評価が見つかりません。",
+    "notScored": "未スコアリング",
+    "col": {
+      "movie": "作品",
+      "category": "カテゴリ（JavDB → 推定）",
+      "consistent": "一致性",
+      "score": "スコア",
+      "shadowRank": "シャドウランク",
+      "wouldReplace": "置換可否",
+      "decision": "判定",
+      "reasons": "理由",
+      "infoHash": "Info hash"
+    },
+    "consistent": {
+      "yes": "一致",
+      "no": "不一致"
+    },
+    "detail": {
+      "evaluation": "評価",
+      "reasons": "理由コード",
+      "evidence": "本番ダウンロードの証拠",
+      "evidenceMissing": "このトレントの本番ダウンロード証拠はまだ記録されていません。"
+    },
+    "field": {
+      "videoCode": "品番",
+      "movieHref": "作品 href",
+      "scoringVersion": "スコアリングバージョン",
+      "javdbCategory": "JavDB カテゴリ",
+      "inferredCategory": "推定カテゴリ",
+      "magnetName": "マグネット名",
+      "subtitleEvidence": "字幕の証拠",
+      "policyMode": "ポリシーモード"
+    },
+    "evidence": {
+      "probeTarget": "プローブ対象",
+      "metadataStatus": "メタデータ状態",
+      "totalSize": "合計サイズ",
+      "mainVideoSize": "メイン動画サイズ",
+      "mainVideoRatio": "メイン動画比率",
+      "videoFiles": "動画ファイル数",
+      "subtitleFiles": "字幕ファイル数",
+      "nonVideoFiles": "非動画ファイル数",
+      "junkSize": "ジャンクサイズ",
+      "junkRatio": "ジャンク比率",
+      "suspiciousFiles": "不審ファイル数"
+    },
+    "review": {
+      "title": "オペレーターレビュー",
+      "comingSoon": "承認 / 却下は近日対応予定です（Python IMP-08 待ち）。",
+      "accept": "承認",
+      "reject": "却下"
     }
   }
 }

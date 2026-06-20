@@ -37,7 +37,8 @@
     "logs": "Logs",
     "stats": "Statistics",
     "library": "Library",
-    "filterRules": "Filter Rules"
+    "filterRules": "Filter Rules",
+    "qualityReview": "Quality Review"
   },
   "common": {
     "save": "Save",
@@ -1551,6 +1552,67 @@
         "filePath": "File path",
         "observedAt": "Observed"
       }
+    }
+  },
+  "quality": {
+    "title": "Torrent Quality Review",
+    "subtitle": "Compare each movie's production download against probed runner-up evidence (ADR-024).",
+    "shadowNote": "Read-only review of shadow evidence. Assist scoring (shadow rank, would-replace, decision) is not yet populated — pending Python IMP-08.",
+    "filter": {
+      "movieHref": "Filter by movie href (e.g. /v/ABC-123)",
+      "apply": "Apply"
+    },
+    "empty": "No evaluations found.",
+    "notScored": "not yet scored",
+    "col": {
+      "movie": "Movie",
+      "category": "Category (JavDB → inferred)",
+      "consistent": "Consistency",
+      "score": "Score",
+      "shadowRank": "Shadow rank",
+      "wouldReplace": "Would replace",
+      "decision": "Decision",
+      "reasons": "Reasons",
+      "infoHash": "Info hash"
+    },
+    "consistent": {
+      "yes": "consistent",
+      "no": "mismatch"
+    },
+    "detail": {
+      "evaluation": "Evaluation",
+      "reasons": "Reason codes",
+      "evidence": "Production download evidence",
+      "evidenceMissing": "No production-download evidence recorded for this torrent yet."
+    },
+    "field": {
+      "videoCode": "Video code",
+      "movieHref": "Movie href",
+      "scoringVersion": "Scoring version",
+      "javdbCategory": "JavDB category",
+      "inferredCategory": "Inferred category",
+      "magnetName": "Magnet name",
+      "subtitleEvidence": "Subtitle evidence",
+      "policyMode": "Policy mode"
+    },
+    "evidence": {
+      "probeTarget": "Probe target",
+      "metadataStatus": "Metadata status",
+      "totalSize": "Total size",
+      "mainVideoSize": "Main video size",
+      "mainVideoRatio": "Main video ratio",
+      "videoFiles": "Video files",
+      "subtitleFiles": "Subtitle files",
+      "nonVideoFiles": "Non-video files",
+      "junkSize": "Junk size",
+      "junkRatio": "Junk ratio",
+      "suspiciousFiles": "Suspicious files"
+    },
+    "review": {
+      "title": "Operator review",
+      "comingSoon": "Accept / reject is coming soon (pending Python IMP-08).",
+      "accept": "Accept",
+      "reject": "Reject"
     }
   }
 }
