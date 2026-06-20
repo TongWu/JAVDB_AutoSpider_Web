@@ -1557,7 +1557,7 @@
   "quality": {
     "title": "Torrent Quality Review",
     "subtitle": "Compare each movie's production download against probed runner-up evidence (ADR-024).",
-    "shadowNote": "Read-only review of shadow evidence. Assist scoring (shadow rank, would-replace, decision) is not yet populated — pending Python IMP-08.",
+    "shadowNote": "Read-only review of quality evidence. Scoring columns (shadow rank, would-replace, decision) show 'not yet scored' when absent.",
     "filter": {
       "movieHref": "Filter by movie href (e.g. /v/ABC-123)",
       "apply": "Apply"
@@ -1610,7 +1610,7 @@
     },
     "review": {
       "title": "Operator review",
-      "comingSoon": "Accept / reject is coming soon (pending Python IMP-08).",
+      "comingSoon": "Accept / reject is coming soon (pending backend support).",
       "accept": "Accept",
       "reject": "Reject"
     }

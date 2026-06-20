@@ -452,10 +452,11 @@ watch(selected, (row) => {
           </NSpin>
         </div>
 
-        <!-- Operator review — STUB. The accept/reject write path is blocked on
-             Python IMP-08 Task A/B (review-label store + write contract). Until
-             that ships there is nothing to mirror, so the controls are disabled.
-             See ADR-024 / IMP-ADR024-08-phase2-assist.md in the Python repo. -->
+        <!-- Operator review — STUB. The Python write contract now exists on main
+             (POST /api/quality/review-labels), but this SPA talks to the TS Worker
+             backend, which has not mirrored it yet. Controls stay disabled until
+             that ADR-018 dual-backend follow-up lands. See ADR-024 /
+             IMP-ADR024-08-phase2-assist.md in the Python repo. -->
         <div class="detail-section">
           <div class="detail-section-title">
             {{ t('quality.review.title') }}

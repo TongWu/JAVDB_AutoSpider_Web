@@ -15,12 +15,14 @@
 //     repo SELECTs extra columns — javdb_tags_json, resolution_consistent, etc. —
 //     which pydantic drops; we drop them the same way).
 //
-// NOTE: the operator accept/reject WRITE path is intentionally NOT built here. It
-// is blocked on the Python IMP-08 assist work (Task A/B) which owns the review-
-// label store + write contract. See
-// /Users/tedwu/JAVDB_AutoSpider_CICD/docs/design/ADR-024-Torrent-Quality-Evidence/IMP-ADR024-08-phase2-assist.md
-// The UI renders accept/reject as disabled "coming soon" affordances; until the
-// Python contract exists there is nothing to mirror.
+// NOTE: this router intentionally covers only the READ surface (evaluations +
+// evidence). The Python side has since shipped the assist contract on main —
+// POST /api/quality/review-labels (operator accept/reject/skip) plus
+// GET /api/quality/recommendations and GET /api/quality/needs-review (all vendored
+// in src/types/api.gen.ts). Mirroring those in this TS Worker backend, and wiring
+// the real accept/reject UI, is a tracked ADR-018 dual-backend follow-up; until it
+// lands the SPA keeps accept/reject disabled. See ADR-024 /
+// IMP-ADR024-08-phase2-assist.md in the Python repo.
 
 import { Hono } from "hono";
 import type { Env } from "../env";

@@ -1557,7 +1557,7 @@
   "quality": {
     "title": "种子质量审查",
     "subtitle": "对比每部影片的正式下载与探测到的候补证据（ADR-024）。",
-    "shadowNote": "对影子证据的只读审查。评分（影子排名、是否替换、决策）尚未生成 — 等待 Python IMP-08。",
+    "shadowNote": "对质量证据的只读审查。评分列（影子排名、是否替换、决策）在缺失时显示为「尚未评分」。",
     "filter": {
       "movieHref": "按影片 href 过滤（如 /v/ABC-123）",
       "apply": "应用"
@@ -1610,7 +1610,7 @@
     },
     "review": {
       "title": "运维审核",
-      "comingSoon": "接受 / 拒绝即将推出（等待 Python IMP-08）。",
+      "comingSoon": "接受 / 拒绝即将推出（等待后端支持）。",
       "accept": "接受",
       "reject": "拒绝"
     }
