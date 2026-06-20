@@ -1602,6 +1602,74 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/quality/needs-review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Needs Review
+         * @description Queue of evaluations that need operator review.
+         *
+         *     Includes rows where decision='needs_review' OR would_replace_current_choice
+         *     is true (a probe candidate outranked the production download). Limit defaults
+         *     to 50, capped at 200.
+         */
+        get: operations["list_needs_review_api_quality_needs_review_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/quality/recommendations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Recommendations
+         * @description Per-category recommendation: current vs best probe candidate + reason diff.
+         */
+        get: operations["list_recommendations_api_quality_recommendations_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/quality/review-labels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Write Review Label
+         * @description Record an operator review label (accept / reject / skip) for an evaluation.
+         *
+         *     Stamps reviewed_at server-side and stores the reviewer from the JWT subject.
+         *     Idempotent: a second call with the same (info_hash, movie_href, scoring_version)
+         *     overwrites the previous label.
+         */
+        post: operations["write_review_label_api_quality_review_labels_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/sessions": {
         parameters: {
             query?: never;
@@ -3537,6 +3605,26 @@ export interface components {
             /** Total */
             total: number;
         };
+        /** QualityRecommendationListResponse */
+        QualityRecommendationListResponse: {
+            /** Items */
+            items: components["schemas"]["QualityRecommendationSchema"][];
+        };
+        /**
+         * QualityRecommendationSchema
+         * @description Per-category recommendation: current vs recommended candidate + diff.
+         */
+        QualityRecommendationSchema: {
+            current?: components["schemas"]["TorrentQualityEvaluationSchema"] | null;
+            /** Javdb Category */
+            javdb_category: string;
+            /**
+             * Reason Diff
+             * @default []
+             */
+            reason_diff: string[];
+            recommended?: components["schemas"]["TorrentQualityEvaluationSchema"] | null;
+        };
         /** RcloneLastResponse */
         RcloneLastResponse: {
             /** Dedup Completed */
@@ -3595,6 +3683,23 @@ export interface components {
             token_type: string;
         } & {
             [key: string]: unknown;
+        };
+        /** ReviewLabelRequest */
+        ReviewLabelRequest: {
+            /** Info Hash */
+            info_hash: string;
+            label: components["schemas"]["_LabelEnum"];
+            /** Movie Href */
+            movie_href: string;
+            /** Note */
+            note?: string | null;
+            /** Scoring Version */
+            scoring_version: string;
+        };
+        /** ReviewLabelResponse */
+        ReviewLabelResponse: {
+            /** Status */
+            status: string;
         };
         /** RunItem */
         RunItem: {
@@ -3974,6 +4079,8 @@ export interface components {
              * @default []
              */
             reasons: string[];
+            /** Resolution Consistent */
+            resolution_consistent?: boolean | null;
             /** Score */
             score?: number | null;
             /** Scoring Version */
@@ -4284,6 +4391,11 @@ export interface components {
             /** Workflows */
             workflows: components["schemas"]["WorkflowItem"][];
         };
+        /**
+         * _LabelEnum
+         * @enum {string}
+         */
+        _LabelEnum: "accept" | "reject" | "skip";
     };
     responses: never;
     parameters: never;
@@ -9341,6 +9453,188 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
                 };
+            };
+        };
+    };
+    list_needs_review_api_quality_needs_review_get: {
+        parameters: {
+            query?: {
+                /** @description Number of recent evaluations to return. Values greater than 200 are truncated to 200 by the server. */
+                limit?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TorrentQualityEvaluationListResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_recommendations_api_quality_recommendations_get: {
+        parameters: {
+            query?: {
+                movie_href?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QualityRecommendationListResponse"];
+                };
+            };
+            /** @description Bad Request */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    write_review_label_api_quality_review_labels_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReviewLabelRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewLabelResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Unprocessable Entity */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };
