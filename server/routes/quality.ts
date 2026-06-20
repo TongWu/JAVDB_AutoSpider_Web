@@ -1,10 +1,13 @@
-// Torrent quality review routes (ADR-024 Phase 2, read-only).
+// Torrent quality review routes (ADR-024 Phase 2).
 //
 // TypeScript mirror of apps/api/routers/quality.py + apps/api/schemas/quality.py
-// (ADR-018 dual-backend parity). Two read endpoints over the shadow evidence the
-// Python collector already writes:
-//   GET /api/quality/evaluations?limit=&movie_href=
-//   GET /api/quality/evidence/:info_hash
+// (ADR-018 dual-backend parity). Read surface over the shadow evidence the Python
+// collector writes, plus the IMP-08 assist endpoints:
+//   GET  /api/quality/evaluations?limit=&movie_href=
+//   GET  /api/quality/evidence/:info_hash
+//   GET  /api/quality/recommendations?movie_href=   (per-category current vs best)
+//   GET  /api/quality/needs-review?limit=           (operator review queue)
+//   POST /api/quality/review-labels                 (operator accept/reject/skip)
 //
 // Row -> response shaping mirrors the Python repo `_to_dict` + router
 // `_evaluation_from_row` / `_evidence_from_row`:
@@ -14,15 +17,6 @@
 //   - only the fields declared by the Python pydantic schemas are emitted (the
 //     repo SELECTs extra columns — javdb_tags_json, resolution_consistent, etc. —
 //     which pydantic drops; we drop them the same way).
-//
-// NOTE: this router intentionally covers only the READ surface (evaluations +
-// evidence). The Python side has since shipped the assist contract on main —
-// POST /api/quality/review-labels (operator accept/reject/skip) plus
-// GET /api/quality/recommendations and GET /api/quality/needs-review (all vendored
-// in src/types/api.gen.ts). Mirroring those in this TS Worker backend, and wiring
-// the real accept/reject UI, is a tracked ADR-018 dual-backend follow-up; until it
-// lands the SPA keeps accept/reject disabled. See ADR-024 /
-// IMP-ADR024-08-phase2-assist.md in the Python repo.
 
 import { Hono } from "hono";
 import type { Env } from "../env";
@@ -30,7 +24,9 @@ import type { JwtPayload } from "../services/jwt";
 import {
   getEvidence,
   listEvaluationsForMovie,
+  listNeedsReview,
   listRecentEvaluations,
+  upsertReviewLabel,
   type TorrentQualityEvaluationRow,
   type TorrentQualityEvidenceRow,
 } from "../services/quality-service";
@@ -44,6 +40,8 @@ const PROBE_SCHEMA_VERSION = "adr024-probe-v1";
 const PRODUCTION_DOWNLOAD_ROLE = "production_download";
 const LIMIT_DEFAULT = 50;
 const LIMIT_CAP = 200;
+// Mirror schemas/quality.py `_LabelEnum`.
+const VALID_LABELS = new Set(["accept", "reject", "skip"]);
 
 // Errors mirror the global app.onError envelope: { error: { code, message } }.
 // (The Python backend uses {detail}; the TS backend has always used this
@@ -86,6 +84,14 @@ interface EvidenceResponse {
   junk_size_ratio: number | null;
   suspicious_file_count: number | null;
   reasons: string[];
+}
+
+// Mirror schemas/quality.py QualityRecommendationSchema.
+interface RecommendationResponse {
+  javdb_category: string;
+  current: EvaluationResponse | null;
+  recommended: EvaluationResponse | null;
+  reason_diff: string[];
 }
 
 // Mirror router `_optional_bool`: null stays null, otherwise 0 -> false, 1 -> true.
@@ -148,6 +154,52 @@ function toEvidenceResponse(r: TorrentQualityEvidenceRow): EvidenceResponse {
   };
 }
 
+// Mirror router `_build_recommendations`. Rows arrive ordered by shadow_rank ASC
+// (listEvaluationsForMovie). For each javdb_category (first-occurrence order, like
+// Python's defaultdict insertion order):
+//   - recommended = the shadow_rank==1 row;
+//   - current     = the would_replace_current_choice row (the production pick a
+//                   probe outranked); when none is flagged, production IS rank 1,
+//                   so current falls back to rank1;
+//   - reason_diff = reason codes in recommended but not in current (sorted), only
+//                   when recommended and current are distinct rows.
+function buildRecommendations(
+  rows: TorrentQualityEvaluationRow[],
+): RecommendationResponse[] {
+  const byCategory = new Map<string, TorrentQualityEvaluationRow[]>();
+  for (const row of rows) {
+    const cat = row.javdb_category || "unknown";
+    const bucket = byCategory.get(cat);
+    if (bucket) bucket.push(row);
+    else byCategory.set(cat, [row]);
+  }
+
+  const items: RecommendationResponse[] = [];
+  for (const [cat, catRows] of byCategory) {
+    const rank1 = catRows.find((r) => r.shadow_rank === 1) ?? null;
+    let currentRow =
+      catRows.find((r) => optionalBool(r.would_replace_current_choice)) ?? null;
+    if (currentRow === null) currentRow = rank1;
+
+    let reasonDiff: string[] = [];
+    if (rank1 !== null && currentRow !== null && rank1 !== currentRow) {
+      const currentCodes = new Set(parseReasons(currentRow.reasons_json));
+      reasonDiff = parseReasons(rank1.reasons_json)
+        .filter((code) => !currentCodes.has(code))
+        .filter((code, i, arr) => arr.indexOf(code) === i)
+        .sort();
+    }
+
+    items.push({
+      javdb_category: cat,
+      current: currentRow ? toEvaluationResponse(currentRow) : null,
+      recommended: rank1 ? toEvaluationResponse(rank1) : null,
+      reason_diff: reasonDiff,
+    });
+  }
+  return items;
+}
+
 // --- Routes ---
 
 // GET /evaluations?limit=&movie_href=
@@ -188,4 +240,95 @@ qualityRoutes.get("/evidence/:info_hash", async (c) => {
     return c.json(errJson("quality.evidence_not_found", "Evidence not found"), 404);
   }
   return c.json(toEvidenceResponse(row));
+});
+
+// GET /recommendations?movie_href= — per-category current-vs-recommended diff.
+// movie_href is required (mirrors the Python router: empty/missing -> 400).
+qualityRoutes.get("/recommendations", async (c) => {
+  const movieHref = c.req.query("movie_href");
+  if (!movieHref) {
+    return c.json(
+      errJson("quality.movie_href_required", "movie_href query parameter is required"),
+      400,
+    );
+  }
+  const rows = await listEvaluationsForMovie(c.env.REPORTS_DB, movieHref);
+  return c.json({ items: buildRecommendations(rows) });
+});
+
+// GET /needs-review?limit= — evaluations needing operator attention.
+// Same limit contract as /evaluations: limit<=0 -> 400, capped at 200.
+qualityRoutes.get("/needs-review", async (c) => {
+  const rawLimit = c.req.query("limit");
+  const limit = rawLimit === undefined ? LIMIT_DEFAULT : Number(rawLimit);
+  if (!Number.isFinite(limit) || limit <= 0) {
+    return c.json(errJson("quality.invalid_limit", "limit must be a positive integer"), 400);
+  }
+  const rows = await listNeedsReview(c.env.REPORTS_DB, Math.min(limit, LIMIT_CAP));
+  return c.json({ items: rows.map(toEvaluationResponse) });
+});
+
+// POST /review-labels — record an operator accept/reject/skip label.
+// Auth + CSRF are enforced by the global requireAuth() middleware (server/app.ts).
+// info_hash, movie_href, scoring_version and label are required; label must be one
+// of accept/reject/skip (mirrors pydantic ReviewLabelRequest -> 422 on violation).
+// reviewed_at is stamped server-side; reviewer comes from the JWT subject. Idempotent
+// on (info_hash, movie_href, scoring_version).
+qualityRoutes.post("/review-labels", async (c) => {
+  let body: {
+    info_hash?: unknown;
+    movie_href?: unknown;
+    scoring_version?: unknown;
+    label?: unknown;
+    note?: unknown;
+  };
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json(errJson("quality.invalid_body", "Request body must be valid JSON"), 422);
+  }
+
+  const { info_hash, movie_href, scoring_version, label, note } = body;
+  if (
+    typeof info_hash !== "string" ||
+    typeof movie_href !== "string" ||
+    typeof scoring_version !== "string" ||
+    typeof label !== "string"
+  ) {
+    return c.json(
+      errJson(
+        "quality.invalid_body",
+        "info_hash, movie_href, scoring_version and label are required",
+      ),
+      422,
+    );
+  }
+  if (!VALID_LABELS.has(label)) {
+    return c.json(
+      errJson("quality.invalid_label", "label must be one of: accept, reject, skip"),
+      422,
+    );
+  }
+  if (note !== undefined && note !== null && typeof note !== "string") {
+    return c.json(errJson("quality.invalid_note", "note must be a string"), 422);
+  }
+
+  // Mirror Python: `datetime.now(UTC).strftime("...%f")[:-3] + "Z"` == ISO millis.
+  const reviewedAt = new Date().toISOString();
+  // Mirror `str(_user.get("sub","") or "")` then `reviewer or None`.
+  const reviewer = c.get("user").sub || null;
+
+  await upsertReviewLabel(
+    c.env.REPORTS_DB,
+    {
+      info_hash,
+      movie_href,
+      scoring_version,
+      label,
+      reviewer,
+      note: note ?? null,
+    },
+    reviewedAt,
+  );
+  return c.json({ status: "recorded" });
 });

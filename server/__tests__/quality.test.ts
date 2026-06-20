@@ -29,11 +29,23 @@ async function login() {
     env,
   );
   const data = (await res.json()) as Record<string, unknown>;
-  return { accessToken: data.access_token as string };
+  return {
+    accessToken: data.access_token as string,
+    csrfToken: data.csrf_token as string,
+  };
 }
 
 function authHeaders(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
+}
+
+function mutationHeaders(accessToken: string, csrfToken: string) {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${accessToken}`,
+    "X-CSRF-Token": csrfToken,
+    Cookie: `csrf_token=${csrfToken}`,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -94,6 +106,55 @@ async function seedQualityTables() {
      VALUES
        ('hash_qa2_a', '/v/QA-002', 'adr024-score-v1', NULL, NULL),
        ('hash_qa2_b', '/v/QA-002', 'adr024-score-v1', NULL, '{not valid json')`,
+  ).run();
+
+  // Assist-mode movie: a quality probe (rank 1) outranks the production download
+  // (rank 2, flagged would_replace_current_choice=1). Used by recommendations +
+  // needs-review. reason_diff = recommended reasons - current reasons.
+  await env.REPORTS_DB.prepare(
+    `INSERT OR REPLACE INTO TorrentQualityEvaluation
+       (info_hash, movie_href, scoring_version, video_code, javdb_category, magnet_name,
+        javdb_tags_json, javdb_size_text, inferred_category, category_consistent, subtitle_evidence,
+        resolution_consistent, source_trust, score, shadow_rank, would_replace_current_choice,
+        policy_mode, decision, reasons_json)
+     VALUES
+       ('hash_qa3_prod', '/v/QA-003', 'adr024-score-v1', 'QA-003', '4K', 'QA-003 prod',
+        '[]', '8 GB', '4K', 1, NULL,
+        NULL, NULL, 0.55, 2, 1, 'assist', NULL, '["junk_high"]'),
+       ('hash_qa3_probe', '/v/QA-003', 'adr024-score-v1', 'QA-003', '4K', 'QA-003 probe',
+        '[]', '14 GB', '4K', 1, 'embedded',
+        NULL, NULL, 0.91, 1, NULL, 'assist', NULL,
+        '["junk_high","size_better","subs_present"]')`,
+  ).run();
+
+  // A row flagged decision='needs_review' (without would_replace) — also surfaces
+  // in the needs-review queue.
+  await env.REPORTS_DB.prepare(
+    `INSERT OR REPLACE INTO TorrentQualityEvaluation
+       (info_hash, movie_href, scoring_version, javdb_category, shadow_rank,
+        would_replace_current_choice, decision, reasons_json)
+     VALUES
+       ('hash_qa4_a', '/v/QA-004', 'adr024-score-v1', 'HD', 1, NULL, 'needs_review', '["low_confidence"]')`,
+  ).run();
+
+  // Operator review-label table (mirrors javdb/migrations/d1/
+  // 2026_06_20_add_torrent_quality_review_label.sql byte-for-byte).
+  await env.REPORTS_DB.prepare(
+    `CREATE TABLE IF NOT EXISTS TorrentQualityReviewLabel (
+      info_hash        TEXT NOT NULL,
+      movie_href       TEXT NOT NULL,
+      scoring_version  TEXT NOT NULL,
+      label            TEXT NOT NULL
+                           CHECK (label IN ('accept', 'reject', 'skip')),
+      reviewer         TEXT,
+      note             TEXT,
+      reviewed_at      TEXT NOT NULL,
+      PRIMARY KEY (info_hash, movie_href, scoring_version)
+    )`,
+  ).run();
+  await env.REPORTS_DB.prepare(
+    `CREATE INDEX IF NOT EXISTS idx_quality_review_label_movie
+       ON TorrentQualityReviewLabel(movie_href)`,
   ).run();
 
   // Production-download evidence (stored lowercase) + a runner-up row with the
@@ -279,6 +340,236 @@ describe("Quality review routes", () => {
   // -----------------------------------------------------------------------
   it("rejects an unauthenticated request with 401", async () => {
     const res = await app.request("/api/quality/evaluations", {}, env);
+    expect(res.status).toBe(401);
+  });
+
+  // -----------------------------------------------------------------------
+  // 10. Recommendations: a probe outranks the production pick.
+  // -----------------------------------------------------------------------
+  it("builds current-vs-recommended with a reason diff when a probe wins", async () => {
+    const { accessToken } = await login();
+    const res = await app.request(
+      `/api/quality/recommendations?movie_href=${encodeURIComponent("/v/QA-003")}`,
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      items: {
+        javdb_category: string;
+        current: { info_hash: string } | null;
+        recommended: { info_hash: string } | null;
+        reason_diff: string[];
+      }[];
+    };
+    expect(body.items.length).toBe(1);
+    const item = body.items[0];
+    expect(item.javdb_category).toBe("4K");
+    expect(item.current?.info_hash).toBe("hash_qa3_prod"); // flagged would_replace
+    expect(item.recommended?.info_hash).toBe("hash_qa3_probe"); // shadow_rank 1
+    expect(item.reason_diff).toEqual(["size_better", "subs_present"]);
+  });
+
+  // -----------------------------------------------------------------------
+  // 11. Recommendations: production already rank 1 -> current == recommended, no diff.
+  // -----------------------------------------------------------------------
+  it("returns current == recommended with empty diff when nothing is flagged", async () => {
+    const { accessToken } = await login();
+    const res = await app.request(
+      `/api/quality/recommendations?movie_href=${encodeURIComponent("/v/QA-001")}`,
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as {
+      items: {
+        current: { info_hash: string } | null;
+        recommended: { info_hash: string } | null;
+        reason_diff: string[];
+      }[];
+    };
+    expect(body.items.length).toBe(1);
+    const item = body.items[0];
+    expect(item.recommended?.info_hash).toBe("hash_qa1_b"); // shadow_rank 1
+    expect(item.current?.info_hash).toBe("hash_qa1_b"); // falls back to rank 1
+    expect(item.reason_diff).toEqual([]);
+  });
+
+  // -----------------------------------------------------------------------
+  // 12. Recommendations require movie_href -> 400.
+  // -----------------------------------------------------------------------
+  it("rejects recommendations without movie_href", async () => {
+    const { accessToken } = await login();
+    const res = await app.request(
+      "/api/quality/recommendations",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("quality.movie_href_required");
+  });
+
+  // -----------------------------------------------------------------------
+  // 13. needs-review: surfaces would_replace=1 OR decision='needs_review' only.
+  // -----------------------------------------------------------------------
+  it("lists only evaluations that need review", async () => {
+    const { accessToken } = await login();
+    const res = await app.request(
+      "/api/quality/needs-review",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { items: { info_hash: string }[] };
+    const hashes = body.items.map((r) => r.info_hash);
+    expect(hashes).toContain("hash_qa3_prod"); // would_replace_current_choice=1
+    expect(hashes).toContain("hash_qa4_a"); // decision='needs_review'
+    expect(hashes).not.toContain("hash_qa3_probe"); // assist, not flagged
+    expect(hashes).not.toContain("hash_qa1_a"); // plain evaluation
+  });
+
+  // -----------------------------------------------------------------------
+  // 14. needs-review limit <= 0 -> 400.
+  // -----------------------------------------------------------------------
+  it("rejects a non-positive needs-review limit with 400", async () => {
+    const { accessToken } = await login();
+    const res = await app.request(
+      "/api/quality/needs-review?limit=0",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("quality.invalid_limit");
+  });
+
+  // -----------------------------------------------------------------------
+  // 15. review-labels: write + persist, reviewer from JWT, idempotent overwrite.
+  // -----------------------------------------------------------------------
+  it("records a review label and overwrites idempotently on resubmit", async () => {
+    const { accessToken, csrfToken } = await login();
+    const payload = {
+      info_hash: "hash_qa3_probe",
+      movie_href: "/v/QA-003",
+      scoring_version: "adr024-score-v1",
+      label: "accept",
+      note: "looks good",
+    };
+    const res = await app.request(
+      "/api/quality/review-labels",
+      { method: "POST", headers: mutationHeaders(accessToken, csrfToken), body: JSON.stringify(payload) },
+      env,
+    );
+    expect(res.status).toBe(200);
+    expect((await res.json()) as { status: string }).toEqual({ status: "recorded" });
+
+    const row = await env.REPORTS_DB.prepare(
+      `SELECT label, reviewer, note, reviewed_at FROM TorrentQualityReviewLabel
+       WHERE info_hash = ? AND movie_href = ? AND scoring_version = ?`,
+    )
+      .bind("hash_qa3_probe", "/v/QA-003", "adr024-score-v1")
+      .first<{ label: string; reviewer: string | null; note: string | null; reviewed_at: string | null }>();
+    expect(row?.label).toBe("accept");
+    expect(row?.reviewer).toBe("admin"); // JWT subject
+    expect(row?.note).toBe("looks good");
+    expect(row?.reviewed_at).toBeTruthy();
+
+    // Resubmit with a different label + null note -> overwrite, still one row.
+    const res2 = await app.request(
+      "/api/quality/review-labels",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ ...payload, label: "reject", note: undefined }),
+      },
+      env,
+    );
+    expect(res2.status).toBe(200);
+
+    const after = await env.REPORTS_DB.prepare(
+      `SELECT label, note, COUNT(*) AS n FROM TorrentQualityReviewLabel
+       WHERE info_hash = ? AND movie_href = ? AND scoring_version = ?`,
+    )
+      .bind("hash_qa3_probe", "/v/QA-003", "adr024-score-v1")
+      .first<{ label: string; note: string | null; n: number }>();
+    expect(after?.n).toBe(1);
+    expect(after?.label).toBe("reject");
+    expect(after?.note).toBeNull();
+  });
+
+  // -----------------------------------------------------------------------
+  // 16. review-labels validation: missing field + invalid label -> 422.
+  // -----------------------------------------------------------------------
+  it("rejects review labels with a missing field or invalid label", async () => {
+    const { accessToken, csrfToken } = await login();
+    const missing = await app.request(
+      "/api/quality/review-labels",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({ info_hash: "h", movie_href: "/v/x", label: "accept" }), // no scoring_version
+      },
+      env,
+    );
+    expect(missing.status).toBe(422);
+
+    const badLabel = await app.request(
+      "/api/quality/review-labels",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({
+          info_hash: "h",
+          movie_href: "/v/x",
+          scoring_version: "v1",
+          label: "maybe",
+        }),
+      },
+      env,
+    );
+    expect(badLabel.status).toBe(422);
+    const body = (await badLabel.json()) as { error: { code: string } };
+    expect(body.error.code).toBe("quality.invalid_label");
+  });
+
+  // -----------------------------------------------------------------------
+  // 17. review-labels enforces CSRF (POST without token) + auth.
+  // -----------------------------------------------------------------------
+  it("rejects a review label POST without a CSRF token", async () => {
+    const { accessToken } = await login();
+    const res = await app.request(
+      "/api/quality/review-labels",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authHeaders(accessToken) },
+        body: JSON.stringify({
+          info_hash: "h",
+          movie_href: "/v/x",
+          scoring_version: "v1",
+          label: "accept",
+        }),
+      },
+      env,
+    );
+    expect(res.status).toBe(403);
+  });
+
+  it("rejects an unauthenticated review label POST with 401", async () => {
+    const res = await app.request(
+      "/api/quality/review-labels",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          info_hash: "h",
+          movie_href: "/v/x",
+          scoring_version: "v1",
+          label: "accept",
+        }),
+      },
+      env,
+    );
     expect(res.status).toBe(401);
   });
 });
