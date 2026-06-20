@@ -11,6 +11,12 @@ export type TorrentQualityEvaluation = components['schemas']['TorrentQualityEval
 export type TorrentQualityEvidence = components['schemas']['TorrentQualityEvidenceSchema']
 export type TorrentQualityEvaluationList =
   components['schemas']['TorrentQualityEvaluationListResponse']
+export type QualityRecommendation = components['schemas']['QualityRecommendationSchema']
+export type QualityRecommendationList =
+  components['schemas']['QualityRecommendationListResponse']
+export type ReviewLabelRequest = components['schemas']['ReviewLabelRequest']
+export type ReviewLabelResponse = components['schemas']['ReviewLabelResponse']
+export type ReviewLabel = ReviewLabelRequest['label']
 
 export interface ListEvaluationsParams {
   // Capped server-side at 200; ignored when movie_href is provided.
@@ -38,5 +44,28 @@ export async function getQualityEvidence(infoHash: string): Promise<TorrentQuali
     `/api/quality/evidence/${encodeURIComponent(infoHash)}`,
     { skipErrorToast: true },
   )
+  return data
+}
+
+// Per-category current-vs-recommended candidates + reason diff for one movie. The
+// drawer renders this inline (404/empty is an expected "not yet scored" state), so
+// the global error toast is suppressed and the caller handles failures itself.
+export async function listQualityRecommendations(
+  movieHref: string,
+): Promise<QualityRecommendationList> {
+  const { data } = await http.get<QualityRecommendationList>('/api/quality/recommendations', {
+    params: { movie_href: movieHref },
+    skipErrorToast: true,
+  })
+  return data
+}
+
+// Record an operator accept/reject/skip label. The http client injects the CSRF
+// token for mutations. Throws on validation / auth errors (the caller surfaces the
+// message inline rather than via the global toast).
+export async function submitReviewLabel(body: ReviewLabelRequest): Promise<ReviewLabelResponse> {
+  const { data } = await http.post<ReviewLabelResponse>('/api/quality/review-labels', body, {
+    skipErrorToast: true,
+  })
   return data
 }

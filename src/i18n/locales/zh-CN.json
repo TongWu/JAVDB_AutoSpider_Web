@@ -1610,9 +1610,19 @@
     },
     "review": {
       "title": "运维审核",
-      "comingSoon": "接受 / 拒绝即将推出（等待后端支持）。",
       "accept": "接受",
-      "reject": "拒绝"
+      "reject": "拒绝",
+      "skip": "跳过",
+      "notePlaceholder": "备注（接受 / 拒绝 / 跳过的原因，可选）",
+      "recorded": "已记录：{label}",
+      "success": "审核已记录",
+      "error": "记录审核失败",
+      "recommendation": {
+        "title": "辅助推荐",
+        "betterCandidate": "该分类下存在评分更高的候选。",
+        "recommended": "推荐",
+        "extraReasons": "额外原因"
+      }
     }
   }
 }

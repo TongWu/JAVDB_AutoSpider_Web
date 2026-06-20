@@ -151,3 +151,63 @@ export async function getEvidence(
     .bind(infoHash, probeSchemaVersion, targetRole)
     .first<TorrentQualityEvidenceRow>();
 }
+
+// Mirrors TorrentQualityRepo.list_needs_review — evaluations needing operator
+// attention (decision='needs_review' OR a probe outranked the production pick).
+// Same WHERE/ORDER BY/LIMIT as the Python source; `limit` is capped by the route.
+export async function listNeedsReview(
+  db: D1Database,
+  limit: number,
+): Promise<TorrentQualityEvaluationRow[]> {
+  const sql =
+    `SELECT ${EVALUATION_COLUMNS} FROM TorrentQualityEvaluation ` +
+    "WHERE decision = 'needs_review' OR would_replace_current_choice = 1 " +
+    "ORDER BY created_at DESC, info_hash DESC, movie_href DESC, " +
+    "scoring_version DESC LIMIT ?";
+  const rows = await db.prepare(sql).bind(limit).all<TorrentQualityEvaluationRow>();
+  return rows.results;
+}
+
+// One operator review label (write payload). Mirrors the Python
+// torrent_quality_review_repo.ReviewLabel dataclass.
+export interface ReviewLabel {
+  info_hash: string;
+  movie_href: string;
+  scoring_version: string;
+  label: string;
+  reviewer: string | null;
+  note: string | null;
+}
+
+// Mirrors TorrentQualityReviewRepo.upsert_label — byte-for-byte the same INSERT
+// ... ON CONFLICT DO UPDATE over TorrentQualityReviewLabel (REPORTS_DB). The PK is
+// (info_hash, movie_href, scoring_version), so a re-submit overwrites the label /
+// reviewer / note / reviewed_at. `reviewed_at` is stamped server-side by the route.
+export async function upsertReviewLabel(
+  db: D1Database,
+  label: ReviewLabel,
+  reviewedAt: string,
+): Promise<void> {
+  await db
+    .prepare(
+      `INSERT INTO TorrentQualityReviewLabel (
+        info_hash, movie_href, scoring_version,
+        label, reviewer, note, reviewed_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(info_hash, movie_href, scoring_version) DO UPDATE SET
+        label=excluded.label,
+        reviewer=excluded.reviewer,
+        note=excluded.note,
+        reviewed_at=excluded.reviewed_at`,
+    )
+    .bind(
+      label.info_hash,
+      label.movie_href,
+      label.scoring_version,
+      label.label,
+      label.reviewer,
+      label.note,
+      reviewedAt,
+    )
+    .run();
+}

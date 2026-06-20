@@ -1610,9 +1610,19 @@
     },
     "review": {
       "title": "Operator review",
-      "comingSoon": "Accept / reject is coming soon (pending backend support).",
       "accept": "Accept",
-      "reject": "Reject"
+      "reject": "Reject",
+      "skip": "Skip",
+      "notePlaceholder": "Optional note (why accept / reject / skip)",
+      "recorded": "Recorded: {label}",
+      "success": "Review recorded",
+      "error": "Failed to record review",
+      "recommendation": {
+        "title": "Assist recommendation",
+        "betterCandidate": "A different candidate scores higher for this category.",
+        "recommended": "Recommended",
+        "extraReasons": "Additional reasons"
+      }
     }
   }
 }

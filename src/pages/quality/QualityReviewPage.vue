@@ -20,6 +20,10 @@ import type { DataTableColumns } from 'naive-ui'
 import {
   getQualityEvidence,
   listQualityEvaluations,
+  listQualityRecommendations,
+  submitReviewLabel,
+  type QualityRecommendation,
+  type ReviewLabel,
   type TorrentQualityEvaluation,
   type TorrentQualityEvidence,
 } from '@/api/quality-review'
@@ -181,12 +185,77 @@ async function fetchEvidence(infoHash: string) {
   }
 }
 
+// ── Assist recommendation (per-category current vs best candidate) ───
+const recommendation = ref<QualityRecommendation | null>(null)
+let recReqSeq = 0
+
+async function fetchRecommendation(row: TorrentQualityEvaluation) {
+  const reqSeq = ++recReqSeq
+  recommendation.value = null
+  try {
+    const res = await listQualityRecommendations(row.movie_href)
+    if (reqSeq !== recReqSeq) return
+    const cat = row.javdb_category ?? 'unknown'
+    recommendation.value = res.items.find((it) => it.javdb_category === cat) ?? null
+  } catch {
+    if (reqSeq === recReqSeq) recommendation.value = null
+  }
+}
+
+// True when a different candidate outranks the current production pick.
+const recommendedDiffers = computed(() => {
+  const rec = recommendation.value
+  return Boolean(rec?.recommended && rec.recommended.info_hash !== rec.current?.info_hash)
+})
+
+// ── Operator review (accept / reject / skip) ────────────────────────
+// Labels recorded this session, keyed by evaluation PK, so the drawer reflects
+// a prior submission when reopened.
+const reviewLabels = ref<Record<string, ReviewLabel>>({})
+const reviewSubmitting = ref<ReviewLabel | null>(null)
+const reviewError = ref<string | null>(null)
+const reviewNote = ref('')
+
+function evalKey(row: TorrentQualityEvaluation): string {
+  return `${row.info_hash}:${row.movie_href}:${row.scoring_version}`
+}
+
+const recordedLabel = computed<ReviewLabel | null>(() =>
+  selected.value ? (reviewLabels.value[evalKey(selected.value)] ?? null) : null,
+)
+
+async function submitLabel(label: ReviewLabel) {
+  const row = selected.value
+  if (!row || reviewSubmitting.value) return
+  reviewSubmitting.value = label
+  reviewError.value = null
+  try {
+    await submitReviewLabel({
+      info_hash: row.info_hash,
+      movie_href: row.movie_href,
+      scoring_version: row.scoring_version,
+      label,
+      note: reviewNote.value.trim() || null,
+    })
+    reviewLabels.value = { ...reviewLabels.value, [evalKey(row)]: label }
+  } catch (e) {
+    reviewError.value = extractErrorMessage(e)
+  } finally {
+    reviewSubmitting.value = null
+  }
+}
+
 watch(selected, (row) => {
-  if (row) void fetchEvidence(row.info_hash)
-  else {
+  reviewNote.value = ''
+  reviewError.value = null
+  if (row) {
+    void fetchEvidence(row.info_hash)
+    void fetchRecommendation(row)
+  } else {
     evidence.value = null
     evidenceMissing.value = false
     evidenceError.value = null
+    recommendation.value = null
   }
 })
 </script>
@@ -454,37 +523,102 @@ watch(selected, (row) => {
           </NSpin>
         </div>
 
-        <!-- Operator review — STUB. The Python write contract now exists on main
-             (POST /api/quality/review-labels), but this SPA talks to the TS Worker
-             backend, which has not mirrored it yet. Controls stay disabled until
-             that ADR-018 dual-backend follow-up lands. See ADR-024 /
-             IMP-ADR024-08-phase2-assist.md in the Python repo. -->
+        <!-- Operator review — accept / reject / skip (POST review-labels). CSRF is
+             injected by the http client for mutations. -->
         <div class="detail-section">
           <div class="detail-section-title">
             {{ t('quality.review.title') }}
           </div>
+
+          <!-- Assist recommendation: a different candidate outranks the current pick. -->
           <NAlert
-            type="warning"
+            v-if="recommendedDiffers && recommendation"
+            type="info"
             size="small"
             :show-icon="true"
             style="margin-bottom: 8px"
           >
-            {{ t('quality.review.comingSoon') }}
+            <div>{{ t('quality.review.recommendation.betterCandidate') }}</div>
+            <div style="margin-top: 4px">
+              {{ t('quality.review.recommendation.recommended') }}:
+              {{ recommendation.recommended?.video_code ?? recommendation.recommended?.info_hash }}
+              <template v-if="recommendation.recommended?.shadow_rank != null">
+                (#{{ recommendation.recommended?.shadow_rank }})
+              </template>
+            </div>
+            <NSpace
+              v-if="recommendation.reason_diff.length"
+              :size="4"
+              wrap
+              style="margin-top: 6px"
+            >
+              <NTag
+                v-for="(reason, i) in recommendation.reason_diff"
+                :key="i"
+                size="small"
+                type="success"
+              >
+                {{ reason }}
+              </NTag>
+            </NSpace>
           </NAlert>
+
+          <NAlert
+            v-if="recordedLabel"
+            type="success"
+            size="small"
+            :show-icon="true"
+            style="margin-bottom: 8px"
+          >
+            {{ t('quality.review.recorded', { label: t('quality.review.' + recordedLabel) }) }}
+          </NAlert>
+
+          <NAlert
+            v-if="reviewError"
+            type="error"
+            size="small"
+            closable
+            style="margin-bottom: 8px"
+            @close="reviewError = null"
+          >
+            {{ reviewError }}
+          </NAlert>
+
+          <NInput
+            v-model:value="reviewNote"
+            type="textarea"
+            :placeholder="t('quality.review.notePlaceholder')"
+            :autosize="{ minRows: 1, maxRows: 3 }"
+            size="small"
+            style="margin-bottom: 8px"
+          />
+
           <NSpace :size="8">
             <NButton
               size="small"
               type="success"
-              disabled
+              :loading="reviewSubmitting === 'accept'"
+              :disabled="reviewSubmitting !== null"
+              @click="() => void submitLabel('accept')"
             >
               {{ t('quality.review.accept') }}
             </NButton>
             <NButton
               size="small"
               type="error"
-              disabled
+              :loading="reviewSubmitting === 'reject'"
+              :disabled="reviewSubmitting !== null"
+              @click="() => void submitLabel('reject')"
             >
               {{ t('quality.review.reject') }}
+            </NButton>
+            <NButton
+              size="small"
+              :loading="reviewSubmitting === 'skip'"
+              :disabled="reviewSubmitting !== null"
+              @click="() => void submitLabel('skip')"
+            >
+              {{ t('quality.review.skip') }}
             </NButton>
           </NSpace>
         </div>

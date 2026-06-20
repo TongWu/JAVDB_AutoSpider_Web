@@ -1610,9 +1610,19 @@
     },
     "review": {
       "title": "オペレーターレビュー",
-      "comingSoon": "承認 / 却下は近日対応予定です（バックエンド対応待ち）。",
       "accept": "承認",
-      "reject": "却下"
+      "reject": "却下",
+      "skip": "スキップ",
+      "notePlaceholder": "メモ（承認 / 却下 / スキップの理由・任意）",
+      "recorded": "記録済み: {label}",
+      "success": "レビューを記録しました",
+      "error": "レビューの記録に失敗しました",
+      "recommendation": {
+        "title": "アシスト推奨",
+        "betterCandidate": "このカテゴリで別の候補がより高いスコアです。",
+        "recommended": "推奨",
+        "extraReasons": "追加の理由"
+      }
     }
   }
 }
