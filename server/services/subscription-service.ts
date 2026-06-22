@@ -112,10 +112,22 @@ export async function listNewWorks(
 export async function dismissNewWork(
   db: D1Database,
   videoCode: string,
+  actorHref: string | null = null,
 ): Promise<boolean> {
-  const res = await db
-    .prepare("UPDATE NewWorks SET dismissed = 1 WHERE video_code = ?")
-    .bind(videoCode)
-    .run();
+  // actorHref scopes the dismiss to a single followed actor's feed row (the
+  // same release can occupy one row per actor, composite PK); omitting it
+  // dismisses the release across every actor's feed (back-compat). Mirrors
+  // the Python NewWorksRepo.dismiss contract (issue #229).
+  const res = actorHref
+    ? await db
+        .prepare(
+          "UPDATE NewWorks SET dismissed = 1 WHERE video_code = ? AND actor_href = ?",
+        )
+        .bind(videoCode, actorHref)
+        .run()
+    : await db
+        .prepare("UPDATE NewWorks SET dismissed = 1 WHERE video_code = ?")
+        .bind(videoCode)
+        .run();
   return (res.meta?.changes ?? 0) > 0;
 }

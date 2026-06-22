@@ -43,11 +43,14 @@ async function seedTables() {
     )`,
   ).run();
   await env.HISTORY_DB.prepare(
+    // Composite PK mirrors production D1 (issue #223) so the same release can
+    // occupy one row per followed actor — the premise scoped dismiss relies on.
     `CREATE TABLE IF NOT EXISTS NewWorks (
-      video_code TEXT PRIMARY KEY, href TEXT NOT NULL, actor_href TEXT NOT NULL,
+      video_code TEXT NOT NULL, href TEXT NOT NULL, actor_href TEXT NOT NULL,
       title TEXT, release_date TEXT,
       discovered_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
-      dismissed INTEGER NOT NULL DEFAULT 0 CHECK (dismissed IN (0,1))
+      dismissed INTEGER NOT NULL DEFAULT 0 CHECK (dismissed IN (0,1)),
+      PRIMARY KEY (actor_href, video_code)
     )`,
   ).run();
 }
@@ -134,6 +137,38 @@ describe("Subscription routes", () => {
       env,
     );
     expect((await after.json() as { total: number }).total).toBe(0);
+  });
+
+  it("scopes dismiss to a single actor via actor_href query param", async () => {
+    const { accessToken, csrfToken } = await login();
+    // Same release in a second followed actor's feed (composite PK).
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO NewWorks (video_code, href, actor_href) VALUES (?, ?, ?)",
+    )
+      .bind("NW-001", "/v/nw001", "/actors/Other")
+      .run();
+
+    const dismiss = await app.request(
+      "/api/new-works/NW-001/dismiss?actor_href=/actors/EvkJ",
+      { method: "POST", headers: mutationHeaders(accessToken, csrfToken) },
+      env,
+    );
+    expect(dismiss.status).toBe(200);
+    expect((await dismiss.json() as Record<string, unknown>).dismissed).toBe(true);
+
+    // Only EvkJ's row is hidden; the other actor still sees the release.
+    const evkj = await app.request(
+      "/api/new-works?actor_href=/actors/EvkJ",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect((await evkj.json() as { total: number }).total).toBe(0);
+    const other = await app.request(
+      "/api/new-works?actor_href=/actors/Other",
+      { headers: authHeaders(accessToken) },
+      env,
+    );
+    expect((await other.json() as { total: number }).total).toBe(1);
   });
 
   it("normalizes and validates actor_href filters for new works", async () => {

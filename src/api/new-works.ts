@@ -37,6 +37,13 @@ export async function listNewWorks(
   return data
 }
 
-export async function dismissNewWork(videoCode: string): Promise<void> {
-  await http.post(`/api/new-works/${encodeURIComponent(videoCode)}/dismiss`)
+export async function dismissNewWork(
+  videoCode: string,
+  actorHref?: string | null,
+): Promise<void> {
+  // actorHref scopes the dismiss to one followed actor's feed; omitting it
+  // dismisses across every actor's feed (back-compat). See issue #229.
+  await http.post(`/api/new-works/${encodeURIComponent(videoCode)}/dismiss`, null, {
+    params: { actor_href: actorHref ?? undefined },
+  })
 }

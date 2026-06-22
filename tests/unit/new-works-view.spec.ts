@@ -85,7 +85,8 @@ describe('NewWorksView', () => {
     await dismissBtn!.trigger('click')
     await flushPromises()
 
-    expect(dismissNewWork).toHaveBeenCalledWith('N-1')
+    // Dismiss is scoped to the row's actor so other actors' feeds survive (#229).
+    expect(dismissNewWork).toHaveBeenCalledWith('N-1', '/actors/AAA')
     // dismiss() awaits dismissNewWork then fetchList() → one extra list call.
     expect((listNewWorks as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterLoad + 1)
   })
