@@ -174,9 +174,20 @@ subscriptionsRoutes.get("/new-works", async (c) => {
 });
 
 subscriptionsRoutes.post("/new-works/:videoCode/dismiss", requireRole("admin"), async (c) => {
+  // actor_href scopes the dismiss to one followed actor's feed row; omitting
+  // it dismisses across every actor's feed (back-compat). Query param mirrors
+  // the sibling GET /new-works?actor_href=… contract (issue #229).
+  const actorHrefRaw = c.req.query("actor_href");
+  let actorHref: string | null = null;
+  if (actorHrefRaw !== undefined) {
+    const parsedActorHref = parseActorHref(actorHrefRaw);
+    if (!parsedActorHref.ok) return parsedActorHref.error;
+    actorHref = parsedActorHref.value;
+  }
   const dismissed = await dismissNewWork(
     c.env.HISTORY_DB,
     c.req.param("videoCode"),
+    actorHref,
   );
   if (!dismissed) {
     return c.json(errJson("new_works.not_found", "Record not found"), 404);

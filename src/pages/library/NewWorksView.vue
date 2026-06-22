@@ -31,9 +31,9 @@ async function fetchList(): Promise<void> {
   }
 }
 
-async function dismiss(videoCode: string): Promise<void> {
+async function dismiss(videoCode: string, actorHref: string): Promise<void> {
   try {
-    await dismissNewWork(videoCode)
+    await dismissNewWork(videoCode, actorHref)
     await fetchList()
   } catch {
     message.error(t('library.newWorks.dismissError'))
@@ -82,7 +82,7 @@ const columns = computed<DataTableColumns<NewWork>>(() => [
     render: (row) =>
       h(
         NButton,
-        { size: 'small', tertiary: true, onClick: () => void dismiss(row.video_code) },
+        { size: 'small', tertiary: true, onClick: () => void dismiss(row.video_code, row.actor_href) },
         { default: () => t('library.newWorks.dismiss') },
       ),
   },
