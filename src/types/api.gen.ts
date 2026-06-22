@@ -7840,7 +7840,9 @@ export interface operations {
     };
     dismiss_new_work_api_new_works__video_code__dismiss_post: {
         parameters: {
-            query?: never;
+            query?: {
+                actor_href?: string | null;
+            };
             header?: never;
             path: {
                 video_code: string;
