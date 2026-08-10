@@ -25,16 +25,22 @@ async function seedOutcomes(db: D1Database) {
       `CREATE TABLE IF NOT EXISTS AcquisitionOutcome (
         qb_hash TEXT PRIMARY KEY NOT NULL, href TEXT NOT NULL DEFAULT '',
         video_code TEXT, category TEXT, state TEXT NOT NULL DEFAULT 'queued',
-        queued_at TEXT, completed_at TEXT, landed_at TEXT, last_seen_at TEXT, session_id TEXT)`,
+        queued_at TEXT, completed_at TEXT, landed_at TEXT, last_seen_at TEXT, session_id TEXT,
+        state_changed_at TEXT)`,
     )
     .run();
   await db.batch([
     db.prepare(
-      "INSERT INTO AcquisitionOutcome (qb_hash, href, video_code, category, state, queued_at, completed_at, last_seen_at) VALUES (?,?,?,?,?,?,?,?)",
-    ).bind("h1", "/v/a", "AAA-001", "subtitle", "queued", "2026-06-01T00:00:00.000000Z", null, "2026-06-01T00:00:00.000000Z"),
+      "INSERT INTO AcquisitionOutcome (qb_hash, href, video_code, category, state, queued_at, completed_at, last_seen_at, state_changed_at) VALUES (?,?,?,?,?,?,?,?,?)",
+    ).bind("h1", "/v/a", "AAA-001", "subtitle", "queued", "2026-06-01T00:00:00.000000Z", null, "2026-06-01T00:00:00.000000Z", "2026-06-01T00:00:00.000000Z"),
     db.prepare(
-      "INSERT INTO AcquisitionOutcome (qb_hash, href, video_code, category, state, queued_at, completed_at, last_seen_at) VALUES (?,?,?,?,?,?,?,?)",
-    ).bind("h3", "/v/c", "CCC-003", "subtitle", "completed", "2026-06-03T00:00:00.000000Z", "2026-06-04T00:00:00.000000Z", "2026-06-04T00:00:00.000000Z"),
+      "INSERT INTO AcquisitionOutcome (qb_hash, href, video_code, category, state, queued_at, completed_at, last_seen_at, state_changed_at) VALUES (?,?,?,?,?,?,?,?,?)",
+    ).bind("h3", "/v/c", "CCC-003", "subtitle", "completed", "2026-06-03T00:00:00.000000Z", "2026-06-04T00:00:00.000000Z", "2026-06-04T00:00:00.000000Z", "2026-06-04T00:00:00.000000Z"),
+    // Last seen alive 2026-06-05, transitioned to stalled a week later: the trend
+    // must plot it on the transition day, not on last_seen_at.
+    db.prepare(
+      "INSERT INTO AcquisitionOutcome (qb_hash, href, video_code, category, state, queued_at, completed_at, last_seen_at, state_changed_at) VALUES (?,?,?,?,?,?,?,?,?)",
+    ).bind("h4", "/v/d", "DDD-004", "subtitle", "stalled", "2026-05-30T00:00:00.000000Z", null, "2026-06-05T00:00:00.000000Z", "2026-06-12T00:00:00.000000Z"),
   ]);
 }
 
@@ -54,7 +60,8 @@ describe("Library acquisition routes", () => {
     const body = (await res.json()) as Record<string, number>;
     expect(body.queued).toBe(1);
     expect(body.completed).toBe(1);
-    expect(body.total).toBe(2);
+    expect(body.stalled).toBe(1);
+    expect(body.total).toBe(3);
   });
 
   it("recent filters by state", async () => {
@@ -116,8 +123,13 @@ describe("Library acquisition routes", () => {
       date: string; completed: number; stalled: number; failed: number;
     }>;
     const byDate = Object.fromEntries(points.map((p) => [p.date, p]));
-    // h3 is completed with last_seen_at 2026-06-04 (within the 90d window)
+    // h3 is completed with state_changed_at 2026-06-04 (within the 90d window)
     expect(byDate["2026-06-04"]?.completed).toBe(1);
+    // h4 stalled: grouped on the transition (2026-06-12), NOT on last_seen_at
+    // (2026-06-05). Grouping by last_seen_at dated the failure up to two weeks
+    // early and dropped it out of short windows entirely.
+    expect(byDate["2026-06-12"]?.stalled).toBe(1);
+    expect(byDate["2026-06-05"]).toBeUndefined();
     // the handler renames the SQL alias `d` → `date`; assert no raw `d` leaks through
     expect(points.every((p) => "date" in p && !("d" in p))).toBe(true);
   });

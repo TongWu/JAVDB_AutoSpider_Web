@@ -39,6 +39,28 @@ function authHeaders(accessToken: string) {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
+const READONLY_ENV = {
+  READONLY_USERNAME: "viewer",
+  READONLY_PASSWORD_HASH: "plain:viewerpass",
+};
+
+async function loginReadonly() {
+  const res = await app.request(
+    "/api/auth/login",
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "viewer", password: "viewerpass" }),
+    },
+    { ...env, ...READONLY_ENV },
+  );
+  const data = (await res.json()) as Record<string, unknown>;
+  return {
+    accessToken: data.access_token as string,
+    csrfToken: data.csrf_token as string,
+  };
+}
+
 function mutationHeaders(accessToken: string, csrfToken: string) {
   return {
     "Content-Type": "application/json",
@@ -511,6 +533,37 @@ describe("Quality review routes", () => {
     expect(after?.n).toBe(1);
     expect(after?.label).toBe("reject");
     expect(after?.note).toBeNull();
+  });
+
+  // -----------------------------------------------------------------------
+  // 15b. review-labels is admin-only: a readonly JWT must not overwrite the
+  // shared accept/reject/skip dataset. Regression — the route used to sit on
+  // the global requireAuth() alone, which accepts readonly tokens too.
+  // -----------------------------------------------------------------------
+  it("rejects review label writes from readonly users", async () => {
+    const { accessToken, csrfToken } = await loginReadonly();
+    const res = await app.request(
+      "/api/quality/review-labels",
+      {
+        method: "POST",
+        headers: mutationHeaders(accessToken, csrfToken),
+        body: JSON.stringify({
+          info_hash: "hash_readonly_attempt",
+          movie_href: "/v/QA-003",
+          scoring_version: "adr024-score-v1",
+          label: "accept",
+        }),
+      },
+      { ...env, ...READONLY_ENV },
+    );
+    expect(res.status).toBe(403);
+
+    const row = await env.REPORTS_DB.prepare(
+      "SELECT label FROM TorrentQualityReviewLabel WHERE info_hash = ?",
+    )
+      .bind("hash_readonly_attempt")
+      .first<{ label: string }>();
+    expect(row).toBeNull();
   });
 
   // -----------------------------------------------------------------------
