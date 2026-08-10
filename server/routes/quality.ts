@@ -20,6 +20,7 @@
 
 import { Hono } from "hono";
 import type { Env } from "../env";
+import { requireRole } from "../middleware/auth";
 import type { JwtPayload } from "../services/jwt";
 import {
   getEvidence,
@@ -271,12 +272,16 @@ qualityRoutes.get("/needs-review", async (c) => {
 });
 
 // POST /review-labels — record an operator accept/reject/skip label.
-// Auth + CSRF are enforced by the global requireAuth() middleware (server/app.ts).
+// Auth + CSRF are enforced by the global requireAuth() middleware (server/app.ts);
+// requireRole("admin") narrows it further, mirroring the Python router's
+// Depends(require_role("admin")). The labels are shared, tunable state — the dataset
+// ADR-024 Phase 3 tunes thresholds against, not per-user data — so a readonly JWT
+// must not be able to overwrite them.
 // info_hash, movie_href, scoring_version and label are required; label must be one
 // of accept/reject/skip (mirrors pydantic ReviewLabelRequest -> 422 on violation).
 // reviewed_at is stamped server-side; reviewer comes from the JWT subject. Idempotent
 // on (info_hash, movie_href, scoring_version).
-qualityRoutes.post("/review-labels", async (c) => {
+qualityRoutes.post("/review-labels", requireRole("admin"), async (c) => {
   let body: {
     info_hash?: unknown;
     movie_href?: unknown;
