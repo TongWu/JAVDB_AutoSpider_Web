@@ -1044,7 +1044,27 @@ export interface paths {
         put?: never;
         /**
          * Run Migration
-         * @description Preview or run a migration.
+         * @description Preview a migration, or apply it to D1.
+         *
+         *     With dry_run=true (the default) returns the SQL and its executable statement
+         *     count, changing nothing. With dry_run=false the migration is applied to the
+         *     D1 database named by its own `wrangler d1 execute javdb-<db>` header line and
+         *     recorded in system_state.
+         *
+         *     Refuses before running anything when STORAGE_BACKEND is not d1/dual (409),
+         *     when the migration is already recorded as applied (409 — ALTER TABLE ADD
+         *     COLUMN is not idempotent), when it has no ledger marker at all and the caller
+         *     has not acknowledged that it may already have been applied out of band (409),
+         *     when the target database cannot be resolved unambiguously from the header
+         *     (400), or when the script has more statements than one atomic D1 batch
+         *     holds (400).
+         *
+         *     The statements run as a single D1 batch, so they land whole or roll back
+         *     whole. A rejection by D1 returns 502 with nothing applied and the ledger
+         *     claim released. A timeout or dropped connection returns 502 as well but
+         *     keeps the claim, because D1 may have committed and lost the response — the
+         *     outcome is unknown, not rolled back. Claiming the ledger entry before
+         *     execution is also what makes two concurrent applies resolve safely.
          */
         post: operations["run_migration_api_migrations__migration_id__run_post"];
         delete?: never;
@@ -1658,6 +1678,11 @@ export interface paths {
         /**
          * Write Review Label
          * @description Record an operator review label (accept / reject / skip) for an evaluation.
+         *
+         *     Admin-only: the labels are shared, tunable state (the dataset ADR-024 Phase 3
+         *     tunes thresholds against), not per-user data, so a readonly JWT must not be
+         *     able to overwrite them. ``require_role`` still runs ``_require_auth``, so the
+         *     returned payload is the same JWT claims dict the reviewer identity reads from.
          *
          *     Stamps reviewed_at server-side and stores the reviewer from the JWT subject.
          *     Idempotent: a second call with the same (info_hash, movie_href, scoring_version)
@@ -3731,6 +3756,11 @@ export interface components {
         };
         /** RunMigrationRequest */
         RunMigrationRequest: {
+            /**
+             * Acknowledge Unrecorded
+             * @default false
+             */
+            acknowledge_unrecorded: boolean;
             /**
              * Dry Run
              * @default true
