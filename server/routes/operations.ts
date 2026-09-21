@@ -1,22 +1,17 @@
+import { dispatchJob } from "../services/workflow-launch";
+import { resolveDispatchConfig, isDispatchConfigured } from "../services/dispatch-config";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
-import { createJobRunsRepo } from "../services/job-runs";
-import { createGhClient } from "../services/gh-client";
 
 type OpsEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
 export const operationsRoutes = new Hono<OpsEnv>();
 
 function requireGhActions(env: Env): void {
-  if (
-    !env.GH_ACTIONS_TIER ||
-    env.GH_ACTIONS_TIER === "none" ||
-    !env.GH_ACTIONS_TOKEN ||
-    !env.GH_ACTIONS_REPO
-  ) {
+  if (!isDispatchConfigured(resolveDispatchConfig(env))) {
     throw new HTTPException(503, {
       message: "GitHub Actions not configured",
     });
@@ -89,17 +84,10 @@ operationsRoutes.post("/qb/filter-small", requireRole("admin"), async (c) => {
     inputs.dry_run = String(body.dry_run);
   }
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
-  const job = await repo.create("qb-filter", "QBFileFilter.yml", inputs);
-
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow("QBFileFilter.yml", inputs);
+  const job = await dispatchJob(c.env, "qb-filter", "QBFileFilter.yml", inputs);
 
   return c.json(
-    { job_id: job.job_id, status: job.status, created_at: job.created_at },
+    { job_id: job.job_id, status: job.status, created_at: job.created_at, config_snapshot_status: job.config_snapshot_status },
     201,
   );
 });
@@ -125,17 +113,10 @@ operationsRoutes.post("/rclone/run", requireRole("admin"), async (c) => {
   if (body.dry_run) inputs.dry_run = "true";
   if (body.incremental) inputs.incremental = "true";
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
-  const job = await repo.create("rclone", "RcloneManager.yml", inputs);
-
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow("RcloneManager.yml", inputs);
+  const job = await dispatchJob(c.env, "rclone", "RcloneManager.yml", inputs);
 
   return c.json(
-    { job_id: job.job_id, status: job.status, created_at: job.created_at },
+    { job_id: job.job_id, status: job.status, created_at: job.created_at, config_snapshot_status: job.config_snapshot_status },
     201,
   );
 });
@@ -160,21 +141,10 @@ operationsRoutes.post(
     if (body.apply) inputs.apply = "true";
     if (body.scope) inputs.scope = body.scope;
 
-    const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
-    const job = await repo.create(
-      "cleanup",
-      "StaleSessionCleanup.yml",
-      inputs,
-    );
-
-    const gh = createGhClient({
-      token: c.env.GH_ACTIONS_TOKEN!,
-      repo: c.env.GH_ACTIONS_REPO!,
-    });
-    await gh.dispatchWorkflow("StaleSessionCleanup.yml", inputs);
+    const job = await dispatchJob(c.env, "cleanup", "StaleSessionCleanup.yml", inputs);
 
     return c.json(
-      { job_id: job.job_id, status: job.status, created_at: job.created_at },
+      { job_id: job.job_id, status: job.status, created_at: job.created_at, config_snapshot_status: job.config_snapshot_status },
       201,
     );
   },

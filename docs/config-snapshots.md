@@ -20,8 +20,7 @@ job ID to retrieve history. The endpoints are:
 - `GET /api/config/job-snapshots/{job_id}`: version 1 retained evidence for
   `api_process`, `cli_accessor`, `launched_job`.
 
-Worker `api_process` evidence measures request-time D1/default resolution, including
-alias fallback. The Worker cannot measure the Python CLI or dispatched GitHub
+Worker `api_process` evidence combines request-time D1/default resolution with actual dispatch environment bindings. `dispatch-config.ts` resolves `GH_ACTIONS_TIER`, `GH_ACTIONS_TOKEN`, and `GH_ACTIONS_REPO` once per launch; the same result feeds both snapshot capture and the GitHub client. Those fields always use source `environment` (including absent bindings), expose presence only, and override conflicting D1/default observations. The Worker cannot measure the Python CLI or dispatched GitHub
 runner: those records are explicitly `unobservable`, with no snapshot/digest.
 Python start hooks generate independent evidence for the actual CLI process;
 there is no inferred remote-runner correlation. All job-creating route adapters
@@ -47,6 +46,14 @@ history and display unavailable evidence. Reads are admin-only even for redacted
 
 The two backends intentionally do not share resolution precedence: Python API
 uses its config module plus sparse override store; Python `cfg()` records actual
-module/caller-default reads; Worker uses its D1 store/default resolver. Direct
+module/caller-default reads; Worker uses its D1 store/default resolver plus the authoritative dispatch environment bindings. Direct
 imports, later dynamic reads and external consumers are explicitly outside the
 observed scope. Python diagnostic files are not a replacement D1 authority.
+
+## Launch and decode guarantees
+
+All nine remote launch cases use `dispatchJob`: generic `/api/gh-actions/runs`, tasks `/daily` and `/adhoc`, operations `/qb/filter-small`, `/rclone/run`, `/cleanup/stale-sessions`, session rollback, and onboarding `qb`/`proxy`. The shared helper allocates an internal job ID and captures before external dispatch. Receipts include typed `job_id` and `config_snapshot_status`; onboarding additionally retains `details.job_id`. Inline onboarding `javdb` and unsupported `smtp` do not launch jobs. Snapshot failure does not block launch and is never reported as captured.
+
+Reasons are a finite union: `not_observed_in_this_process`, `capture_failed`, `writes_forbidden`, `observation_failed`, `no_retained_evidence`, `storage_unavailable`, `invalid_evidence`. The unreleased migration CHECK accepts captured records only with null reason, and unobservable records only with the fixed reason and null payload/digest. Existing disposable development tables require recreation to receive this new CHECK; this migration has not been deployed to production. Never delete production evidence to retrofit a constraint.
+
+Decoding validates state, the complete canonical redacted representation and its digest before exposing evidence; invalid rows produce unavailable evidence without raw text in responses or logs. The frontend only displays known reasons, provides table captions, and announces successful refresh/lookup in a localized polite live status.

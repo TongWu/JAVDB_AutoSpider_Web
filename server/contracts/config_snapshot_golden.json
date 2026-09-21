@@ -9,6 +9,11 @@
       "key": "QB_PASSWORD",
       "value": "golden-secret-canary",
       "source": "config_module"
+    },
+    {
+      "key": "GH_ACTIONS_TOKEN",
+      "value": "environment-secret-canary",
+      "source": "environment"
     }
   ],
   "snapshot": {
@@ -22,6 +27,12 @@
       "external_consumers"
     ],
     "fields": [
+      {
+        "key": "GH_ACTIONS_TOKEN",
+        "source": "environment",
+        "sensitive": true,
+        "present": true
+      },
       {
         "key": "PAGE_END",
         "source": "override_store",
@@ -37,6 +48,6 @@
       }
     ]
   },
-  "canonical": "{\"captured_at\":\"2026-09-22T00:00:00.000Z\",\"consumer\":\"api_process\",\"fields\":[{\"key\":\"PAGE_END\",\"present\":true,\"sensitive\":false,\"source\":\"override_store\",\"value\":7},{\"key\":\"QB_PASSWORD\",\"present\":true,\"sensitive\":true,\"source\":\"config_module\"}],\"schema_version\":1,\"scope\":\"resolver_at_start\",\"unobservable\":[\"direct_imports\",\"later_dynamic_reads\",\"external_consumers\"]}",
-  "digest": "e6b8acd27a602f0f6975f85e65b0a1bc05d677809754308036d197c24067cd66"
+  "canonical": "{\"captured_at\":\"2026-09-22T00:00:00.000Z\",\"consumer\":\"api_process\",\"fields\":[{\"key\":\"GH_ACTIONS_TOKEN\",\"present\":true,\"sensitive\":true,\"source\":\"environment\"},{\"key\":\"PAGE_END\",\"present\":true,\"sensitive\":false,\"source\":\"override_store\",\"value\":7},{\"key\":\"QB_PASSWORD\",\"present\":true,\"sensitive\":true,\"source\":\"config_module\"}],\"schema_version\":1,\"scope\":\"resolver_at_start\",\"unobservable\":[\"direct_imports\",\"later_dynamic_reads\",\"external_consumers\"]}",
+  "digest": "7b196ac48c12e895749b97ba0439a77ed65afb867ff56173365460619ae0f0e4"
 }

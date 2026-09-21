@@ -1638,6 +1638,9 @@
     "value": "值 / 存在性",
     "source": "来源",
     "present": "存在（已脱敏）",
-    "absent": "不存在（已脱敏）"
+    "absent": "不存在（已脱敏）",
+    "currentRefreshed": "已刷新当前消费者证据。",
+    "historyLoaded": "已加载 {jobId} 的历史证据。",
+    "fieldsFor": "{consumer} 的配置字段"
   }
 }

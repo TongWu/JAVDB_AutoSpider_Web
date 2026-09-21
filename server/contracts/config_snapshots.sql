@@ -10,8 +10,8 @@ CREATE TABLE IF NOT EXISTS ConfigSnapshots (
     snapshot_json TEXT,
     digest TEXT,
     PRIMARY KEY (job_id, consumer),
-    CHECK ((status = 'captured' AND snapshot_json IS NOT NULL AND digest IS NOT NULL)
-        OR (status = 'unobservable' AND snapshot_json IS NULL AND digest IS NULL))
+    CHECK ((status = 'captured' AND reason IS NULL AND snapshot_json IS NOT NULL AND digest IS NOT NULL)
+        OR (status = 'unobservable' AND reason IS NOT NULL AND reason = 'not_observed_in_this_process' AND snapshot_json IS NULL AND digest IS NULL))
 );
 CREATE INDEX IF NOT EXISTS idx_config_snapshots_expiry ON ConfigSnapshots(expires_at);
 CREATE TRIGGER IF NOT EXISTS config_snapshots_immutable

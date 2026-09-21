@@ -1638,6 +1638,9 @@
     "value": "値 / 存在",
     "source": "取得元",
     "present": "存在（秘匿化）",
-    "absent": "不在（秘匿化）"
+    "absent": "不在（秘匿化）",
+    "currentRefreshed": "現在のコンシューマー証跡を更新しました。",
+    "historyLoaded": "{jobId} の履歴証跡を読み込みました。",
+    "fieldsFor": "{consumer} の設定項目"
   }
 }

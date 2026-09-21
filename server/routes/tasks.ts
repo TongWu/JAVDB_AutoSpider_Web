@@ -1,3 +1,5 @@
+import { dispatchJob } from "../services/workflow-launch";
+import { resolveDispatchConfig, isDispatchConfigured } from "../services/dispatch-config";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
@@ -11,12 +13,7 @@ type TasksEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 export const tasksRoutes = new Hono<TasksEnv>();
 
 function isGhActionsConfigured(env: Env): boolean {
-  return (
-    !!env.GH_ACTIONS_TIER &&
-    env.GH_ACTIONS_TIER !== "none" &&
-    !!env.GH_ACTIONS_TOKEN &&
-    !!env.GH_ACTIONS_REPO
-  );
+  return isDispatchConfigured(resolveDispatchConfig(env));
 }
 
 function requireGhActions(env: Env): void {
@@ -87,17 +84,10 @@ tasksRoutes.post("/daily", requireRole("admin"), async (c) => {
     disable_all_filters: body.disable_all_filters ? "true" : "false",
   };
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
-  const job = await repo.create("daily", "DailyIngestion.yml", inputs);
-
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow("DailyIngestion.yml", inputs);
+  const job = await dispatchJob(c.env, "daily", "DailyIngestion.yml", inputs);
 
   return c.json(
-    { job_id: job.job_id, status: job.status, created_at: job.created_at },
+    { job_id: job.job_id, status: job.status, created_at: job.created_at, config_snapshot_status: job.config_snapshot_status },
     201,
   );
 });
@@ -130,17 +120,10 @@ tasksRoutes.post("/adhoc", requireRole("admin"), async (c) => {
     inputs.end_page = String(body.end_page);
   }
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
-  const job = await repo.create("adhoc", "AdHocIngestion.yml", inputs);
-
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow("AdHocIngestion.yml", inputs);
+  const job = await dispatchJob(c.env, "adhoc", "AdHocIngestion.yml", inputs);
 
   return c.json(
-    { job_id: job.job_id, status: job.status, created_at: job.created_at },
+    { job_id: job.job_id, status: job.status, created_at: job.created_at, config_snapshot_status: job.config_snapshot_status },
     201,
   );
 });

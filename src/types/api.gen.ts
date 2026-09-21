@@ -2314,12 +2314,16 @@ export interface components {
         };
         /** CleanupStaleResponse */
         CleanupStaleResponse: {
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Details */
             details: {
                 [key: string]: unknown;
             }[];
             /** Dry Run */
             dry_run: boolean;
+            /** Job Id */
+            job_id?: string | null;
             /** Sessions Cleaned */
             sessions_cleaned: number;
             /** Sessions Failed */
@@ -2337,7 +2341,7 @@ export interface components {
             /** Digest */
             digest: string | null;
             /** Reason */
-            reason: string | null;
+            reason: ("not_observed_in_this_process" | "capture_failed" | "writes_forbidden" | "observation_failed" | "no_retained_evidence" | "storage_unavailable" | "invalid_evidence") | null;
             snapshot: components["schemas"]["ConfigSnapshot"] | null;
             /**
              * Status
@@ -2410,7 +2414,7 @@ export interface components {
              * Source
              * @enum {string}
              */
-            source: "default" | "config_module" | "override_store" | "derived" | "launch_options" | "unknown";
+            source: "default" | "config_module" | "override_store" | "derived" | "launch_options" | "environment" | "unknown";
             /** Value */
             value?: boolean | number | string | null;
         };
@@ -2692,8 +2696,15 @@ export interface components {
         };
         /** DispatchResponse */
         DispatchResponse: {
+            /**
+             * Config Snapshot Status
+             * @enum {string}
+             */
+            config_snapshot_status: "captured" | "snapshot_unavailable";
             /** Dispatched */
             dispatched: boolean;
+            /** Job Id */
+            job_id: string;
         };
         /** EmailHistoryItem */
         EmailHistoryItem: {
@@ -3341,14 +3352,20 @@ export interface components {
         OnboardingTestResponse: {
             /** Component */
             component: string;
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Details */
             details?: {
                 [key: string]: unknown;
             } | null;
+            /** Job Id */
+            job_id?: string | null;
             /** Message */
             message: string;
             /** Ok */
-            ok: boolean;
+            ok?: boolean | null;
+            /** Status */
+            status?: ("dispatched" | "unavailable") | null;
         };
         /** OpsAlertEventListResponse */
         OpsAlertEventListResponse: {
@@ -3707,6 +3724,8 @@ export interface components {
         };
         /** QbFilterSmallResponse */
         QbFilterSmallResponse: {
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Details */
             details: {
                 [key: string]: unknown;
@@ -3715,6 +3734,8 @@ export interface components {
             dry_run: boolean;
             /** Filtered Count */
             filtered_count: number;
+            /** Job Id */
+            job_id?: string | null;
             /** Torrents Scanned */
             torrents_scanned: number;
         };
@@ -3805,8 +3826,12 @@ export interface components {
         };
         /** RcloneRunResponse */
         RcloneRunResponse: {
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Dry Run */
             dry_run: boolean;
+            /** Job Id */
+            job_id?: string | null;
             /** Phase Results */
             phase_results: {
                 [key: string]: unknown;
@@ -4003,8 +4028,12 @@ export interface components {
             actions: {
                 [key: string]: unknown;
             }[];
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Dry Run */
             dry_run: boolean;
+            /** Job Id */
+            job_id?: string | null;
             /** Session Id */
             session_id: string;
             /** Summary */
@@ -4131,6 +4160,11 @@ export interface components {
         SpiderJobSubmitResponse: {
             /** Cli Args */
             cli_args: string[];
+            /**
+             * Config Snapshot Status
+             * @enum {string}
+             */
+            config_snapshot_status: "captured" | "snapshot_unavailable";
             /** Job Id */
             job_id: string;
             /** Status */
@@ -4338,6 +4372,11 @@ export interface components {
          * @description Returned by POST /api/tasks/daily and POST /api/tasks/adhoc.
          */
         TriggerTaskResponse: {
+            /**
+             * Config Snapshot Status
+             * @enum {string}
+             */
+            config_snapshot_status: "captured" | "snapshot_unavailable";
             /** Created At */
             created_at: string;
             /** Job Id */

@@ -1,11 +1,11 @@
+import { dispatchJob } from "../services/workflow-launch";
+import { resolveDispatchConfig, isDispatchConfigured } from "../services/dispatch-config";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
 import { loadConfigStore } from "../services/config-store";
-import { createGhClient } from "../services/gh-client";
-import { createJobRunsRepo } from "../services/job-runs";
 import { upsertSystemState } from "../services/system-state-store";
 
 type OnbEnv = { Bindings: Env; Variables: { user: JwtPayload } };
@@ -53,12 +53,7 @@ async function buildStatus(env: Env) {
 }
 
 function isGhActionsConfigured(env: Env): boolean {
-  return (
-    !!env.GH_ACTIONS_TIER &&
-    env.GH_ACTIONS_TIER !== "none" &&
-    !!env.GH_ACTIONS_TOKEN &&
-    !!env.GH_ACTIONS_REPO
-  );
+  return isDispatchConfigured(resolveDispatchConfig(env));
 }
 
 type TestableComponent = "javdb" | "qb" | "proxy" | "smtp";
@@ -73,7 +68,7 @@ async function testComponent(
   component: TestableComponent,
   config: Record<string, unknown>,
   env: Env,
-): Promise<{ ok?: boolean; status?: string; message: string; details: Record<string, unknown> | null }> {
+): Promise<{ ok?: boolean; status?: string; message: string; details: Record<string, unknown> | null; job_id?: string; config_snapshot_status?: "captured" | "snapshot_unavailable" }> {
   switch (component) {
     case "javdb": {
       const cookie = config.JAVDB_SESSION_COOKIE;
@@ -89,19 +84,17 @@ async function testComponent(
       if (!isGhActionsConfigured(env)) {
         return { status: "unavailable", message: "GitHub Actions not configured", details: null };
       }
-      const gh = createGhClient({ token: env.GH_ACTIONS_TOKEN!, repo: env.GH_ACTIONS_REPO! });
-      const repo = createJobRunsRepo(env.OPERATIONS_DB, env);
-      const job = await repo.create(`test-${component}`, mapping.workflow, mapping.inputs);
+      let job;
       try {
-        await gh.dispatchWorkflow(mapping.workflow, mapping.inputs);
-      } catch (e) {
-        // Degrade gracefully instead of bubbling a 5xx; mark the orphaned job failed.
-        console.error(`onboarding ${component} dispatch failed`, e);
-        await repo.updateStatus(job.job_id, "failed").catch(() => {});
+        job = await dispatchJob(env, `test-${component}`, mapping.workflow, mapping.inputs);
+      } catch {
+        console.error("onboarding dispatch failed");
         return { status: "unavailable", message: `${component} connectivity test unavailable (dispatch failed)`, details: null };
       }
       return {
         status: "dispatched",
+        job_id: job.job_id,
+        config_snapshot_status: job.config_snapshot_status,
         message: `Dispatched ${mapping.workflow} for ${component} connectivity test`,
         details: { job_id: job.job_id, poll_url: `/api/tasks/${job.job_id}` },
       };

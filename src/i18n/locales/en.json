@@ -1638,6 +1638,9 @@
     "value": "Value / presence",
     "source": "Source",
     "present": "Present (redacted)",
-    "absent": "Absent (redacted)"
+    "absent": "Absent (redacted)",
+    "currentRefreshed": "Current consumer evidence refreshed.",
+    "historyLoaded": "Historical evidence loaded for {jobId}.",
+    "fieldsFor": "Configuration fields for {consumer}"
   }
 }
