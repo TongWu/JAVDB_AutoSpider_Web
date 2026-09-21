@@ -59,3 +59,21 @@ Reasons are a finite union: `not_observed_in_this_process`, `capture_failed`, `w
 Decoding validates state, the complete canonical redacted representation and its digest before exposing evidence; invalid rows produce unavailable evidence without raw text in responses or logs. The frontend only displays known reasons, provides table captions, and announces successful refresh/lookup in a localized polite live status.
 
 Generic workflow inputs may carry arbitrary credentials. They are sent to the dispatch client but never copied into the new generic job tracking row (`inputs` remains null) or the snapshot.
+
+## Identical replay and blocking I/O
+
+A conflict no-op is not evidence that the attempted snapshot was stored. Both
+backends return `captured` only when the retained validated canonical redacted
+payload and digest match the attempt, including timestamp. Mismatches return
+`snapshot_unavailable` with null payload/digest (`invalid_evidence` in the
+repository, `capture_failed` at guarded launch capture) and a constant sanitized
+alert. Unobservable writes must also retain the matching unobservable state.
+The old row and expiry remain unchanged, and an authorized historical read can
+still return that original evidence. This proves no secret equality.
+
+Python diagnostic connections fail fast on a non-CLOSED shared D1 breaker,
+without waiting or probing; ordinary storage recovery is unchanged. Diagnostic
+HTTP requests keep the three-second transport timeout with no retries, not a
+universal DNS/filesystem deadline. Python historical reads use the FastAPI worker
+thread pool so blocking D1 I/O cannot stall its event loop. Worker D1 bindings
+remain asynchronous.

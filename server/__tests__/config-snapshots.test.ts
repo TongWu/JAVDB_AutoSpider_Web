@@ -48,7 +48,7 @@ describe('ADR-061 evidence', () => {
     expect(snapshots.redactField('PAGE_END', 7, 'secret-canary').source).toBe('unknown')
   })
 
-  it('retains the original snapshot after config edits and retries', async () => {
+  it('rejects a changed capture while preserving original history', async () => {
     await env.OPERATIONS_DB.prepare('INSERT INTO api_config (key,value) VALUES (?,?)')
       .bind('PAGE_END', '7')
       .run()
@@ -59,8 +59,15 @@ describe('ADR-061 evidence', () => {
     await env.OPERATIONS_DB.prepare('UPDATE api_config SET value = ? WHERE key = ?')
       .bind('99', 'PAGE_END')
       .run()
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
     const second = await snapshots.captureDispatch(env, 'job-a')
-    expect(second).toEqual(first)
+    expect(
+      second.consumers.every(
+        (c) => c.status === 'snapshot_unavailable' && c.snapshot === null && c.digest === null,
+      ),
+    ).toBe(true)
+    expect(error).toHaveBeenCalledWith('config_snapshot snapshot_unavailable')
+    error.mockRestore()
     const history = await snapshots.readJobSnapshots(env.OPERATIONS_DB, 'job-a')
     expect(history).toEqual(first)
     await expect(
@@ -301,10 +308,121 @@ it.each([
 
 it('does not trust an unredacted payload even with a matching digest', async () => {
   const snapshot = snapshots.buildSnapshot('api_process', [])
-  snapshot.fields = [{key:'QB_PASSWORD',source:'environment',sensitive:false,present:true,value:'secret-canary'}]
-  const row = {consumer:'api_process',status:'captured',reason:null,snapshot_json:JSON.stringify(snapshot),digest:await snapshots.digestSnapshot(snapshot)}
-  const db = {prepare: () => ({bind: () => ({all: async () => ({success:true,results:[row]})})})} as unknown as D1Database
-  const result = await snapshots.readJobSnapshots(db,'job-a')
+  snapshot.fields = [
+    {
+      key: 'QB_PASSWORD',
+      source: 'environment',
+      sensitive: false,
+      present: true,
+      value: 'secret-canary',
+    },
+  ]
+  const row = {
+    consumer: 'api_process',
+    status: 'captured',
+    reason: null,
+    snapshot_json: JSON.stringify(snapshot),
+    digest: await snapshots.digestSnapshot(snapshot),
+  }
+  const db = {
+    prepare: () => ({ bind: () => ({ all: async () => ({ success: true, results: [row] }) }) }),
+  } as unknown as D1Database
+  const result = await snapshots.readJobSnapshots(db, 'job-a')
   expect(result.consumers[0].reason).toBe('invalid_evidence')
   expect(JSON.stringify(result)).not.toContain('secret-canary')
+})
+
+it('acknowledges identical redacted replay without refreshing expiry', async () => {
+  const snapshot = golden.snapshot as snapshots.Snapshot
+  const first = await snapshots.insertSnapshot(env.OPERATIONS_DB, 'job-replay', snapshot)
+  const before = await env.OPERATIONS_DB.prepare('SELECT * FROM ConfigSnapshots').all()
+  expect(await snapshots.insertSnapshot(env.OPERATIONS_DB, 'job-replay', snapshot)).toEqual(first)
+  expect((await env.OPERATIONS_DB.prepare('SELECT * FROM ConfigSnapshots').all()).results).toEqual(
+    before.results,
+  )
+})
+
+it.each(['value', 'source', 'timestamp', 'unobservable'])(
+  'rejects nonidentical %s replay with no payload or digest',
+  async (change) => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+    const snapshot = snapshots.buildSnapshot(
+      'api_process',
+      [
+        snapshots.redactField('PAGE_END', 7, 'default'),
+        snapshots.redactField('QB_PASSWORD', 'secret-canary', 'default'),
+      ],
+      golden.snapshot.captured_at,
+    )
+    if (change === 'unobservable') {
+      await env.OPERATIONS_DB.prepare(
+        `INSERT INTO ConfigSnapshots VALUES
+        ('job-replay','api_process',?,?,'unobservable','not_observed_in_this_process',NULL,NULL)`,
+      )
+        .bind(snapshot.captured_at, Date.parse(snapshot.captured_at) / 1000 + 90 * 86400)
+        .run()
+    } else {
+      await snapshots.insertSnapshot(env.OPERATIONS_DB, 'job-replay', snapshot)
+    }
+    const before = await env.OPERATIONS_DB.prepare('SELECT * FROM ConfigSnapshots').all()
+    const field = snapshot.fields.find((f) => f.key === 'PAGE_END')!
+    if (change === 'value') field.value = 99
+    if (change === 'source') field.source = 'override_store'
+    if (change === 'timestamp') snapshot.captured_at = '2026-09-22T00:00:01.000Z'
+    const result = await snapshots.insertSnapshot(env.OPERATIONS_DB, 'job-replay', snapshot)
+    expect(result).toEqual({
+      consumer: 'api_process',
+      status: 'snapshot_unavailable',
+      reason: 'invalid_evidence',
+      snapshot: null,
+      digest: null,
+    })
+    expect(
+      (await env.OPERATIONS_DB.prepare('SELECT * FROM ConfigSnapshots').all()).results,
+    ).toEqual(before.results)
+    expect(JSON.stringify(result) + JSON.stringify(error.mock.calls)).not.toContain('secret-canary')
+    error.mockRestore()
+  },
+)
+
+it('rejects captured remote evidence where dispatch attempted unobservable', async () => {
+  // Freeze observation time so only the remote status mismatch causes failure.
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(golden.snapshot.captured_at))
+  const error = vi.spyOn(console, 'error').mockImplementation(() => {})
+  try {
+    const remote = snapshots.buildSnapshot('cli_accessor', [
+      snapshots.redactField('QB_PASSWORD', 'secret-canary', 'default'),
+    ])
+    await snapshots.insertSnapshot(env.OPERATIONS_DB, 'job-remote-conflict', remote)
+    const result = await snapshots.captureDispatch(env, 'job-remote-conflict')
+    expect(
+      result.consumers.every(
+        (c) => c.status === 'snapshot_unavailable' && c.snapshot === null && c.digest === null,
+      ),
+    ).toBe(true)
+    expect(error).toHaveBeenCalledWith('config_snapshot snapshot_unavailable')
+    expect(JSON.stringify(result) + JSON.stringify(error.mock.calls)).not.toContain('secret-canary')
+    const history = await snapshots.readJobSnapshots(env.OPERATIONS_DB, 'job-remote-conflict')
+    expect(history.consumers[1].snapshot).toEqual(remote)
+  } finally {
+    error.mockRestore()
+    vi.useRealTimers()
+  }
+})
+
+it('acknowledges identical dispatch replay including unobservable consumers', async () => {
+  vi.useFakeTimers()
+  vi.setSystemTime(new Date(golden.snapshot.captured_at))
+  try {
+    const first = await snapshots.captureDispatch(env, 'job-identical')
+    expect(first.consumers.map((c) => c.status)).toEqual([
+      'captured',
+      'unobservable',
+      'unobservable',
+    ])
+    expect(await snapshots.captureDispatch(env, 'job-identical')).toEqual(first)
+  } finally {
+    vi.useRealTimers()
+  }
 })

@@ -264,6 +264,8 @@ export async function insertSnapshot(
   input: Snapshot,
 ): Promise<ConsumerEvidence> {
   const snapshot = buildSnapshot(input.consumer, input.fields, input.captured_at)
+  const canonical = canonicalJson(snapshot)
+  const digest = await digestSnapshot(snapshot)
   const result = await db
     .prepare(
       `INSERT INTO ConfigSnapshots (job_id,consumer,captured_at,expires_at,status,reason,snapshot_json,digest)
@@ -274,8 +276,8 @@ export async function insertSnapshot(
       snapshot.consumer,
       snapshot.captured_at,
       Math.floor(Date.parse(snapshot.captured_at) / 1000) + retentionSeconds,
-      canonicalJson(snapshot),
-      await digestSnapshot(snapshot),
+      canonical,
+      digest,
     )
     .run()
   if (!result.success) throw new Error('Snapshot write not acknowledged')
@@ -286,7 +288,15 @@ export async function insertSnapshot(
     .bind(jobId, snapshot.consumer)
     .first<Row>()
   if (!row) throw new Error('Snapshot acknowledgement missing')
-  return decode(row)
+  const retained = await decode(row)
+  // A conflict no-op acknowledges only the retained record, not this attempt.
+  if (
+    retained.status !== 'captured' ||
+    retained.digest !== digest ||
+    canonicalJson(retained.snapshot) !== canonical
+  )
+    return empty(snapshot.consumer, 'snapshot_unavailable', 'invalid_evidence')
+  return retained
 }
 
 export async function captureDispatch(
@@ -298,7 +308,8 @@ export async function captureDispatch(
     if (!validJobId(jobId)) throw new Error('Invalid job ID')
     const api = await observeApi(env, config)
     if (!api.snapshot) throw new Error('Observation missing')
-    await insertSnapshot(env.OPERATIONS_DB, jobId, api.snapshot)
+    const inserted = await insertSnapshot(env.OPERATIONS_DB, jobId, api.snapshot)
+    if (inserted.status !== 'captured') throw new Error('Snapshot acknowledgement unavailable')
     for (const consumer of ['cli_accessor', 'launched_job'] as Consumer[]) {
       const result = await env.OPERATIONS_DB.prepare(
         `INSERT INTO ConfigSnapshots (job_id,consumer,captured_at,expires_at,status,reason,snapshot_json,digest)
@@ -314,7 +325,11 @@ export async function captureDispatch(
       if (!result.success) throw new Error('Snapshot write not acknowledged')
     }
     const retained = await readJobSnapshots(env.OPERATIONS_DB, jobId)
-    if (retained.consumers.some((c) => c.status === 'snapshot_unavailable')) {
+    if (
+      retained.consumers.some(
+        (c) => c.status !== (c.consumer === 'api_process' ? 'captured' : 'unobservable'),
+      )
+    ) {
       throw new Error('Snapshot acknowledgement unavailable')
     }
     return retained
