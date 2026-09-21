@@ -3,8 +3,9 @@ import type { ContentFilterRuleRow } from "./content-filter-service";
 export const BASELINE_IDENTITY = "content-filter-rules";
 export const PORTABLE_REGEX_ERROR = "regex patterns for impact comparison must contain only literal branches separated by '|'";
 export const PORTABLE_REGEX_LENGTH_ERROR = "regex pattern too long (max 200 Unicode code points)";
-export const PORTABLE_AGE_ERROR = "age rules require a non-negative integer value using ASCII digits [0-9]";
+export const PORTABLE_AGE_ERROR = "age rules require an integer from 0 to 150 using ASCII digits [0-9]";
 const MAX_PORTABLE_REGEX_CODE_POINTS = 200;
+const MAX_PORTABLE_AGE = 150;
 const REGEX_METACHARACTERS = new Set("\\.^$*+?{}[]()".split(""));
 
 export interface DraftRule {
@@ -94,7 +95,7 @@ function jsonObjectList(value: unknown): Record<string, unknown>[] | null {
   if (value === null || value === undefined) return null;
   try {
     const parsed = JSON.parse(String(value));
-    return Array.isArray(parsed) && parsed.every((item) => item !== null && typeof item === "object")
+    return Array.isArray(parsed) && parsed.every((item) => item !== null && typeof item === "object" && !Array.isArray(item))
       ? parsed as Record<string, unknown>[]
       : null;
   } catch {
@@ -189,7 +190,7 @@ export async function listRetainedCohort(db: D1Database, limit: number): Promise
 }
 
 function parseIsoDate(value: unknown): Date | null {
-  const text = String(value ?? "").trim().slice(0, 10);
+  const text = portableTrim(String(value ?? "")).slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return null;
   const parsed = new Date(`${text}T00:00:00Z`);
   return Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== text ? null : parsed;
@@ -227,8 +228,12 @@ function missingFields(row: RetainedMovieRow, rules: DraftRule[]): string[] {
   return [...missing].sort();
 }
 
+export function portableTrim(value: string | null | undefined): string {
+  return (value ?? "").replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, "");
+}
+
 function normalized(value: string | null | undefined): string {
-  return (value ?? "").trim().replace(/[A-Z]/g, (char) => char.toLowerCase());
+  return portableTrim(value).replace(/[A-Z]/g, (char) => char.toLowerCase());
 }
 
 function matchesLink(value: string, item: Link): boolean {
@@ -237,7 +242,7 @@ function matchesLink(value: string, item: Link): boolean {
 }
 
 function compileRegex(pattern: string): RegExp | null {
-  const clean = pattern.trim();
+  const clean = portableTrim(pattern);
   if (!clean) return null;
   try {
     return new RegExp(clean);
@@ -247,8 +252,11 @@ function compileRegex(pattern: string): RegExp | null {
 }
 
 export function comparisonRuleError(rule: DraftRule): string | null {
-  const value = rule.value.trim();
-  if (rule.dimension === "age" && !/^[0-9]+$/.test(value)) return PORTABLE_AGE_ERROR;
+  const value = portableTrim(rule.value);
+  if (rule.dimension === "age" && (
+    !/^[0-9]{1,3}$/.test(value)
+    || Number(value) > MAX_PORTABLE_AGE
+  )) return PORTABLE_AGE_ERROR;
   if (!["regex_exclude", "regex_include"].includes(rule.mode)) return null;
   const pattern = value;
   if ([...pattern].length > MAX_PORTABLE_REGEX_CODE_POINTS) return PORTABLE_REGEX_LENGTH_ERROR;
@@ -279,16 +287,16 @@ function evaluateKnown(row: RetainedMovieRow, rules: DraftRule[]): ImpactDecisio
     const matched = rule.mode === "exclude"
       ? items.some((item) => matchesLink(rule.value, item))
       : rule.mode === "regex_exclude" && items.some((item) => matchesRegex(rule.value, item));
-    if (matched) return { outcome: "drop", reasons: [`excluded by ${rule.dimension} rule: ${rule.value.trim()}`] };
+    if (matched) return { outcome: "drop", reasons: [`excluded by ${rule.dimension} rule: ${portableTrim(rule.value)}`] };
   }
   const reasons: string[] = [];
   const includeTags = enabled.filter((rule) => rule.dimension === "tag" && rule.mode === "include" && normalized(rule.value));
   if (includeTags.length && !includeTags.some((rule) => tags.some((tag) => matchesLink(rule.value, tag)))) {
-    reasons.push(`missing required tag include: ${includeTags.map((rule) => rule.value.trim()).join(", ")}`);
+    reasons.push(`missing required tag include: ${includeTags.map((rule) => portableTrim(rule.value)).join(", ")}`);
   }
   const regexIncludes = enabled.filter((rule) => ["actor", "tag"].includes(rule.dimension) && rule.mode === "regex_include" && compileRegex(rule.value));
   if (regexIncludes.length && !regexIncludes.some((rule) => (rule.dimension === "actor" ? actors : tags).some((item) => matchesRegex(rule.value, item)))) {
-    reasons.push(`missing required regex include: ${regexIncludes.map((rule) => rule.value.trim()).join(", ")}`);
+    reasons.push(`missing required regex include: ${regexIncludes.map((rule) => portableTrim(rule.value)).join(", ")}`);
   }
   for (const rule of enabled.filter((item) => item.dimension === "gender")) {
     if (rule.mode === "require_lead") {
@@ -302,7 +310,7 @@ function evaluateKnown(row: RetainedMovieRow, rules: DraftRule[]): ImpactDecisio
   const release = parseIsoDate(row.release_date);
   const ages = release ? actors.map((actor) => ageAt(row.actor_birthdates[actor.href], release)).filter((age): age is number => age !== null) : [];
   for (const rule of enabled.filter((item) => item.dimension === "age")) {
-    const bound = Number.parseInt(rule.value.trim(), 10);
+    const bound = Number.parseInt(portableTrim(rule.value), 10);
     if (rule.mode === "min_age" && ages.some((age) => age < bound)) reasons.push(`actor younger than minimum age ${bound}`);
     if (rule.mode === "max_age" && ages.some((age) => age > bound)) reasons.push(`actor older than maximum age ${bound}`);
   }

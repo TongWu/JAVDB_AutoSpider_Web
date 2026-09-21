@@ -1,7 +1,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
-import { compareRetainedCohort } from "../services/content-filter-impact";
+import { compareRetainedCohort, listRetainedCohort } from "../services/content-filter-impact";
 import contract from "./fixtures/content-filter-impact-contract.json";
 
 async function login() {
@@ -316,6 +316,20 @@ describe("Content-filter impact comparison", () => {
       )[0].draft;
       expect(decision, testCase.name).toEqual(testCase.expected);
     }
+  });
+
+  it("treats malformed retained category members as unknown", async () => {
+    const testCase = contract.retained_metadata_cases[0];
+    await env.HISTORY_DB.prepare(
+      `INSERT INTO MovieMetadata
+         (href, title, video_code, release_date, categories, updated_at)
+       VALUES ('/v/bad-member', 'Bad', 'BAD', '2024-01-01', ?, '2026-09-22')`,
+    ).bind(testCase.categories).run();
+
+    const rows = await listRetainedCohort(env.HISTORY_DB, 1);
+    const decision = compareRetainedCohort(rows, [], testCase.rules)[0].draft;
+
+    expect(decision).toEqual(testCase.expected);
   });
 
   it("rejects an incompatible persisted regex without changing the save contract", async () => {

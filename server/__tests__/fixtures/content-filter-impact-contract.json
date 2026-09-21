@@ -37,6 +37,36 @@
         {"id": -1, "dimension": "actor", "mode": "regex_exclude", "value": "Bob|Alice", "enabled": true}
       ],
       "expected": {"outcome": "drop", "reasons": ["excluded by actor rule: Bob|Alice"]}
+    },
+    {
+      "name": "ascii_trim_does_not_strip_nel",
+      "row": {
+        "href": "/v/nel",
+        "title": "NEL",
+        "video_code": "NEL-001",
+        "release_date": "2024-01-01",
+        "categories": [],
+        "actors": [{"name": "Alice", "href": "/actors/alice", "gender": "female"}],
+        "actor_birthdates": {},
+        "updated_at": "2026-09-22T00:00:00.000Z"
+      },
+      "rules": [{"id": -1, "dimension": "actor", "mode": "exclude", "value": "\u0085Alice\u0085", "enabled": true}],
+      "expected": {"outcome": "keep", "reasons": []}
+    },
+    {
+      "name": "ascii_trim_does_not_strip_bom",
+      "row": {
+        "href": "/v/bom",
+        "title": "BOM",
+        "video_code": "BOM-001",
+        "release_date": "2024-01-01",
+        "categories": [],
+        "actors": [{"name": "Alice", "href": "/actors/alice", "gender": "female"}],
+        "actor_birthdates": {},
+        "updated_at": "2026-09-22T00:00:00.000Z"
+      },
+      "rules": [{"id": -1, "dimension": "actor", "mode": "exclude", "value": "\ufeffAlice\ufeff", "enabled": true}],
+      "expected": {"outcome": "keep", "reasons": []}
     }
   ],
   "validation_cases": [
@@ -77,7 +107,18 @@
         "status": 422,
         "body": {"detail": {"error": {
           "code": "content_filter.invalid_value",
-          "message": "age rules require a non-negative integer value using ASCII digits [0-9]"
+          "message": "age rules require an integer from 0 to 150 using ASCII digits [0-9]"
+        }}}
+      }
+    },
+    {
+      "name": "reject_age_above_portable_domain",
+      "rule": {"dimension": "age", "mode": "min_age", "value": "151", "enabled": true},
+      "expected": {
+        "status": 422,
+        "body": {"detail": {"error": {
+          "code": "content_filter.invalid_value",
+          "message": "age rules require an integer from 0 to 150 using ASCII digits [0-9]"
         }}}
       }
     },
@@ -114,6 +155,10 @@
     {
       "name": "accept_null_id_and_omitted_rule_defaults",
       "rule": {"id": null, "dimension": "gender", "mode": "exclude_all_male"}
+    },
+    {
+      "name": "accept_portable_maximum_age",
+      "rule": {"dimension": "age", "mode": "max_age", "value": "150", "enabled": true}
     }
   ],
   "request_validation_cases": [
@@ -171,6 +216,24 @@
       "name": "reject_null_rule_enabled",
       "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [{"dimension": "gender", "mode": "exclude_all_male", "enabled": null}]},
       "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0].enabled must be a boolean"}}}}
+    },
+    {
+      "name": "draft_rules_precedes_invalid_cohort_size",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": null, "cohort_size": null},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_draft_rules", "message": "draft_rules must be an array"}}}}
+    },
+    {
+      "name": "nested_draft_value_precedes_invalid_page",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [{"dimension": "tag", "mode": "exclude", "value": null}], "page": null},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0].value must be a string"}}}}
+    }
+  ],
+  "retained_metadata_cases": [
+    {
+      "name": "malformed_category_member_is_unknown",
+      "categories": "[[]]",
+      "rules": [{"id": -1, "dimension": "tag", "mode": "exclude", "value": "VR", "enabled": true}],
+      "expected": {"outcome": "unknown", "reasons": ["missing metadata: categories"]}
     }
   ],
   "conflict_envelopes": {

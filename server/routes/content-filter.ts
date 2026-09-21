@@ -16,6 +16,7 @@ import {
   comparisonRuleError,
   compareRetainedCohort,
   listRetainedCohort,
+  portableTrim,
   summarizeComparisons,
   type DraftRule,
 } from "../services/content-filter-impact";
@@ -65,8 +66,13 @@ const UNBOUNDED_QUANTIFIER = String.raw`(?:[*+]|\{\d+,\})`;
 const NESTED_QUANTIFIER = new RegExp(String.raw`\([^()]*${UNBOUNDED_QUANTIFIER}[^()]*\)${UNBOUNDED_QUANTIFIER}`);
 const QUANTIFIED_ALTERNATION = new RegExp(String.raw`\([^()]*\|[^()]*\)${UNBOUNDED_QUANTIFIER}`);
 
-function validateRuleValue(dimension: string, mode: string, rawValue: string): { value: string } | { error: string } {
-  const value = rawValue.trim();
+function validateRuleValue(
+  dimension: string,
+  mode: string,
+  rawValue: string,
+  normalizer: (value: string) => string = (value) => value.trim(),
+): { value: string } | { error: string } {
+  const value = normalizer(rawValue);
   const key = `${dimension}:${mode}`;
   if (VALUE_REQUIRED.has(key) && value.length === 0) {
     return { error: `${dimension} ${mode} rules require a non-empty value` };
@@ -114,7 +120,7 @@ function parseDraftRules(value: unknown): { rules: DraftRule[] } | { code: strin
     if (candidate.value !== undefined && typeof candidate.value !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].value must be a string` };
     if (candidate.enabled !== undefined && typeof candidate.enabled !== "boolean") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].enabled must be a boolean` };
     if (candidate.id !== undefined && candidate.id !== null && !Number.isInteger(candidate.id)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}].id must be an integer or null` };
-    const rawValue = String(candidate.value ?? "");
+    const rawValue = portableTrim(String(candidate.value ?? ""));
     const portableError = comparisonRuleError({
       id: -1,
       dimension,
@@ -124,8 +130,8 @@ function parseDraftRules(value: unknown): { rules: DraftRule[] } | { code: strin
     });
     if (portableError) return { code: "content_filter.invalid_value", error: portableError };
     const validated = ["regex_exclude", "regex_include"].includes(mode)
-      ? { value: rawValue.trim() }
-      : validateRuleValue(dimension, mode, rawValue);
+      ? { value: rawValue }
+      : validateRuleValue(dimension, mode, rawValue, portableTrim);
     if ("error" in validated) return { code: "content_filter.invalid_value", error: validated.error };
     const rule = {
       id: candidate.id === undefined || candidate.id === null ? -(index + 1) : candidate.id as number,
@@ -165,6 +171,8 @@ contentFilterRoutes.post("/impact", async (c) => {
   if (typeof input.baseline_version !== "string") {
     return c.json(impactErrJson("content_filter.invalid_baseline", "baseline_version must be a string"), 422);
   }
+  const parsedDraft = parseDraftRules(input.draft_rules);
+  if ("error" in parsedDraft) return c.json(impactErrJson(parsedDraft.code, parsedDraft.error), 422);
   const cohortSize = input.cohort_size === undefined ? 500 : input.cohort_size;
   const page = input.page === undefined ? 1 : input.page;
   const pageSize = input.page_size === undefined ? 100 : input.page_size;
@@ -193,8 +201,6 @@ contentFilterRoutes.post("/impact", async (c) => {
     const compatibilityError = comparisonRuleError(rowToRule(currentRule));
     if (compatibilityError) return c.json(impactErrJson("content_filter.invalid_value", compatibilityError), 422);
   }
-  const parsedDraft = parseDraftRules(input.draft_rules);
-  if ("error" in parsedDraft) return c.json(impactErrJson(parsedDraft.code, parsedDraft.error), 422);
   const rows = await listRetainedCohort(c.env.HISTORY_DB, Number(cohortSize));
   const currentCohortVersion = await cohortVersion(rows);
   if (typeof input.expected_cohort_version === "string" && input.expected_cohort_version !== currentCohortVersion) {
