@@ -1,6 +1,8 @@
 import type { ContentFilterRuleRow } from "./content-filter-service";
 
 export const BASELINE_IDENTITY = "content-filter-rules";
+export const PORTABLE_REGEX_ERROR = "regex patterns for impact comparison must contain only literal branches separated by '|'";
+const REGEX_METACHARACTERS = new Set("\\.^$*+?{}[]()".split(""));
 
 export interface DraftRule {
   id?: number;
@@ -223,7 +225,7 @@ function missingFields(row: RetainedMovieRow, rules: DraftRule[]): string[] {
 }
 
 function normalized(value: string | null | undefined): string {
-  return (value ?? "").trim().toLocaleLowerCase();
+  return (value ?? "").trim().replace(/[A-Z]/g, (char) => char.toLowerCase());
 }
 
 function matchesLink(value: string, item: Link): boolean {
@@ -235,10 +237,26 @@ function compileRegex(pattern: string): RegExp | null {
   const clean = pattern.trim();
   if (!clean) return null;
   try {
-    return clean.startsWith("(?i)") ? new RegExp(clean.slice(4), "i") : new RegExp(clean);
+    return new RegExp(clean);
   } catch {
     return null;
   }
+}
+
+export function comparisonRuleError(rule: DraftRule): string | null {
+  if (!["regex_exclude", "regex_include"].includes(rule.mode)) return null;
+  const pattern = rule.value.trim();
+  const branches = pattern.split("|");
+  if (
+    pattern === ""
+    || branches.some((branch) => branch === "")
+    || [...pattern].some((char) => REGEX_METACHARACTERS.has(char))
+    || [...pattern].some((char) => {
+      const code = char.codePointAt(0) ?? 0;
+      return code < 32 || code === 127;
+    })
+  ) return PORTABLE_REGEX_ERROR;
+  return null;
 }
 
 function matchesRegex(pattern: string, item: Link): boolean {

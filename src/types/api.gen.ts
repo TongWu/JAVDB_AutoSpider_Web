@@ -2379,6 +2379,35 @@ export interface components {
             /** Watched */
             watched: number;
         };
+        /** ContentFilterBaselineChangedDetail */
+        ContentFilterBaselineChangedDetail: {
+            /** Baseline Identity */
+            baseline_identity: string;
+            /** Baseline Version */
+            baseline_version: string;
+            error: components["schemas"]["ContentFilterDomainError"];
+        };
+        /** ContentFilterBaselineChangedResponse */
+        ContentFilterBaselineChangedResponse: {
+            detail: components["schemas"]["ContentFilterBaselineChangedDetail"];
+        };
+        /** ContentFilterCohortChangedDetail */
+        ContentFilterCohortChangedDetail: {
+            /** Cohort Version */
+            cohort_version: string;
+            error: components["schemas"]["ContentFilterDomainError"];
+        };
+        /** ContentFilterCohortChangedResponse */
+        ContentFilterCohortChangedResponse: {
+            detail: components["schemas"]["ContentFilterCohortChangedDetail"];
+        };
+        /** ContentFilterDomainError */
+        ContentFilterDomainError: {
+            /** Code */
+            code: string;
+            /** Message */
+            message: string;
+        };
         /** ContentFilterDraftRule */
         ContentFilterDraftRule: {
             /** Dimension */
@@ -5068,6 +5097,15 @@ export interface operations {
                     "application/json": {
                         detail: string;
                     };
+                };
+            };
+            /** @description Saved baseline or retained cohort changed */
+            409: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentFilterBaselineChangedResponse"] | components["schemas"]["ContentFilterCohortChangedResponse"];
                 };
             };
             /** @description Validation Error */

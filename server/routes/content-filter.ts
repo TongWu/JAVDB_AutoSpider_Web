@@ -13,6 +13,7 @@ import {
   BASELINE_IDENTITY,
   baselineVersion,
   cohortVersion,
+  comparisonRuleError,
   compareRetainedCohort,
   listRetainedCohort,
   summarizeComparisons,
@@ -25,6 +26,9 @@ type CfEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 export const contentFilterRoutes = new Hono<CfEnv>();
 
 const errJson = (code: string, message: string) => ({ error: { code, message } });
+const impactErrJson = (code: string, message: string, extra: Record<string, unknown> = {}) => ({
+  detail: { error: { code, message }, ...extra },
+});
 const rowToRule = (r: { id: number; dimension: string; mode: string; value: string | null; enabled: number }) => ({
   id: r.id,
   dimension: r.dimension,
@@ -95,28 +99,31 @@ function validateRuleValue(dimension: string, mode: string, rawValue: string): {
   return { value };
 }
 
-function parseDraftRules(value: unknown): { rules: DraftRule[] } | { error: string } {
-  if (!Array.isArray(value)) return { error: "draft_rules must be an array" };
+function parseDraftRules(value: unknown): { rules: DraftRule[] } | { code: string; error: string } {
+  if (!Array.isArray(value)) return { code: "content_filter.invalid_value", error: "draft_rules must be an array" };
   const rules: DraftRule[] = [];
   for (let index = 0; index < value.length; index += 1) {
     const item = value[index];
-    if (item === null || typeof item !== "object") return { error: `draft_rules[${index}] must be an object` };
+    if (item === null || typeof item !== "object") return { code: "content_filter.invalid_value", error: `draft_rules[${index}] must be an object` };
     const candidate = item as Record<string, unknown>;
     const dimension = typeof candidate.dimension === "string" ? candidate.dimension : "";
     const mode = typeof candidate.mode === "string" ? candidate.mode : "";
-    if (!VALID_RULE_MODES.has(`${dimension}:${mode}`)) return { error: `${dimension} rules do not support mode '${mode}'` };
-    if (candidate.value !== undefined && typeof candidate.value !== "string") return { error: `draft_rules[${index}].value must be a string` };
-    if (candidate.enabled !== undefined && typeof candidate.enabled !== "boolean") return { error: `draft_rules[${index}].enabled must be a boolean` };
-    if (candidate.id !== undefined && !Number.isInteger(candidate.id)) return { error: `draft_rules[${index}].id must be an integer` };
+    if (!VALID_RULE_MODES.has(`${dimension}:${mode}`)) return { code: "content_filter.invalid_mode", error: `${dimension} rules do not support mode '${mode}'` };
+    if (candidate.value !== undefined && typeof candidate.value !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].value must be a string` };
+    if (candidate.enabled !== undefined && typeof candidate.enabled !== "boolean") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].enabled must be a boolean` };
+    if (candidate.id !== undefined && !Number.isInteger(candidate.id)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}].id must be an integer` };
     const validated = validateRuleValue(dimension, mode, String(candidate.value ?? ""));
-    if ("error" in validated) return { error: validated.error };
-    rules.push({
+    if ("error" in validated) return { code: "content_filter.invalid_value", error: validated.error };
+    const rule = {
       id: candidate.id === undefined ? -(index + 1) : candidate.id as number,
       dimension,
       mode,
       value: validated.value,
       enabled: candidate.enabled === undefined ? true : candidate.enabled,
-    });
+    };
+    const compatibilityError = comparisonRuleError(rule);
+    if (compatibilityError) return { code: "content_filter.invalid_value", error: compatibilityError };
+    rules.push(rule);
   }
   return { rules };
 }
@@ -138,49 +145,51 @@ contentFilterRoutes.post("/impact", async (c) => {
   try {
     body = await c.req.json();
   } catch {
-    return c.json(errJson("content_filter.invalid_body", "Request body must be valid JSON"), 422);
+    return c.json(impactErrJson("content_filter.invalid_body", "Request body must be valid JSON"), 422);
   }
   if (body === null || typeof body !== "object") {
-    return c.json(errJson("content_filter.invalid_body", "Request body must be a JSON object"), 422);
+    return c.json(impactErrJson("content_filter.invalid_body", "Request body must be a JSON object"), 422);
   }
   const input = body as Record<string, unknown>;
   if (typeof input.baseline_version !== "string") {
-    return c.json(errJson("content_filter.invalid_baseline", "baseline_version must be a string"), 422);
+    return c.json(impactErrJson("content_filter.invalid_baseline", "baseline_version must be a string"), 422);
   }
   const cohortSize = input.cohort_size === undefined ? 500 : input.cohort_size;
   const page = input.page === undefined ? 1 : input.page;
   const pageSize = input.page_size === undefined ? 100 : input.page_size;
   if (!Number.isInteger(cohortSize) || Number(cohortSize) < 1 || Number(cohortSize) > 5000) {
-    return c.json(errJson("content_filter.invalid_cohort_size", "cohort_size must be an integer from 1 to 5000"), 422);
+    return c.json(impactErrJson("content_filter.invalid_cohort_size", "cohort_size must be an integer from 1 to 5000"), 422);
   }
   if (!Number.isInteger(page) || Number(page) < 1) {
-    return c.json(errJson("content_filter.invalid_page", "page must be a positive integer"), 422);
+    return c.json(impactErrJson("content_filter.invalid_page", "page must be a positive integer"), 422);
   }
   if (!Number.isInteger(pageSize) || Number(pageSize) < 1 || Number(pageSize) > 500) {
-    return c.json(errJson("content_filter.invalid_page_size", "page_size must be an integer from 1 to 500"), 422);
+    return c.json(impactErrJson("content_filter.invalid_page_size", "page_size must be an integer from 1 to 500"), 422);
   }
-  if (input.expected_cohort_version !== undefined && typeof input.expected_cohort_version !== "string") {
-    return c.json(errJson("content_filter.invalid_cohort_version", "expected_cohort_version must be a string"), 422);
+  if (input.expected_cohort_version !== undefined && input.expected_cohort_version !== null && typeof input.expected_cohort_version !== "string") {
+    return c.json(impactErrJson("content_filter.invalid_cohort_version", "expected_cohort_version must be a string or null"), 422);
   }
 
   const currentRules = await listRules(c.env.REPORTS_DB);
   const currentBaselineVersion = await baselineVersion(currentRules);
   if (input.baseline_version !== currentBaselineVersion) {
-    return c.json({
-      ...errJson("content_filter.baseline_changed", "Saved content-filter rules changed; compare again"),
+    return c.json(impactErrJson("content_filter.baseline_changed", "Saved content-filter rules changed; compare again", {
       baseline_identity: BASELINE_IDENTITY,
       baseline_version: currentBaselineVersion,
-    }, 409);
+    }), 409);
+  }
+  for (const currentRule of currentRules) {
+    const compatibilityError = comparisonRuleError(rowToRule(currentRule));
+    if (compatibilityError) return c.json(impactErrJson("content_filter.invalid_value", compatibilityError), 422);
   }
   const parsedDraft = parseDraftRules(input.draft_rules);
-  if ("error" in parsedDraft) return c.json(errJson("content_filter.invalid_value", parsedDraft.error), 422);
+  if ("error" in parsedDraft) return c.json(impactErrJson(parsedDraft.code, parsedDraft.error), 422);
   const rows = await listRetainedCohort(c.env.HISTORY_DB, Number(cohortSize));
   const currentCohortVersion = await cohortVersion(rows);
-  if (input.expected_cohort_version !== undefined && input.expected_cohort_version !== currentCohortVersion) {
-    return c.json({
-      ...errJson("content_filter.cohort_changed", "Retained comparison cohort changed; compare again"),
+  if (typeof input.expected_cohort_version === "string" && input.expected_cohort_version !== currentCohortVersion) {
+    return c.json(impactErrJson("content_filter.cohort_changed", "Retained comparison cohort changed; compare again", {
       cohort_version: currentCohortVersion,
-    }, 409);
+    }), 409);
   }
   const comparisons = compareRetainedCohort(rows, currentRules, parsedDraft.rules);
   const offset = (Number(page) - 1) * Number(pageSize);

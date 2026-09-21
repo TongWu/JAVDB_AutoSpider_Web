@@ -1,0 +1,95 @@
+{
+  "semantic_cases": [
+    {
+      "name": "unicode_ascii_fold_does_not_expand_sharp_s",
+      "row": {
+        "href": "/v/unicode",
+        "title": "Unicode",
+        "video_code": "UNICODE-001",
+        "release_date": "2024-01-01",
+        "categories": [],
+        "actors": [
+          {"name": "Straße", "href": "/actors/strasse", "gender": "female"}
+        ],
+        "actor_birthdates": {},
+        "updated_at": "2026-09-22T00:00:00.000Z"
+      },
+      "rules": [
+        {"id": -1, "dimension": "actor", "mode": "exclude", "value": "STRASSE", "enabled": true}
+      ],
+      "expected": {"outcome": "keep", "reasons": []}
+    },
+    {
+      "name": "literal_regex_alternation_matches",
+      "row": {
+        "href": "/v/regex",
+        "title": "Regex",
+        "video_code": "REGEX-001",
+        "release_date": "2024-01-01",
+        "categories": [],
+        "actors": [
+          {"name": "Alice", "href": "/actors/alice", "gender": "female"}
+        ],
+        "actor_birthdates": {},
+        "updated_at": "2026-09-22T00:00:00.000Z"
+      },
+      "rules": [
+        {"id": -1, "dimension": "actor", "mode": "regex_exclude", "value": "Bob|Alice", "enabled": true}
+      ],
+      "expected": {"outcome": "drop", "reasons": ["excluded by actor rule: Bob|Alice"]}
+    }
+  ],
+  "validation_cases": [
+    {
+      "name": "reject_python_inline_dotall",
+      "rule": {"dimension": "actor", "mode": "regex_exclude", "value": "(?s).", "enabled": true},
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "regex patterns for impact comparison must contain only literal branches separated by '|'"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "reject_invalid_mode",
+      "rule": {"dimension": "actor", "mode": "before", "value": "Alice", "enabled": true},
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_mode",
+              "message": "actor rules do not support mode 'before'"
+            }
+          }
+        }
+      }
+    }
+  ],
+  "conflict_envelopes": {
+    "baseline_changed": {
+      "detail": {
+        "error": {
+          "code": "content_filter.baseline_changed",
+          "message": "Saved content-filter rules changed; compare again"
+        },
+        "baseline_identity": "content-filter-rules",
+        "baseline_version": "__CURRENT_BASELINE_VERSION__"
+      }
+    },
+    "cohort_changed": {
+      "detail": {
+        "error": {
+          "code": "content_filter.cohort_changed",
+          "message": "Retained comparison cohort changed; compare again"
+        },
+        "cohort_version": "__CURRENT_COHORT_VERSION__"
+      }
+    }
+  }
+}

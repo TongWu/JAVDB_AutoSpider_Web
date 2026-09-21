@@ -1,6 +1,8 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
+import { compareRetainedCohort } from "../services/content-filter-impact";
+import contract from "./fixtures/content-filter-impact-contract.json";
 
 async function login() {
   const response = await app.request(
@@ -176,7 +178,12 @@ describe("Content-filter impact comparison", () => {
       env,
     );
     expect(staleBaseline.status).toBe(409);
-    expect((await staleBaseline.json() as Record<string, any>).error.code).toBe("content_filter.baseline_changed");
+    const staleBaselineBody = await staleBaseline.json() as Record<string, any>;
+    const expectedBaseline = JSON.parse(JSON.stringify(contract.conflict_envelopes.baseline_changed).replace(
+      "__CURRENT_BASELINE_VERSION__",
+      staleBaselineBody.detail.baseline_version,
+    ));
+    expect(staleBaselineBody).toEqual(expectedBaseline);
 
     const relisted = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
     const current = await relisted.json() as Record<string, unknown>;
@@ -194,7 +201,12 @@ describe("Content-filter impact comparison", () => {
       env,
     );
     expect(staleCohort.status).toBe(409);
-    expect((await staleCohort.json() as Record<string, any>).error.code).toBe("content_filter.cohort_changed");
+    const staleCohortBody = await staleCohort.json() as Record<string, any>;
+    const expectedCohort = JSON.parse(JSON.stringify(contract.conflict_envelopes.cohort_changed).replace(
+      "__CURRENT_COHORT_VERSION__",
+      staleCohortBody.detail.cohort_version,
+    ));
+    expect(staleCohortBody).toEqual(expectedCohort);
   });
 
   it("rejects over-limit cohorts and catastrophic draft regexes", async () => {
@@ -224,6 +236,70 @@ describe("Content-filter impact comparison", () => {
       env,
     );
     expect(expensive.status).toBe(422);
-    expect((await expensive.json() as Record<string, any>).error.code).toBe("content_filter.invalid_value");
+    expect((await expensive.json() as Record<string, any>).detail.error.code).toBe("content_filter.invalid_value");
+  });
+
+  it("matches the shared validation contract and accepts a null cohort precondition", async () => {
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as Record<string, unknown>;
+    for (const testCase of contract.validation_cases) {
+      const response = await app.request(
+        "/api/content-filter/impact",
+        {
+          method: "POST",
+          headers: headers(accessToken, csrfToken),
+          body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [testCase.rule] }),
+        },
+        env,
+      );
+      expect(response.status, testCase.name).toBe(testCase.expected.status);
+      expect(await response.json(), testCase.name).toEqual(testCase.expected.body);
+    }
+    const nullPrecondition = await app.request(
+      "/api/content-filter/impact",
+      {
+        method: "POST",
+        headers: headers(accessToken, csrfToken),
+        body: JSON.stringify({
+          baseline_version: baseline.baseline_version,
+          draft_rules: [],
+          expected_cohort_version: null,
+        }),
+      },
+      env,
+    );
+    expect(nullPrecondition.status).toBe(200);
+  });
+
+  it("runs the shared semantic corpus through the portable evaluator", () => {
+    for (const testCase of contract.semantic_cases) {
+      const decision = compareRetainedCohort(
+        [testCase.row],
+        [],
+        testCase.rules,
+      )[0].draft;
+      expect(decision, testCase.name).toEqual(testCase.expected);
+    }
+  });
+
+  it("rejects an incompatible persisted regex without changing the save contract", async () => {
+    await env.REPORTS_DB.prepare(
+      "INSERT INTO ContentFilterRule (dimension, mode, value, enabled) VALUES ('actor', 'regex_exclude', '(?s).', 1)",
+    ).run();
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as Record<string, unknown>;
+    const response = await app.request(
+      "/api/content-filter/impact",
+      {
+        method: "POST",
+        headers: headers(accessToken, csrfToken),
+        body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [] }),
+      },
+      env,
+    );
+    expect(response.status).toBe(422);
+    expect(await response.json()).toEqual(contract.validation_cases[0].expected.body);
   });
 });

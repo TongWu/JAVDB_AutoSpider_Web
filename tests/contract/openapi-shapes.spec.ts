@@ -24,6 +24,7 @@ const FE_CONSUMED: Array<[keyof PathItem, string]> = [
   ['post', '/api/auth/logout'],
   ['get', '/api/capabilities'],
   ['get', '/api/health'],
+  ['post', '/api/content-filter/impact'],
   // ADR-024 Phase 2 torrent quality review surface (read + assist).
   ['get', '/api/quality/evaluations'],
   ['get', '/api/quality/evidence/{info_hash}'],
@@ -44,4 +45,17 @@ describe('OpenAPI contract — FE-consumed endpoints', () => {
       expect(content?.schema, `application/json schema missing on ${method} ${path}`).toBeTruthy()
     })
   }
+})
+
+describe('OpenAPI contract — content-filter impact conflicts', () => {
+  it('declares typed baseline and cohort 409 responses', () => {
+    const conflict = schema.paths['/api/content-filter/impact']?.post?.responses?.['409']
+    const responseSchema = conflict?.content?.['application/json']?.schema as {
+      anyOf?: Array<{ $ref?: string }>
+    }
+    expect(responseSchema.anyOf?.map((item) => item.$ref).sort()).toEqual([
+      '#/components/schemas/ContentFilterBaselineChangedResponse',
+      '#/components/schemas/ContentFilterCohortChangedResponse',
+    ])
+  })
 })

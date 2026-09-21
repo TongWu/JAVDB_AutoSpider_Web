@@ -58,6 +58,43 @@ const modeOptions = [
   { label: 'before', value: 'before' },
   { label: 'after', value: 'after' },
 ]
+const validRuleModes = new Set([
+  'actor:exclude', 'tag:exclude', 'tag:include',
+  'gender:require_lead', 'gender:exclude_all_male',
+  'age:min_age', 'age:max_age',
+  'actor:regex_exclude', 'actor:regex_include',
+  'tag:regex_exclude', 'tag:regex_include',
+  'release_date:before', 'release_date:after',
+])
+const valueRequired = new Set([...validRuleModes].filter((key) => key !== 'gender:exclude_all_male'))
+const regexMetacharacters = /[\\.^$*+?{}[\]()]/
+
+function isStrictIsoDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
+  const date = new Date(`${value}T00:00:00Z`)
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value
+}
+
+const isDraftValid = computed(() => {
+  const key = `${draftDimension.value}:${draftMode.value}`
+  const value = draftValue.value.trim()
+  if (!validRuleModes.has(key)) return false
+  if (!valueRequired.has(key)) return value === ''
+  if (value === '') return false
+  if (key === 'gender:require_lead') return ['female', 'male'].includes(value.toLowerCase())
+  if (draftDimension.value === 'age') return /^\d+$/.test(value)
+  if (draftDimension.value === 'release_date') return isStrictIsoDate(value)
+  if (draftMode.value.startsWith('regex_')) {
+    return value.length <= 200
+      && value.split('|').every((branch) => branch.length > 0)
+      && !regexMetacharacters.test(value)
+      && ![...value].some((char) => {
+        const code = char.codePointAt(0) ?? 0
+        return code < 32 || code === 127
+      })
+  }
+  return true
+})
 
 async function fetchRules(): Promise<void> {
   loading.value = true
@@ -92,6 +129,7 @@ function draftRules() {
 }
 
 async function runComparison(page = 1): Promise<void> {
+  if (!isDraftValid.value) return
   comparing.value = true
   impactError.value = null
   try {
@@ -231,10 +269,7 @@ watch(
         :title="t('settings.filterRules.addTitle')"
         size="small"
       >
-        <NSpace
-          v-if="isAdmin"
-          align="center"
-        >
+        <NSpace align="center">
           <NSelect
             v-model:value="draftDimension"
             :options="dimensionOptions"
@@ -251,6 +286,7 @@ watch(
             style="width: 260px"
           />
           <NButton
+            v-if="isAdmin"
             type="primary"
             :loading="saving"
             @click="onAdd"
@@ -266,13 +302,14 @@ watch(
           <NButton
             secondary
             :loading="comparing"
+            :disabled="!isDraftValid"
             @click="runComparison(1)"
           >
             {{ t('settings.filterRules.impact.compare') }}
           </NButton>
         </NSpace>
         <NAlert
-          v-else
+          v-if="!isAdmin"
           type="warning"
           :show-icon="true"
         >
