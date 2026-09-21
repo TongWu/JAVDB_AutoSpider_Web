@@ -87,7 +87,7 @@ tasksRoutes.post("/daily", requireRole("admin"), async (c) => {
     disable_all_filters: body.disable_all_filters ? "true" : "false",
   };
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const job = await repo.create("daily", "DailyIngestion.yml", inputs);
 
   const gh = createGhClient({
@@ -130,7 +130,7 @@ tasksRoutes.post("/adhoc", requireRole("admin"), async (c) => {
     inputs.end_page = String(body.end_page);
   }
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const job = await repo.create("adhoc", "AdHocIngestion.yml", inputs);
 
   const gh = createGhClient({
@@ -156,7 +156,7 @@ tasksRoutes.get("/", async (c) => {
     }
   }
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const items = await repo.list(limit);
   return c.json({
     tasks: items.map(mapJobToSummary),
@@ -192,7 +192,7 @@ tasksRoutes.get("/stats", async (c) => {
 // GET /:job_id — single job detail
 tasksRoutes.get("/:job_id", async (c) => {
   const jobId = c.req.param("job_id");
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const job = await repo.get(jobId);
   if (!job) {
     return c.json({ error: { code: "job.not_found" } }, 404);
@@ -203,7 +203,7 @@ tasksRoutes.get("/:job_id", async (c) => {
 // GET /:job_id/logs — get logs URL for a job
 tasksRoutes.get("/:job_id/logs", async (c) => {
   const jobId = c.req.param("job_id");
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const job = await repo.get(jobId);
   if (!job) {
     return c.json({ error: { code: "job.not_found" } }, 404);

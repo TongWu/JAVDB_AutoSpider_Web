@@ -1,3 +1,4 @@
+import { currentConsumers, readJobSnapshots, validJobId } from '../services/config-snapshots';
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
@@ -54,4 +55,12 @@ configRoutes.put("/", requireRole("admin"), async (c) => {
   }
 
   return c.json({ status: "ok" });
+});
+
+
+configRoutes.get('/consumers', requireRole('admin'), async (c) => c.json(await currentConsumers(c.env)));
+configRoutes.get('/job-snapshots/:job_id', requireRole('admin'), async (c) => {
+  const id = c.req.param('job_id');
+  if (!validJobId(id)) throw new HTTPException(422, {message: 'Invalid job_id'});
+  return c.json(await readJobSnapshots(c.env.OPERATIONS_DB, id));
 });

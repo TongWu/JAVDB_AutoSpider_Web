@@ -1,3 +1,5 @@
+import type { Env } from '../env';
+import { captureDispatch } from './config-snapshots';
 export interface JobRun {
   job_id: string;
   workflow: string;
@@ -21,7 +23,7 @@ function generateJobId(kind: string): string {
   return `${kind}-${date}-${time}-${hex}`;
 }
 
-export function createJobRunsRepo(db: D1Database) {
+export function createJobRunsRepo(db: D1Database, env?: Env) {
   return {
     async ensureTable(): Promise<void> {
       await db
@@ -56,6 +58,7 @@ export function createJobRunsRepo(db: D1Database) {
         .first<JobRun>();
 
       if (!row) throw new Error(`Failed to retrieve created job: ${jobId}`);
+      if (env) await captureDispatch(env, jobId);
       return row;
     },
 

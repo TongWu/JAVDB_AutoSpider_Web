@@ -90,7 +90,7 @@ async function testComponent(
         return { status: "unavailable", message: "GitHub Actions not configured", details: null };
       }
       const gh = createGhClient({ token: env.GH_ACTIONS_TOKEN!, repo: env.GH_ACTIONS_REPO! });
-      const repo = createJobRunsRepo(env.OPERATIONS_DB);
+      const repo = createJobRunsRepo(env.OPERATIONS_DB, env);
       const job = await repo.create(`test-${component}`, mapping.workflow, mapping.inputs);
       try {
         await gh.dispatchWorkflow(mapping.workflow, mapping.inputs);

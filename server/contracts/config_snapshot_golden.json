@@ -1,0 +1,42 @@
+{
+  "inputs": [
+    {
+      "key": "PAGE_END",
+      "value": 7,
+      "source": "override_store"
+    },
+    {
+      "key": "QB_PASSWORD",
+      "value": "golden-secret-canary",
+      "source": "config_module"
+    }
+  ],
+  "snapshot": {
+    "schema_version": 1,
+    "consumer": "api_process",
+    "captured_at": "2026-09-22T00:00:00.000Z",
+    "scope": "resolver_at_start",
+    "unobservable": [
+      "direct_imports",
+      "later_dynamic_reads",
+      "external_consumers"
+    ],
+    "fields": [
+      {
+        "key": "PAGE_END",
+        "source": "override_store",
+        "sensitive": false,
+        "present": true,
+        "value": 7
+      },
+      {
+        "key": "QB_PASSWORD",
+        "source": "config_module",
+        "sensitive": true,
+        "present": true
+      }
+    ]
+  },
+  "canonical": "{\"captured_at\":\"2026-09-22T00:00:00.000Z\",\"consumer\":\"api_process\",\"fields\":[{\"key\":\"PAGE_END\",\"present\":true,\"sensitive\":false,\"source\":\"override_store\",\"value\":7},{\"key\":\"QB_PASSWORD\",\"present\":true,\"sensitive\":true,\"source\":\"config_module\"}],\"schema_version\":1,\"scope\":\"resolver_at_start\",\"unobservable\":[\"direct_imports\",\"later_dynamic_reads\",\"external_consumers\"]}",
+  "digest": "e6b8acd27a602f0f6975f85e65b0a1bc05d677809754308036d197c24067cd66"
+}

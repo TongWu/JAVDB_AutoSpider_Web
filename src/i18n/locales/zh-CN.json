@@ -1624,5 +1624,20 @@
         "extraReasons": "额外原因"
       }
     }
+  },
+  "configSnapshots": {
+    "title": "配置证据",
+    "explanation": "快照保留任务启动时的部分观测，保存 90 天。摘要仅覆盖脱敏证据，不能证明密钥相等。",
+    "unavailable": "snapshot_unavailable — 无法读取配置证据。",
+    "refresh": "刷新当前观测",
+    "jobId": "任务 ID",
+    "lookup": "读取历史快照",
+    "current": "当前观测（未持久化）",
+    "partial": "直接导入、后续动态变化和外部使用方不可观测。",
+    "field": "字段",
+    "value": "值 / 存在性",
+    "source": "来源",
+    "present": "存在（已脱敏）",
+    "absent": "不存在（已脱敏）"
   }
 }

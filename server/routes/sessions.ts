@@ -322,7 +322,7 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
   });
   await gh.dispatchWorkflow("RollbackD1.yml", inputs);
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const job = await repo.create("rollback", "RollbackD1.yml", inputs);
 
   return c.json({

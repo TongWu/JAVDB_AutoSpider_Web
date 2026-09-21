@@ -1,3 +1,4 @@
+import type { components } from '@/types/api.gen'
 import { http } from './client'
 
 export type ConfigType = 'bool' | 'int' | 'float' | 'json' | 'string'
@@ -30,5 +31,20 @@ export async function apiGetConfigMeta(): Promise<ConfigMetaResponse> {
 
 export async function apiUpdateConfig(patch: ConfigValues): Promise<{ status?: string }> {
   const { data } = await http.put<{ status?: string }>('/api/config', patch)
+  return data
+}
+
+
+export type ConfigConsumerEvidence = components['schemas']['ConfigConsumer']
+export type ConfigConsumers = components['schemas']['ConfigConsumersResponse']
+export type ConfigJobSnapshots = components['schemas']['ConfigJobSnapshotsResponse']
+
+export async function apiGetConfigConsumers(): Promise<ConfigConsumers> {
+  const { data } = await http.get<ConfigConsumers>('/api/config/consumers')
+  return data
+}
+
+export async function apiGetJobConfigSnapshots(jobId: string): Promise<ConfigJobSnapshots> {
+  const { data } = await http.get<ConfigJobSnapshots>(`/api/config/job-snapshots/${encodeURIComponent(jobId)}`)
   return data
 }

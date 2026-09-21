@@ -107,6 +107,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/config/consumers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Config Consumers */
+        get: operations["get_config_consumers_api_config_consumers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/config/job-snapshots/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Config Job Snapshots */
+        get: operations["get_config_job_snapshots_api_config_job_snapshots__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/config/meta": {
         parameters: {
             query?: never;
@@ -2293,12 +2327,92 @@ export interface components {
             /** Sessions Found */
             sessions_found: number;
         };
+        /** ConfigConsumer */
+        ConfigConsumer: {
+            /**
+             * Consumer
+             * @enum {string}
+             */
+            consumer: "api_process" | "cli_accessor" | "launched_job";
+            /** Digest */
+            digest: string | null;
+            /** Reason */
+            reason: string | null;
+            snapshot: components["schemas"]["ConfigSnapshot"] | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "observed" | "captured" | "unobservable" | "snapshot_unavailable";
+        };
+        /** ConfigConsumersResponse */
+        ConfigConsumersResponse: {
+            /** Consumers */
+            consumers: components["schemas"]["ConfigConsumer"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+        };
+        /** ConfigJobSnapshotsResponse */
+        ConfigJobSnapshotsResponse: {
+            /** Consumers */
+            consumers: components["schemas"]["ConfigConsumer"][];
+            /** Job Id */
+            job_id: string;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+        };
         /**
          * ConfigResponse
          * @description GET /api/config returns the masked runtime config dict verbatim.
          */
         ConfigResponse: {
             [key: string]: unknown;
+        };
+        /** ConfigSnapshot */
+        ConfigSnapshot: {
+            /** Captured At */
+            captured_at: string;
+            /**
+             * Consumer
+             * @enum {string}
+             */
+            consumer: "api_process" | "cli_accessor" | "launched_job";
+            /** Fields */
+            fields: components["schemas"]["ConfigSnapshotField"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Scope */
+            scope: string;
+            /** Unobservable */
+            unobservable: string[];
+        };
+        /** ConfigSnapshotField */
+        ConfigSnapshotField: {
+            /** Key */
+            key: string;
+            /** Present */
+            present: boolean;
+            /** Sensitive */
+            sensitive: boolean;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "default" | "config_module" | "override_store" | "derived" | "launch_options" | "unknown";
+            /** Value */
+            value?: boolean | number | string | null;
         };
         /**
          * ConsumptionRecentItem
@@ -4703,6 +4817,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusOkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_config_consumers_api_config_consumers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigConsumersResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+        };
+    };
+    get_config_job_snapshots_api_config_job_snapshots__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigJobSnapshotsResponse"];
                 };
             };
             /** @description Unauthorized */

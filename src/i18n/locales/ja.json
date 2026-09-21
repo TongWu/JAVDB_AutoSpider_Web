@@ -1624,5 +1624,20 @@
         "extraReasons": "追加の理由"
       }
     }
+  },
+  "configSnapshots": {
+    "title": "設定の証拠",
+    "explanation": "ジョブ開始時の部分的な観測を 90 日間保存します。ダイジェストは秘匿化された証拠のみを対象とし、秘密情報の一致を証明しません。",
+    "unavailable": "snapshot_unavailable — 設定の証拠を取得できません。",
+    "refresh": "現在の観測を更新",
+    "jobId": "ジョブ ID",
+    "lookup": "過去のスナップショットを取得",
+    "current": "現在の観測（未保存）",
+    "partial": "直接インポート、後続の動的変更、外部利用者は観測できません。",
+    "field": "項目",
+    "value": "値 / 存在",
+    "source": "取得元",
+    "present": "存在（秘匿化）",
+    "absent": "不在（秘匿化）"
   }
 }

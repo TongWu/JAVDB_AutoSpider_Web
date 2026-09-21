@@ -1,7 +1,12 @@
+import { cleanupSnapshots } from './services/config-snapshots';
 import { app } from "./app";
 import type { Env } from "./env";
 
 export default {
+  async scheduled(_event: ScheduledController, env: Env): Promise<void> {
+    try { await cleanupSnapshots(env.OPERATIONS_DB); }
+    catch { console.error('config_snapshot cleanup_unavailable'); }
+  },
   async fetch(
     request: Request,
     env: Env,
