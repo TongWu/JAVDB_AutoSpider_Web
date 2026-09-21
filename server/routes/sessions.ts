@@ -198,17 +198,23 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
 
   const currentState = session.Status ?? "in_progress";
 
+  if (currentState === "committed") {
+    return c.json({
+      session_id: sessionId,
+      new_state: "committed",
+      pending_dropped: 0,
+    });
+  }
+
   if (!COMMITTABLE_STATES.has(currentState)) {
-    if (!(currentState === "committed" && body.force)) {
-      throw new HTTPException(409, {
-        message: JSON.stringify({
-          error: {
-            code: "session.invalid_state",
-            detail: `Cannot commit session in state '${currentState}'`,
-          },
-        }),
-      });
-    }
+    throw new HTTPException(409, {
+      message: JSON.stringify({
+        error: {
+          code: "session.invalid_state",
+          detail: `Cannot commit session in state '${currentState}'`,
+        },
+      }),
+    });
   }
 
   let pendingDropped = 0;

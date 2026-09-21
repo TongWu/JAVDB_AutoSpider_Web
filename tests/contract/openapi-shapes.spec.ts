@@ -14,6 +14,12 @@ interface PathItem {
 }
 interface OpenAPISchema {
   paths: Record<string, PathItem>
+  components: {
+    schemas: Record<string, {
+      properties?: Record<string, unknown>
+      required?: string[]
+    }>
+  }
 }
 
 const schema = JSON.parse(readFileSync(SCHEMA_PATH, 'utf-8')) as OpenAPISchema
@@ -44,4 +50,30 @@ describe('OpenAPI contract — FE-consumed endpoints', () => {
       expect(content?.schema, `application/json schema missing on ${method} ${path}`).toBeTruthy()
     })
   }
+})
+
+describe('OpenAPI contract — session commit failure', () => {
+  it('declares the canonical top-level commit.failed 500 envelope', () => {
+    const operation = schema.paths['/api/sessions/{session_id}/commit']?.post
+    const response = operation?.responses?.['500']
+    const responseSchema = response?.content?.['application/json']?.schema
+
+    expect(responseSchema).toEqual({
+      $ref: '#/components/schemas/SessionCommitFailedResponse',
+    })
+
+    const envelope = schema.components.schemas.SessionCommitFailedResponse
+    expect(envelope.required).toContain('error')
+    expect(envelope.properties?.error).toEqual({
+      $ref: '#/components/schemas/SessionCommitFailureDetail',
+    })
+
+    const detail = schema.components.schemas.SessionCommitFailureDetail
+    expect(detail.required).toEqual(expect.arrayContaining(['code', 'message']))
+    expect(detail.properties?.code).toMatchObject({
+      const: 'commit.failed',
+      type: 'string',
+    })
+    expect(detail.properties?.message).toMatchObject({ type: 'string' })
+  })
 })
