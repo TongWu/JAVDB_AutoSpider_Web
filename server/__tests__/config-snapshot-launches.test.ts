@@ -111,3 +111,97 @@ it('does not copy arbitrary generic workflow secrets into new job tracking metad
   const evidence = await env.OPERATIONS_DB.prepare('SELECT * FROM ConfigSnapshots').all()
   expect(JSON.stringify(rows.results)+JSON.stringify(evidence.results)+await response.text()).not.toContain('input-secret-canary')
 })
+
+it.each(['stats', 'detail', 'list'] as const)(
+  'exposes rejected dispatch as terminal failure in %s',
+  async (surface) => {
+    const { dispatchJob } = await import('../services/workflow-launch')
+    vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response('{}', { status: 422 }))
+    await expect(
+      dispatchJob(
+        {
+          ...env,
+          GH_ACTIONS_TIER: 'admin',
+          GH_ACTIONS_TOKEN: 'test-token',
+          GH_ACTIONS_REPO: 'owner/repo',
+        },
+        'daily',
+        'DailyIngestion.yml',
+        {},
+      ),
+    ).rejects.toThrow()
+    const repo = createJobRunsRepo(env.OPERATIONS_DB)
+    const [job] = await repo.list()
+    expect(job.status).toBe('failed')
+    expect((await repo.stats()).failed).toBe(1)
+    const token = await signJwt(
+      { sub: 'admin', role: 'admin', typ: 'access' },
+      env.API_SECRET_KEY,
+      60,
+    )
+    const path =
+      surface === 'stats'
+        ? '/api/tasks/stats'
+        : surface === 'list'
+          ? '/api/tasks'
+          : `/api/tasks/${job.job_id}`
+    const response = await app.request(path, { headers: { Authorization: `Bearer ${token}` } }, env)
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as {
+      daily_failed?: number
+      daily_running?: number
+      status?: string
+      completed_at?: string
+      tasks?: { status: string; completed_at: string }[]
+    }
+    if (surface === 'stats') {
+      expect(body.daily_failed).toBe(1)
+      expect(body.daily_running).toBe(0)
+    } else {
+      const summary = surface === 'list' ? body.tasks![0] : body
+      expect(summary.status).toBe('failed')
+      expect(summary.completed_at).toBe(job.updated_at)
+    }
+    const rows = await env.OPERATIONS_DB.prepare(
+      'SELECT status FROM ConfigSnapshots WHERE job_id = ? ORDER BY consumer',
+    )
+      .bind(job.job_id)
+      .all()
+    expect(rows.results.map((row) => row.status)).toEqual([
+      'captured',
+      'unobservable',
+      'unobservable',
+    ])
+  },
+)
+
+it.each(['failed', 'failure', 'cancelled', 'completed', 'dispatched'])(
+  'handles existing %s rows without rewriting their status',
+  async (status) => {
+    const repo = createJobRunsRepo(env.OPERATIONS_DB)
+    await env.OPERATIONS_DB.prepare(
+      "INSERT INTO job_runs (job_id,workflow,status,updated_at) VALUES ('daily-existing','DailyIngestion.yml',?,'2026-09-22 00:00:00')",
+    )
+      .bind(status)
+      .run()
+    const token = await signJwt(
+      { sub: 'admin', role: 'admin', typ: 'access' },
+      env.API_SECRET_KEY,
+      60,
+    )
+    const headers = { Authorization: `Bearer ${token}` }
+    const response = await app.request('/api/tasks/daily-existing', { headers }, env)
+    const summary = (await response.json()) as { status: string; completed_at: string | null }
+    expect(summary.status).toBe(status)
+    expect(summary.completed_at).toBe(status === 'dispatched' ? null : '2026-09-22 00:00:00')
+    const stats = (await (await app.request('/api/tasks/stats', { headers }, env)).json()) as {
+      daily_failed: number
+      daily_success: number
+      daily_running: number
+    }
+    expect(stats.daily_failed).toBe(['failed', 'failure', 'cancelled'].includes(status) ? 1 : 0)
+    expect(stats.daily_success).toBe(status === 'completed' ? 1 : 0)
+    expect(stats.daily_running).toBe(status === 'dispatched' ? 1 : 0)
+    expect((await repo.get('daily-existing'))?.status).toBe(status)
+  },
+)

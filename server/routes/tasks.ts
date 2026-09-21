@@ -24,7 +24,7 @@ function requireGhActions(env: Env): void {
   }
 }
 
-const TERMINAL_STATUSES = new Set(["completed", "failure", "cancelled"]);
+const TERMINAL_STATUSES = new Set(["completed", "failed", "failure", "cancelled"]);
 
 /**
  * Extract the kind prefix from a job_id (e.g. "daily-20260524-100000-abcd" → "daily").
@@ -157,7 +157,7 @@ tasksRoutes.get("/stats", async (c) => {
     .prepare(
       `SELECT
         SUM(CASE WHEN job_id LIKE 'daily-%' AND status = 'completed' THEN 1 ELSE 0 END) AS daily_success,
-        SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('failure','cancelled') THEN 1 ELSE 0 END) AS daily_failed,
+        SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('failed','failure','cancelled') THEN 1 ELSE 0 END) AS daily_failed,
         SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('dispatched','in_progress','queued') THEN 1 ELSE 0 END) AS daily_running,
         SUM(CASE WHEN job_id LIKE 'adhoc-%' AND status IN ('dispatched','in_progress','queued') THEN 1 ELSE 0 END) AS adhoc_running
       FROM job_runs WHERE created_at >= datetime('now', '-7 days')`,
