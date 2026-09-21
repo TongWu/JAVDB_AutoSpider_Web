@@ -46,6 +46,8 @@
     "submit": "送信",
     "back": "戻る",
     "continue": "続ける",
+    "previous": "前へ",
+    "next": "次へ",
     "skip": "スキップ",
     "retry": "再試行",
     "loading": "読み込み中...",
@@ -850,6 +852,23 @@
       "valuePlaceholder": "値（俳優、タグ、性別、年齢、正規表現、または ISO 日付）",
       "loadError": "フィルタールールの読み込みに失敗しました。",
       "saveError": "フィルタールールの保存に失敗しました。",
+      "impact": {
+        "title": "未保存ルールの影響",
+        "compare": "下書きを比較",
+        "readOnly": "比較は保持済みメタデータのみを使用します。ルール保存、ライブページ取得、ワークフロー実行、スクレイピング、ダウンロードは行いません。",
+        "error": "下書きルールの比較に失敗しました。",
+        "concurrentChange": "保存済みルールまたは保持メタデータが変更されました。ルールを再読み込みして比較し直してください。",
+        "summary": "保持済み {total} 件 · 下書き: keep {keep}、drop {drop}、unknown {unknown} · 完全なデータ {covered} 件",
+        "baseline": "保存済みベースライン",
+        "col": {
+          "movie": "動画",
+          "title": "タイトル",
+          "current": "現在",
+          "draft": "下書き",
+          "transition": "変更",
+          "reasons": "理由"
+        }
+      },
       "col": {
         "id": "ID",
         "dimension": "ディメンション",

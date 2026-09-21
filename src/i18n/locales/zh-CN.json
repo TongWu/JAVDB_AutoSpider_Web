@@ -46,6 +46,8 @@
     "submit": "提交",
     "back": "返回",
     "continue": "继续",
+    "previous": "上一页",
+    "next": "下一页",
     "skip": "跳过",
     "retry": "重试",
     "loading": "加载中...",
@@ -850,6 +852,23 @@
       "valuePlaceholder": "值（演员、标签、性别、年龄、正则或 ISO 日期）",
       "loadError": "加载过滤规则失败。",
       "saveError": "保存过滤规则失败。",
+      "impact": {
+        "title": "未保存规则影响",
+        "compare": "对比草稿",
+        "readOnly": "比较只使用保留元数据，不会保存规则、实时抓取页面、派发 workflow、执行 scrape 或下载。",
+        "error": "对比草稿规则失败。",
+        "concurrentChange": "已保存规则或保留元数据发生变化。请重新加载规则并再次比较。",
+        "summary": "{total} 部保留影片 · 草稿：保留 {keep}、丢弃 {drop}、未知 {unknown} · {covered} 部完整覆盖",
+        "baseline": "已保存基线",
+        "col": {
+          "movie": "影片",
+          "title": "标题",
+          "current": "当前",
+          "draft": "草稿",
+          "transition": "变化",
+          "reasons": "原因"
+        }
+      },
       "col": {
         "id": "ID",
         "dimension": "维度",

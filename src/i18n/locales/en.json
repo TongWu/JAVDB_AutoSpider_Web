@@ -46,6 +46,8 @@
     "submit": "Submit",
     "back": "Back",
     "continue": "Continue",
+    "previous": "Previous",
+    "next": "Next",
     "skip": "Skip",
     "retry": "Retry",
     "loading": "Loading...",
@@ -850,6 +852,23 @@
       "valuePlaceholder": "Value (actor, tag, gender, age, regex, or ISO date)",
       "loadError": "Failed to load filter rules.",
       "saveError": "Failed to save the filter rule.",
+      "impact": {
+        "title": "Unsaved rule impact",
+        "compare": "Compare draft",
+        "readOnly": "Comparison uses retained metadata only. It does not save rules, fetch live pages, dispatch workflows, scrape, or download.",
+        "error": "Failed to compare the draft rule.",
+        "concurrentChange": "Saved rules or retained metadata changed. Reload the rules and compare again.",
+        "summary": "{total} retained movies · draft: {keep} keep, {drop} drop, {unknown} unknown · {covered} fully covered",
+        "baseline": "Saved baseline",
+        "col": {
+          "movie": "Movie",
+          "title": "Title",
+          "current": "Current",
+          "draft": "Draft",
+          "transition": "Change",
+          "reasons": "Reasons"
+        }
+      },
       "col": {
         "id": "ID",
         "dimension": "Dimension",

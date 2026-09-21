@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, h, ref, watch } from 'vue'
+import axios from 'axios'
 import {
-  NAlert, NButton, NCard, NDataTable, NInput, NSelect, NSpace, NSpin, NSwitch,
+  NAlert, NButton, NCard, NDataTable, NInput, NInputNumber, NSelect, NSpace, NSpin, NSwitch, NTag,
   useMessage, type DataTableColumns,
 } from 'naive-ui'
 import { useI18n } from 'vue-i18n'
@@ -9,7 +10,8 @@ import { useCapabilitiesStore } from '@/stores/capabilities'
 import { useAuthStore } from '@/stores/auth'
 import {
   listContentFilterRules, addContentFilterRule, setContentFilterRuleEnabled,
-  deleteContentFilterRule, type ContentFilterRule,
+  deleteContentFilterRule, compareContentFilterImpact, type ContentFilterRule,
+  type ContentFilterImpactItem, type ContentFilterImpactResponse,
 } from '@/api/content-filter'
 
 const { t } = useI18n()
@@ -21,6 +23,7 @@ const enabledFeature = computed(() => cap.data?.features?.content_filter === tru
 const isAdmin = computed(() => auth.role === 'admin')
 
 const rules = ref<ContentFilterRule[]>([])
+const baselineVersion = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
 
@@ -31,6 +34,10 @@ const draftDimension = ref<string>('tag')
 const draftMode = ref<string>('exclude')
 const draftValue = ref<string>('')
 const saving = ref(false)
+const comparing = ref(false)
+const impact = ref<ContentFilterImpactResponse | null>(null)
+const impactError = ref<string | null>(null)
+const cohortSize = ref(500)
 
 const dimensionOptions = [
   { label: 'actor', value: 'actor' },
@@ -58,10 +65,52 @@ async function fetchRules(): Promise<void> {
   try {
     const res = await listContentFilterRules()
     rules.value = res.items
+    baselineVersion.value = res.baseline_version
   } catch (err) {
     error.value = err instanceof Error ? err.message : t('settings.filterRules.loadError')
   } finally {
     loading.value = false
+  }
+}
+
+function invalidateImpact(): void {
+  impact.value = null
+  impactError.value = null
+}
+
+function draftRules() {
+  return [
+    ...rules.value.map((rule) => ({ ...rule })),
+    {
+      id: -1,
+      dimension: draftDimension.value,
+      mode: draftMode.value,
+      value: draftValue.value.trim(),
+      enabled: true,
+    },
+  ]
+}
+
+async function runComparison(page = 1): Promise<void> {
+  comparing.value = true
+  impactError.value = null
+  try {
+    impact.value = await compareContentFilterImpact({
+      baseline_version: baselineVersion.value,
+      draft_rules: draftRules(),
+      cohort_size: cohortSize.value,
+      page,
+      page_size: 100,
+      expected_cohort_version: page > 1 ? impact.value?.cohort_version : undefined,
+    })
+  } catch (err: unknown) {
+    const status = axios.isAxiosError(err) ? err.response?.status : undefined
+    impact.value = null
+    impactError.value = status === 409
+      ? t('settings.filterRules.impact.concurrentChange')
+      : t('settings.filterRules.impact.error')
+  } finally {
+    comparing.value = false
   }
 }
 
@@ -73,6 +122,7 @@ async function onAdd(): Promise<void> {
       mode: draftMode.value,
       value: draftValue.value.trim(),
     })
+    invalidateImpact()
     draftValue.value = ''
     await fetchRules()
     message.success(t('settings.filterRules.added'))
@@ -86,6 +136,7 @@ async function onAdd(): Promise<void> {
 async function onToggle(row: ContentFilterRule, enabled: boolean): Promise<void> {
   try {
     await setContentFilterRuleEnabled(row.id, enabled)
+    invalidateImpact()
     await fetchRules()
   } catch {
     message.error(t('settings.filterRules.saveError'))
@@ -95,6 +146,7 @@ async function onToggle(row: ContentFilterRule, enabled: boolean): Promise<void>
 async function onDelete(row: ContentFilterRule): Promise<void> {
   try {
     await deleteContentFilterRule(row.id)
+    invalidateImpact()
     await fetchRules()
   } catch {
     message.error(t('settings.filterRules.saveError'))
@@ -127,6 +179,29 @@ const columns = computed<DataTableColumns<ContentFilterRule>>(() => [
         { size: 'small', type: 'error', tertiary: true, disabled: !isAdmin.value, onClick: () => void onDelete(row) },
         { default: () => t('common.delete') },
       ),
+  },
+])
+
+const impactColumns = computed<DataTableColumns<ContentFilterImpactItem>>(() => [
+  { title: t('settings.filterRules.impact.col.movie'), key: 'video_code', width: 130 },
+  { title: t('settings.filterRules.impact.col.title'), key: 'title' },
+  {
+    title: t('settings.filterRules.impact.col.current'),
+    key: 'current',
+    width: 140,
+    render: (row) => h(NTag, { type: row.current.outcome === 'drop' ? 'error' : row.current.outcome === 'unknown' ? 'warning' : 'success' }, { default: () => row.current.outcome }),
+  },
+  {
+    title: t('settings.filterRules.impact.col.draft'),
+    key: 'draft',
+    width: 140,
+    render: (row) => h(NTag, { type: row.draft.outcome === 'drop' ? 'error' : row.draft.outcome === 'unknown' ? 'warning' : 'success' }, { default: () => row.draft.outcome }),
+  },
+  { title: t('settings.filterRules.impact.col.transition'), key: 'transition', width: 150 },
+  {
+    title: t('settings.filterRules.impact.col.reasons'),
+    key: 'reasons',
+    render: (row) => [...row.current.reasons, ...row.draft.reasons].join('; ') || '—',
   },
 ])
 
@@ -182,6 +257,19 @@ watch(
           >
             {{ t('settings.filterRules.add') }}
           </NButton>
+          <NInputNumber
+            v-model:value="cohortSize"
+            :min="1"
+            :max="5000"
+            style="width: 130px"
+          />
+          <NButton
+            secondary
+            :loading="comparing"
+            @click="runComparison(1)"
+          >
+            {{ t('settings.filterRules.impact.compare') }}
+          </NButton>
         </NSpace>
         <NAlert
           v-else
@@ -190,6 +278,64 @@ watch(
         >
           {{ t('settings.filterRules.adminOnly') }}
         </NAlert>
+      </NCard>
+
+      <NAlert
+        type="info"
+        :show-icon="true"
+      >
+        {{ t('settings.filterRules.impact.readOnly') }}
+      </NAlert>
+
+      <NAlert
+        v-if="impactError"
+        type="error"
+        :show-icon="true"
+        closable
+        @close="impactError = null"
+      >
+        {{ impactError }}
+      </NAlert>
+
+      <NCard
+        v-if="impact"
+        :title="t('settings.filterRules.impact.title')"
+        size="small"
+      >
+        <NSpace vertical>
+          <div>
+            {{ t('settings.filterRules.impact.summary', {
+              total: impact.total,
+              keep: impact.summary.draft.keep ?? 0,
+              drop: impact.summary.draft.drop ?? 0,
+              unknown: impact.summary.draft.unknown ?? 0,
+              covered: impact.coverage.both_known,
+            }) }}
+          </div>
+          <div class="impact-version">
+            {{ t('settings.filterRules.impact.baseline') }}: <code>{{ impact.baseline_version }}</code>
+          </div>
+          <NDataTable
+            :columns="impactColumns"
+            :data="impact.items"
+            :row-key="(row: ContentFilterImpactItem) => row.href"
+            size="small"
+          />
+          <NSpace justify="end">
+            <NButton
+              :disabled="impact.page <= 1 || comparing"
+              @click="runComparison(impact.page - 1)"
+            >
+              {{ t('common.previous') }}
+            </NButton>
+            <NButton
+              :disabled="!impact.has_more || comparing"
+              @click="runComparison(impact.page + 1)"
+            >
+              {{ t('common.next') }}
+            </NButton>
+          </NSpace>
+        </NSpace>
       </NCard>
 
       <NAlert
@@ -216,4 +362,5 @@ watch(
 
 <style scoped>
 .filter-rules-page { display: flex; flex-direction: column; gap: 12px; }
+.impact-version { color: var(--n-text-color-3); font-size: 12px; overflow-wrap: anywhere; }
 </style>

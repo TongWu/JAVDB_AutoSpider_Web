@@ -142,6 +142,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/content-filter/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Compare Impact */
+        post: operations["compare_impact_api_content_filter_impact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/content-filter/{rule_id}": {
         parameters: {
             query?: never;
@@ -2362,6 +2379,134 @@ export interface components {
             /** Watched */
             watched: number;
         };
+        /** ContentFilterDraftRule */
+        ContentFilterDraftRule: {
+            /** Dimension */
+            dimension: string;
+            /**
+             * Enabled
+             * @default true
+             */
+            enabled: boolean;
+            /** Id */
+            id?: number | null;
+            /** Mode */
+            mode: string;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+        };
+        /** ContentFilterImpactCoverage */
+        ContentFilterImpactCoverage: {
+            /** Both Known */
+            both_known: number;
+            /** Current Known */
+            current_known: number;
+            /** Draft Known */
+            draft_known: number;
+            /** Total */
+            total: number;
+        };
+        /** ContentFilterImpactDecision */
+        ContentFilterImpactDecision: {
+            /**
+             * Outcome
+             * @enum {string}
+             */
+            outcome: "keep" | "drop" | "unknown";
+            /** Reasons */
+            reasons: string[];
+        };
+        /** ContentFilterImpactItem */
+        ContentFilterImpactItem: {
+            current: components["schemas"]["ContentFilterImpactDecision"];
+            /** Decision Changed */
+            decision_changed: boolean;
+            draft: components["schemas"]["ContentFilterImpactDecision"];
+            /** Href */
+            href: string;
+            /** Reasons Changed */
+            reasons_changed: boolean;
+            /** Title */
+            title?: string | null;
+            /**
+             * Transition
+             * @enum {string}
+             */
+            transition: "unchanged" | "newly_kept" | "newly_dropped" | "became_unknown" | "resolved_unknown";
+            /** Updated At */
+            updated_at: string;
+            /** Video Code */
+            video_code?: string | null;
+        };
+        /** ContentFilterImpactRequest */
+        ContentFilterImpactRequest: {
+            /** Baseline Version */
+            baseline_version: string;
+            /**
+             * Cohort Size
+             * @default 500
+             */
+            cohort_size: number;
+            /** Draft Rules */
+            draft_rules: components["schemas"]["ContentFilterDraftRule"][];
+            /** Expected Cohort Version */
+            expected_cohort_version?: string | null;
+            /**
+             * Page
+             * @default 1
+             */
+            page: number;
+            /**
+             * Page Size
+             * @default 100
+             */
+            page_size: number;
+        };
+        /** ContentFilterImpactResponse */
+        ContentFilterImpactResponse: {
+            /** Baseline Identity */
+            baseline_identity: string;
+            /** Baseline Version */
+            baseline_version: string;
+            /** Cohort Size */
+            cohort_size: number;
+            /** Cohort Version */
+            cohort_version: string;
+            coverage: components["schemas"]["ContentFilterImpactCoverage"];
+            /** Has More */
+            has_more: boolean;
+            /** Items */
+            items: components["schemas"]["ContentFilterImpactItem"][];
+            /** Page */
+            page: number;
+            /** Page Size */
+            page_size: number;
+            summary: components["schemas"]["ContentFilterImpactSummary"];
+            /** Total */
+            total: number;
+        };
+        /** ContentFilterImpactSummary */
+        ContentFilterImpactSummary: {
+            /** Current */
+            current: {
+                [key: string]: number;
+            };
+            /** Draft */
+            draft: {
+                [key: string]: number;
+            };
+            /** Missing Metadata */
+            missing_metadata: {
+                [key: string]: number;
+            };
+            /** Transitions */
+            transitions: {
+                [key: string]: number;
+            };
+        };
         /** ContentFilterRuleCreate */
         ContentFilterRuleCreate: {
             /** Dimension */
@@ -2381,6 +2526,10 @@ export interface components {
         };
         /** ContentFilterRuleListResponse */
         ContentFilterRuleListResponse: {
+            /** Baseline Identity */
+            baseline_identity: string;
+            /** Baseline Version */
+            baseline_version: string;
             /** Items */
             items: components["schemas"]["ContentFilterRuleResponse"][];
             /** Total */
@@ -4842,6 +4991,61 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContentFilterRuleResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    compare_impact_api_content_filter_impact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContentFilterImpactRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentFilterImpactResponse"];
                 };
             };
             /** @description Unauthorized */
