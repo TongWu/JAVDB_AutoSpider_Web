@@ -238,6 +238,100 @@ describe("Sessions routes", () => {
     expect(remainingTorrents?.cnt).toBe(0);
   });
 
+  it("keeps the session uncommitted when an atomic pending delete fails, then retries safely", async () => {
+    const targetSession = "sess-asymmetric-history";
+    const unrelatedSession = "sess-asymmetric-unrelated";
+
+    await env.REPORTS_DB.prepare(
+      "INSERT OR REPLACE INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    ).bind(targetSession, "daily", "2026-09-22", "asymmetric.csv", "2026-09-22 01:00:00", "finalizing", "pending").run();
+
+    // Reproduce a partially migrated HISTORY_DB: movie pending exists, torrent
+    // pending does not. REPORTS_DB intentionally contains neither pending table.
+    await env.HISTORY_DB.prepare("DROP TABLE IF EXISTS PendingTorrentHistoryWrites").run();
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE IF NOT EXISTS PendingMovieHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)",
+    ).run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingMovieHistoryWrites (SessionId, VideoCode) VALUES (?, ?), (?, ?)",
+    ).bind(targetSession, "TARGET-001", unrelatedSession, "OTHER-001").run();
+
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const commit = (sessionId: string) => app.request(`/api/sessions/${sessionId}/commit`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({ drop_pending: true }),
+    }, env);
+
+    const failed = await commit(targetSession);
+    const failedBody = await failed.json();
+
+    const afterFailure = await env.REPORTS_DB.prepare(
+      "SELECT Status, CommittedAt FROM ReportSessions WHERE Id = ?",
+    ).bind(targetSession).first<{ Status: string; CommittedAt: string | null }>();
+
+    const movieRowsAfterFailure = await env.HISTORY_DB.prepare(
+      "SELECT SessionId FROM PendingMovieHistoryWrites ORDER BY SessionId",
+    ).all<{ SessionId: string }>();
+    expect({
+      status: failed.status,
+      body: failedBody,
+      reportSession: afterFailure,
+      historySessions: movieRowsAfterFailure.results,
+    }).toEqual({
+      status: 500,
+      body: {
+        error: {
+          code: "commit.failed",
+          message: "Pending history deletion failed; session was not committed. Repair history storage and retry.",
+        },
+      },
+      reportSession: { Status: "finalizing", CommittedAt: null },
+      historySessions: [
+        { SessionId: targetSession },
+        { SessionId: unrelatedSession },
+      ].sort((a, b) => a.SessionId.localeCompare(b.SessionId)),
+    });
+
+    // Repair the asymmetric schema, stage both target and unrelated torrent
+    // writes, and prove an ordinary retry completes without cross-session loss.
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE PendingTorrentHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)",
+    ).run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingTorrentHistoryWrites (SessionId, VideoCode) VALUES (?, ?), (?, ?)",
+    ).bind(targetSession, "TARGET-001", unrelatedSession, "OTHER-001").run();
+
+    const retried = await commit(targetSession);
+
+    expect(retried.status).toBe(200);
+    expect(await retried.json()).toEqual({
+      session_id: targetSession,
+      new_state: "committed",
+      pending_dropped: 2,
+    });
+
+    const afterRetry = await env.REPORTS_DB.prepare(
+      "SELECT Status, CommittedAt FROM ReportSessions WHERE Id = ?",
+    ).bind(targetSession).first<{ Status: string; CommittedAt: string | null }>();
+    expect(afterRetry?.Status).toBe("committed");
+    expect(afterRetry?.CommittedAt).toEqual(expect.any(String));
+
+    const movieRowsAfterRetry = await env.HISTORY_DB.prepare(
+      "SELECT SessionId FROM PendingMovieHistoryWrites ORDER BY SessionId",
+    ).all<{ SessionId: string }>();
+    const torrentRowsAfterRetry = await env.HISTORY_DB.prepare(
+      "SELECT SessionId FROM PendingTorrentHistoryWrites ORDER BY SessionId",
+    ).all<{ SessionId: string }>();
+    expect(movieRowsAfterRetry.results).toEqual([{ SessionId: unrelatedSession }]);
+    expect(torrentRowsAfterRetry.results).toEqual([{ SessionId: unrelatedSession }]);
+  });
+
   // ---------- POST /:session_id/rollback ----------
 
   it("POST /api/sessions/:id/rollback returns 503 without GH_ACTIONS_TOKEN", async () => {

@@ -225,9 +225,15 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
         pendingDropped += r.meta.changes ?? 0;
       }
     } catch (err) {
-      // Only ignore "table doesn't exist" (fresh/test DBs). Rethrow any other
-      // error so we don't commit the session with pending rows left undeleted.
-      if (!(err instanceof Error && /no such table/i.test(err.message))) throw err;
+      throw new HTTPException(500, {
+        message: JSON.stringify({
+          error: {
+            code: "commit.failed",
+            message: "Pending history deletion failed; session was not committed. Repair history storage and retry.",
+          },
+        }),
+        cause: err,
+      });
     }
   }
 
