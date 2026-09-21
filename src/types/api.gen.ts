@@ -2105,7 +2105,7 @@ export interface components {
              * Active
              * @default true
              */
-            active?: boolean;
+            active: boolean;
             /** Actor Name */
             actor_name?: string | null;
         };
@@ -2115,27 +2115,27 @@ export interface components {
              * Date Filter
              * @default false
              */
-            date_filter?: boolean;
+            date_filter: boolean;
             /**
              * Dry Run
              * @default false
              */
-            dry_run?: boolean;
+            dry_run: boolean;
             /**
              * End Page
              * @default 1
              */
-            end_page?: number;
+            end_page: number;
             /**
              * History Filter
              * @default false
              */
-            history_filter?: boolean;
+            history_filter: boolean;
             /**
              * Ignore Release Date
              * @default true
              */
-            ignore_release_date?: boolean;
+            ignore_release_date: boolean;
             /** Max Movies Phase1 */
             max_movies_phase1?: number | null;
             /** Max Movies Phase2 */
@@ -2144,26 +2144,26 @@ export interface components {
              * No Proxy
              * @default false
              */
-            no_proxy?: boolean;
+            no_proxy: boolean;
             /**
              * Phase
              * @default all
              */
-            phase?: string;
+            phase: string;
             /** Qb Category */
             qb_category?: string | null;
             /**
              * Start Page
              * @default 1
              */
-            start_page?: number;
+            start_page: number;
             /** Url */
             url: string;
             /**
              * Use Proxy
              * @default false
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** AggregateMagnetsPayload */
         AggregateMagnetsPayload: {
@@ -2183,7 +2183,7 @@ export interface components {
              * File Count
              * @default 0
              */
-            file_count?: number;
+            file_count: number;
             /** Info Hash */
             info_hash?: string | null;
             /** Magnet Uri */
@@ -2196,12 +2196,12 @@ export interface components {
              * Quality Score
              * @default 0
              */
-            quality_score?: number;
+            quality_score: number;
             /**
              * Size
              * @default
              */
-            size?: string;
+            size: string;
             /** Sources */
             sources?: string[];
             /** Tags */
@@ -2241,7 +2241,7 @@ export interface components {
              * @description Capabilities schema version
              * @default 2.0.0
              */
-            version?: string;
+            version: string;
         };
         /** ChangePasswordPayload */
         ChangePasswordPayload: {
@@ -2256,7 +2256,7 @@ export interface components {
              * Older Than Hours
              * @default 6
              */
-            older_than_hours?: number;
+            older_than_hours: number;
             /** Shard Dates */
             shard_dates?: string[] | null;
         };
@@ -2277,23 +2277,23 @@ export interface components {
              * Dry Run
              * @default true
              */
-            dry_run?: boolean;
+            dry_run: boolean;
             /**
              * Include Legacy
              * @default false
              */
-            include_legacy?: boolean;
+            include_legacy: boolean;
             /**
              * Older Than Hours
              * @default 48
              */
-            older_than_hours?: number;
+            older_than_hours: number;
             /**
              * Scope
              * @default all
              * @enum {string}
              */
-            scope?: "reports" | "operations" | "history" | "all";
+            scope: "reports" | "operations" | "history" | "all";
         };
         /** CleanupStaleResponse */
         CleanupStaleResponse: {
@@ -2412,19 +2412,13 @@ export interface components {
         ContentFilterDraftRule: {
             /** Dimension */
             dimension: string;
-            /**
-             * Enabled
-             * @default true
-             */
+            /** Enabled */
             enabled?: boolean;
             /** Id */
             id?: number | null;
             /** Mode */
             mode: string;
-            /**
-             * Value
-             * @default
-             */
+            /** Value */
             value?: string;
         };
         /** ContentFilterImpactCoverage */
@@ -2474,24 +2468,15 @@ export interface components {
         ContentFilterImpactRequest: {
             /** Baseline Version */
             baseline_version: string;
-            /**
-             * Cohort Size
-             * @default 500
-             */
+            /** Cohort Size */
             cohort_size?: number;
             /** Draft Rules */
             draft_rules: components["schemas"]["ContentFilterDraftRule"][];
             /** Expected Cohort Version */
             expected_cohort_version?: string | null;
-            /**
-             * Page
-             * @default 1
-             */
+            /** Page */
             page?: number;
-            /**
-             * Page Size
-             * @default 100
-             */
+            /** Page Size */
             page_size?: number;
         };
         /** ContentFilterImpactResponse */
@@ -2546,7 +2531,7 @@ export interface components {
              * Value
              * @default
              */
-            value?: string;
+            value: string;
         };
         /** ContentFilterRuleEnabledUpdate */
         ContentFilterRuleEnabledUpdate: {
@@ -2613,12 +2598,12 @@ export interface components {
              * Hearted
              * @default false
              */
-            hearted?: boolean;
+            hearted: boolean;
             /**
              * Weight
              * @default 1
              */
-            weight?: number;
+            weight: number;
         };
         /** CrawlIndexPayload */
         CrawlIndexPayload: {
@@ -2626,41 +2611,41 @@ export interface components {
              * Crawl All
              * @default false
              */
-            crawl_all?: boolean;
+            crawl_all: boolean;
             /** End Page */
             end_page?: number | null;
             /**
              * Max Consecutive Empty
              * @default 2
              */
-            max_consecutive_empty?: number;
+            max_consecutive_empty: number;
             /**
              * Page Delay
              * @default 1
              */
-            page_delay?: number;
+            page_delay: number;
             /**
              * Start Page
              * @default 1
              */
-            start_page?: number;
+            start_page: number;
             /** Url */
             url: string;
             /**
              * Use Cf Bypass
              * @default true
              */
-            use_cf_bypass?: boolean;
+            use_cf_bypass: boolean;
             /**
              * Use Cookie
              * @default false
              */
-            use_cookie?: boolean;
+            use_cookie: boolean;
             /**
              * Use Proxy
              * @default true
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** CreateSecretRequest */
         CreateSecretRequest: {
@@ -2680,27 +2665,27 @@ export interface components {
              * All
              * @default false
              */
-            all?: boolean;
+            all: boolean;
             /**
              * Dry Run
              * @default false
              */
-            dry_run?: boolean;
+            dry_run: boolean;
             /**
              * End Page
              * @default 10
              */
-            end_page?: number;
+            end_page: number;
             /**
              * Ignore History
              * @default false
              */
-            ignore_history?: boolean;
+            ignore_history: boolean;
             /**
              * Ignore Release Date
              * @default false
              */
-            ignore_release_date?: boolean;
+            ignore_release_date: boolean;
             /** Max Movies Phase1 */
             max_movies_phase1?: number | null;
             /** Max Movies Phase2 */
@@ -2709,34 +2694,34 @@ export interface components {
              * Mode
              * @default pipeline
              */
-            mode?: string;
+            mode: string;
             /**
              * No Proxy
              * @default false
              */
-            no_proxy?: boolean;
+            no_proxy: boolean;
             /** Output File */
             output_file?: string | null;
             /**
              * Phase
              * @default all
              */
-            phase?: string;
+            phase: string;
             /**
              * Pikpak Individual
              * @default false
              */
-            pikpak_individual?: boolean;
+            pikpak_individual: boolean;
             /**
              * Start Page
              * @default 1
              */
-            start_page?: number;
+            start_page: number;
             /**
              * Use Proxy
              * @default false
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** DeleteSecretResponse */
         DeleteSecretResponse: {
@@ -2758,7 +2743,7 @@ export interface components {
              * Ref
              * @default main
              */
-            ref?: string;
+            ref: string;
             /** Workflow Id */
             workflow_id: number;
         };
@@ -2834,12 +2819,12 @@ export interface components {
              * Use Cookie
              * @default true
              */
-            use_cookie?: boolean;
+            use_cookie: boolean;
             /**
              * Use Proxy
              * @default true
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** ExploreIndexStatusResponse */
         ExploreIndexStatusResponse: {
@@ -2860,7 +2845,7 @@ export interface components {
              * Title
              * @default
              */
-            title?: string;
+            title: string;
         };
         /** ExploreOneClickPayload */
         ExploreOneClickPayload: {
@@ -2872,12 +2857,12 @@ export interface components {
              * Use Cookie
              * @default true
              */
-            use_cookie?: boolean;
+            use_cookie: boolean;
             /**
              * Use Proxy
              * @default true
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** ExploreOneClickResponse */
         ExploreOneClickResponse: {
@@ -2898,19 +2883,19 @@ export interface components {
              * Page Num
              * @default 1
              */
-            page_num?: number;
+            page_num: number;
             /** Url */
             url: string;
             /**
              * Use Cookie
              * @default true
              */
-            use_cookie?: boolean;
+            use_cookie: boolean;
             /**
              * Use Proxy
              * @default true
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** ExploreResolveResponse */
         ExploreResolveResponse: {
@@ -2985,17 +2970,17 @@ export interface components {
              * Check Smtp
              * @default true
              */
-            check_smtp?: boolean;
+            check_smtp: boolean;
             /**
              * No Proxy
              * @default false
              */
-            no_proxy?: boolean;
+            no_proxy: boolean;
             /**
              * Use Proxy
              * @default false
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** HealthResponse */
         HealthResponse: {
@@ -3003,12 +2988,12 @@ export interface components {
              * Rust Core Available
              * @default false
              */
-            rust_core_available?: boolean;
+            rust_core_available: boolean;
             /**
              * Status
              * @default ok
              */
-            status?: string;
+            status: string;
         };
         /** HtmlPayload */
         HtmlPayload: {
@@ -3018,7 +3003,7 @@ export interface components {
              * Page Num
              * @default 1
              */
-            page_num?: number;
+            page_num: number;
         };
         /**
          * JavdbLoginRefreshPayload
@@ -3037,7 +3022,7 @@ export interface components {
              * @default auto
              * @enum {string}
              */
-            proxy_mode?: "auto" | "none" | "single" | "pool";
+            proxy_mode: "auto" | "none" | "single" | "pool";
             /** Proxy Url */
             proxy_url?: string | null;
         };
@@ -3050,7 +3035,7 @@ export interface components {
              * Attempts
              * @default []
              */
-            attempts?: {
+            attempts: {
                 [key: string]: unknown;
             }[];
             /** Error Category */
@@ -3061,7 +3046,7 @@ export interface components {
              * Output
              * @default
              */
-            output?: string;
+            output: string;
             /** Proxy Used */
             proxy_used?: string | null;
             /**
@@ -3082,7 +3067,7 @@ export interface components {
              * @default headless
              * @enum {string}
              */
-            method?: "headless" | "cookie_paste";
+            method: "headless" | "cookie_paste";
         };
         /**
          * JavdbSessionRefreshResponse
@@ -3480,13 +3465,13 @@ export interface components {
              * Enabled
              * @default true
              */
-            enabled?: boolean;
+            enabled: boolean;
             /**
              * Min Confidence
              * @default medium
              * @enum {string}
              */
-            min_confidence?: "low" | "medium" | "high";
+            min_confidence: "low" | "medium" | "high";
         };
         /** OpsIncidentAnalyticsResponse */
         OpsIncidentAnalyticsResponse: {
@@ -3730,12 +3715,12 @@ export interface components {
              * Days
              * @default 7
              */
-            days?: number;
+            days: number;
             /**
              * Dry Run
              * @default true
              */
-            dry_run?: boolean;
+            dry_run: boolean;
         };
         /** PikPakTransferResponse */
         PikPakTransferResponse: {
@@ -3760,22 +3745,22 @@ export interface components {
              * Days
              * @default 2
              */
-            days?: number;
+            days: number;
             /**
              * Delete Local Files
              * @default false
              */
-            delete_local_files?: boolean;
+            delete_local_files: boolean;
             /**
              * Dry Run
              * @default true
              */
-            dry_run?: boolean;
+            dry_run: boolean;
             /**
              * Min Size Mb
              * @default 100
              */
-            min_size_mb?: number;
+            min_size_mb: number;
         };
         /** QbFilterSmallResponse */
         QbFilterSmallResponse: {
@@ -3833,7 +3818,7 @@ export interface components {
              * Reason Diff
              * @default []
              */
-            reason_diff?: string[];
+            reason_diff: string[];
             recommended?: components["schemas"]["TorrentQualityEvaluationSchema"] | null;
         };
         /** RcloneLastResponse */
@@ -3858,22 +3843,22 @@ export interface components {
              * Dry Run
              * @default true
              */
-            dry_run?: boolean;
+            dry_run: boolean;
             /**
              * Execute
              * @default false
              */
-            execute?: boolean;
+            execute: boolean;
             /**
              * Report
              * @default true
              */
-            report?: boolean;
+            report: boolean;
             /**
              * Scan
              * @default true
              */
-            scan?: boolean;
+            scan: boolean;
         };
         /** RcloneRunResponse */
         RcloneRunResponse: {
@@ -3946,12 +3931,12 @@ export interface components {
              * Acknowledge Unrecorded
              * @default false
              */
-            acknowledge_unrecorded?: boolean;
+            acknowledge_unrecorded: boolean;
             /**
              * Dry Run
              * @default true
              */
-            dry_run?: boolean;
+            dry_run: boolean;
         };
         /** RunMigrationResponse */
         RunMigrationResponse: {
@@ -3991,22 +3976,22 @@ export interface components {
              * Drop Pending
              * @default false
              */
-            drop_pending?: boolean;
+            drop_pending: boolean;
             /**
              * Emit Metrics
              * @default true
              */
-            emit_metrics?: boolean;
+            emit_metrics: boolean;
             /**
              * Fanout Claims
              * @default true
              */
-            fanout_claims?: boolean;
+            fanout_claims: boolean;
             /**
              * Force
              * @default false
              */
-            force?: boolean;
+            force: boolean;
         };
         /** SessionCommitResponse */
         SessionCommitResponse: {
@@ -4016,7 +4001,7 @@ export interface components {
              * Pending Dropped
              * @default 0
              */
-            pending_dropped?: number;
+            pending_dropped: number;
             /** Session Id */
             session_id: string;
         };
@@ -4062,12 +4047,12 @@ export interface components {
              * Dry Run
              * @default true
              */
-            dry_run?: boolean;
+            dry_run: boolean;
             /**
              * Include Pending
              * @default true
              */
-            include_pending?: boolean;
+            include_pending: boolean;
         };
         /** SessionRollbackResponse */
         SessionRollbackResponse: {
@@ -4099,39 +4084,39 @@ export interface components {
              * Crawl All
              * @default false
              */
-            crawl_all?: boolean;
+            crawl_all: boolean;
             /**
              * Disable All Filters
              * @default false
              */
-            disable_all_filters?: boolean;
+            disable_all_filters: boolean;
             /**
              * Dry Run
              * @default false
              */
-            dry_run?: boolean;
+            dry_run: boolean;
             /**
              * Enable Dedup
              * @default false
              */
-            enable_dedup?: boolean;
+            enable_dedup: boolean;
             /**
              * Enable Redownload
              * @default false
              */
-            enable_redownload?: boolean;
+            enable_redownload: boolean;
             /** End Page */
             end_page?: number | null;
             /**
              * Ignore History
              * @default false
              */
-            ignore_history?: boolean;
+            ignore_history: boolean;
             /**
              * Ignore Release Date
              * @default false
              */
-            ignore_release_date?: boolean;
+            ignore_release_date: boolean;
             /** Max Movies Phase1 */
             max_movies_phase1?: number | null;
             /** Max Movies Phase2 */
@@ -4140,37 +4125,37 @@ export interface components {
              * No Proxy
              * @default false
              */
-            no_proxy?: boolean;
+            no_proxy: boolean;
             /**
              * No Rclone Filter
              * @default false
              */
-            no_rclone_filter?: boolean;
+            no_rclone_filter: boolean;
             /**
              * Phase
              * @default all
              * @enum {string}
              */
-            phase?: "1" | "2" | "all";
+            phase: "1" | "2" | "all";
             /** Redownload Threshold */
             redownload_threshold?: number | null;
             /**
              * Start Page
              * @default 1
              */
-            start_page?: number;
+            start_page: number;
             /** Url */
             url?: string | null;
             /**
              * Use History
              * @default false
              */
-            use_history?: boolean;
+            use_history: boolean;
             /**
              * Use Proxy
              * @default false
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** SpiderJobStatusResponse */
         SpiderJobStatusResponse: {
@@ -4235,7 +4220,7 @@ export interface components {
              * Status
              * @default ok
              */
-            status?: string;
+            status: string;
         };
         /** SystemStateGetResponse */
         SystemStateGetResponse: {
@@ -4294,7 +4279,7 @@ export interface components {
              * Reasons
              * @default []
              */
-            reasons?: string[];
+            reasons: string[];
             /** Resolution Consistent */
             resolution_consistent?: boolean | null;
             /** Score */
@@ -4337,7 +4322,7 @@ export interface components {
              * Reasons
              * @default []
              */
-            reasons?: string[];
+            reasons: string[];
             /** Subtitle File Count */
             subtitle_file_count?: number | null;
             /** Suspicious File Count */
@@ -4447,24 +4432,24 @@ export interface components {
              * Page Num
              * @default 1
              */
-            page_num?: number;
+            page_num: number;
             /** Url */
             url: string;
             /**
              * Use Cf Bypass
              * @default true
              */
-            use_cf_bypass?: boolean;
+            use_cf_bypass: boolean;
             /**
              * Use Cookie
              * @default false
              */
-            use_cookie?: boolean;
+            use_cookie: boolean;
             /**
              * Use Proxy
              * @default true
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
         };
         /** ValidationError */
         ValidationError: {
@@ -4485,17 +4470,17 @@ export interface components {
              * F
              * @default all
              */
-            f?: string;
+            f: string;
             /**
              * Use Cookie
              * @default true
              */
-            use_cookie?: boolean;
+            use_cookie: boolean;
             /**
              * Use Proxy
              * @default true
              */
-            use_proxy?: boolean;
+            use_proxy: boolean;
             /** Video Code */
             video_code: string;
         };
@@ -4585,7 +4570,7 @@ export interface components {
              * Branch
              * @default main
              */
-            branch?: string;
+            branch: string;
             /** Commit Message */
             commit_message: string;
             /** Content */

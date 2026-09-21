@@ -27,6 +27,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const ROOT = path.resolve(__dirname, '..')
 const TMP_DIR = path.join(ROOT, 'tmp')
 const OUT_JSON = path.join(TMP_DIR, 'openapi.json')
+const CODEGEN_JSON = path.join(TMP_DIR, 'openapi.codegen.json')
 const OUT_TS = path.join(ROOT, 'src', 'types', 'api.gen.ts')
 
 const OPENAPI_PATH = process.env['OPENAPI_PATH'] ?? ''
@@ -64,9 +65,24 @@ async function main() {
   await writeFile(OUT_JSON, json, 'utf-8')
   console.log(`[fetch-openapi] wrote ${OUT_JSON}`)
 
+  // openapi-typescript defaults to treating every property with a `default`
+  // as required, even when OpenAPI omits it from `required`. Keep the source
+  // artifact intact, but remove defaults from the five ADR-060 request fields
+  // in a codegen-only copy so their generated types preserve omission semantics.
+  const codegenSchema = JSON.parse(json)
+  const optionalDefaults = {
+    ContentFilterDraftRule: ['enabled', 'value'],
+    ContentFilterImpactRequest: ['cohort_size', 'page', 'page_size'],
+  }
+  for (const [schemaName, fields] of Object.entries(optionalDefaults)) {
+    const properties = codegenSchema.components.schemas[schemaName].properties
+    for (const field of fields) delete properties[field].default
+  }
+  await writeFile(CODEGEN_JSON, `${JSON.stringify(codegenSchema)}\n`, 'utf-8')
+
   console.log(`[fetch-openapi] running openapi-typescript ...`)
   execSync(
-    `node node_modules/.bin/openapi-typescript ${OUT_JSON} -o ${OUT_TS} --default-non-nullable false`,
+    `node node_modules/.bin/openapi-typescript ${CODEGEN_JSON} -o ${OUT_TS}`,
     { cwd: ROOT, stdio: 'inherit' },
   )
   console.log(`[fetch-openapi] generated ${OUT_TS}`)
