@@ -78,8 +78,15 @@ describe("Content-filter routes", () => {
       env,
     );
     expect(list.status).toBe(200);
-    const listBody = (await list.json()) as { items: unknown[]; total: number };
+    const listBody = (await list.json()) as {
+      items: unknown[];
+      total: number;
+      baseline_identity: string;
+      baseline_version: string;
+    };
     expect(listBody.total).toBe(1);
+    expect(listBody.baseline_identity).toBe("content-filter-rules");
+    expect(listBody.baseline_version).toMatch(/^sha256:[0-9a-f]{64}$/);
 
     const put = await app.request(
       `/api/content-filter/${ruleId}`,
