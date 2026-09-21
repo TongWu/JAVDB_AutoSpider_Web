@@ -57,3 +57,5 @@ All nine remote launch cases use `dispatchJob`: generic `/api/gh-actions/runs`, 
 Reasons are a finite union: `not_observed_in_this_process`, `capture_failed`, `writes_forbidden`, `observation_failed`, `no_retained_evidence`, `storage_unavailable`, `invalid_evidence`. The unreleased migration CHECK accepts captured records only with null reason, and unobservable records only with the fixed reason and null payload/digest. Existing disposable development tables require recreation to receive this new CHECK; this migration has not been deployed to production. Never delete production evidence to retrofit a constraint.
 
 Decoding validates state, the complete canonical redacted representation and its digest before exposing evidence; invalid rows produce unavailable evidence without raw text in responses or logs. The frontend only displays known reasons, provides table captions, and announces successful refresh/lookup in a localized polite live status.
+
+Generic workflow inputs may carry arbitrary credentials. They are sent to the dispatch client but never copied into the new generic job tracking row (`inputs` remains null) or the snapshot.

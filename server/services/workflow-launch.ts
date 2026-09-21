@@ -13,7 +13,8 @@ export async function dispatchJob(
 ) {
   const config = resolveDispatchConfig(env)
   const repo = createJobRunsRepo(env.OPERATIONS_DB, env, config)
-  const job = await repo.create(kind, workflow, inputs)
+  // Generic workflow inputs are arbitrary and may contain credentials.
+  const job = await repo.create(kind, workflow, kind === 'workflow' ? undefined : inputs)
   try {
     await createGhClient(config).dispatchWorkflow(workflow, inputs, ref)
   } catch (error) {

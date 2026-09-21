@@ -98,3 +98,16 @@ for (const unavailable of [false, true]) {
     },
   )
 }
+
+it('does not copy arbitrary generic workflow secrets into new job tracking metadata', async () => {
+  const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(null, {status:204}))
+  const token = await signJwt({sub:'admin',role:'admin',typ:'access'}, env.API_SECRET_KEY, 60)
+  const response = await app.request('/api/gh-actions/runs', {method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json','X-CSRF-Token':'test',Cookie:'csrf_token=test'},body:JSON.stringify({workflow:'PrivateWorkflow.yml',inputs:{credential:'input-secret-canary'}})},
+    {...env,GH_ACTIONS_TIER:'admin',GH_ACTIONS_TOKEN:'env-secret-canary',GH_ACTIONS_REPO:'owner/repo'})
+  expect(response.status).toBe(201)
+  expect(String(fetch.mock.calls[0][1]?.body)).toContain('input-secret-canary')
+  const rows = await env.OPERATIONS_DB.prepare('SELECT * FROM job_runs').all()
+  expect(rows.results[0].inputs).toBeNull()
+  const evidence = await env.OPERATIONS_DB.prepare('SELECT * FROM ConfigSnapshots').all()
+  expect(JSON.stringify(rows.results)+JSON.stringify(evidence.results)+await response.text()).not.toContain('input-secret-canary')
+})
