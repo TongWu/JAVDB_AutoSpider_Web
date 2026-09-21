@@ -21,6 +21,7 @@ import {
   type DraftRule,
 } from "../services/content-filter-impact";
 import { VALID_RULE_MODES, VALUE_REQUIRED } from "../contract/sql-contract.gen";
+import { canonicalComparisonAge } from "../../shared/content-filter-comparison";
 
 type CfEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 
@@ -88,7 +89,7 @@ function validateRuleValue(
   }
   if (dimension === "age") {
     return /^\d+$/.test(value)
-      ? { value: String(Number.parseInt(value, 10)) }
+      ? { value: value.replace(/^0+/, "") || "0" }
       : { error: "age rules require a non-negative integer value" };
   }
   if (dimension === "release_date") {
@@ -129,7 +130,9 @@ function parseDraftRules(value: unknown): { rules: DraftRule[] } | { code: strin
       enabled: candidate.enabled === undefined ? true : candidate.enabled,
     });
     if (portableError) return { code: "content_filter.invalid_value", error: portableError };
-    const validated = ["regex_exclude", "regex_include"].includes(mode)
+    const validated = dimension === "age"
+      ? { value: canonicalComparisonAge(rawValue)! }
+      : ["regex_exclude", "regex_include"].includes(mode)
       ? { value: rawValue }
       : validateRuleValue(dimension, mode, rawValue, portableTrim);
     if ("error" in validated) return { code: "content_filter.invalid_value", error: validated.error };
@@ -179,8 +182,8 @@ contentFilterRoutes.post("/impact", async (c) => {
   if (!Number.isInteger(cohortSize) || Number(cohortSize) < 1 || Number(cohortSize) > 5000) {
     return c.json(impactErrJson("content_filter.invalid_cohort_size", "cohort_size must be an integer from 1 to 5000"), 422);
   }
-  if (!Number.isInteger(page) || Number(page) < 1) {
-    return c.json(impactErrJson("content_filter.invalid_page", "page must be a positive integer"), 422);
+  if (!Number.isSafeInteger(page) || Number(page) < 1) {
+    return c.json(impactErrJson("content_filter.invalid_page", "page must be an integer from 1 to 9007199254740991"), 422);
   }
   if (!Number.isInteger(pageSize) || Number(pageSize) < 1 || Number(pageSize) > 500) {
     return c.json(impactErrJson("content_filter.invalid_page_size", "page_size must be an integer from 1 to 500"), 422);

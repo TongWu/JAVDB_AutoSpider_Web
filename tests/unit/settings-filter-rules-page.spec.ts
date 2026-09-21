@@ -3,6 +3,7 @@ import { flushPromises, mount } from '@vue/test-utils'
 import { createI18n } from 'vue-i18n'
 import { NInput, NSelect } from 'naive-ui'
 import en from '@/i18n/locales/en.json'
+import contract from '../../server/__tests__/fixtures/content-filter-impact-contract.json'
 
 const { authState, capState, compareImpact, listRules } = vi.hoisted(() => ({
   authState: { role: 'readonly' },
@@ -44,6 +45,37 @@ function findButton(wrapper: ReturnType<typeof mount>, label: string) {
 }
 
 describe('SettingsFilterRulesPage comparison authorization and validity', () => {
+  it.each(contract.portability_route_cases)('preserves comparison draft bytes: $name', async (testCase) => {
+    const wrapper = mount(SettingsFilterRulesPage, { global: { plugins: [i18n] } })
+    await flushPromises()
+    const selects = wrapper.findAllComponents(NSelect)
+    selects[0].vm.$emit('update:value', testCase.rule.dimension)
+    selects[1].vm.$emit('update:value', testCase.rule.mode)
+    wrapper.findComponent(NInput).vm.$emit('update:value', testCase.rule.value)
+    await flushPromises()
+    const button = findButton(wrapper, 'Compare draft')!
+    expect(button.attributes('disabled')).toBeUndefined()
+    await button.trigger('click')
+    expect(compareImpact).toHaveBeenCalledWith(expect.objectContaining({
+      draft_rules: [expect.objectContaining({
+        value: testCase.rule.value.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, ''),
+      })],
+    }))
+    wrapper.unmount()
+  })
+
+  it.each(['151', '١٨', '0000'])('rejects nonportable draft age %s', async (value) => {
+    const wrapper = mount(SettingsFilterRulesPage, { global: { plugins: [i18n] } })
+    await flushPromises()
+    const selects = wrapper.findAllComponents(NSelect)
+    selects[0].vm.$emit('update:value', 'age')
+    selects[1].vm.$emit('update:value', 'min_age')
+    wrapper.findComponent(NInput).vm.$emit('update:value', value)
+    await flushPromises()
+    expect(findButton(wrapper, 'Compare draft')!.attributes('disabled')).toBeDefined()
+    wrapper.unmount()
+  })
+
   beforeEach(() => {
     vi.clearAllMocks()
     authState.role = 'readonly'

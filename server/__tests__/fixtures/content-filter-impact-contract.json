@@ -1,6 +1,78 @@
 {
   "semantic_cases": [
     {
+      "name": "nel_birthdate_is_unknown",
+      "row": {
+        "href": "/v/birthdate",
+        "title": "Birthdate",
+        "video_code": "AGE",
+        "release_date": "2024-01-01",
+        "categories": [],
+        "actors": [
+          {
+            "name": "Alice",
+            "href": "/actors/alice",
+            "gender": "female"
+          }
+        ],
+        "actor_birthdates": {
+          "/actors/alice": "2000-01-01"
+        },
+        "updated_at": "2026-09-22"
+      },
+      "rules": [
+        {
+          "id": -1,
+          "dimension": "age",
+          "mode": "max_age",
+          "value": "018",
+          "enabled": true
+        }
+      ],
+      "expected": {
+        "outcome": "unknown",
+        "reasons": [
+          "missing metadata: actor_age"
+        ]
+      }
+    },
+    {
+      "name": "bom_birthdate_is_unknown",
+      "row": {
+        "href": "/v/birthdate",
+        "title": "Birthdate",
+        "video_code": "AGE",
+        "release_date": "2024-01-01",
+        "categories": [],
+        "actors": [
+          {
+            "name": "Alice",
+            "href": "/actors/alice",
+            "gender": "female"
+          }
+        ],
+        "actor_birthdates": {
+          "/actors/alice": "﻿2000-01-01﻿"
+        },
+        "updated_at": "2026-09-22"
+      },
+      "rules": [
+        {
+          "id": -1,
+          "dimension": "age",
+          "mode": "max_age",
+          "value": "018",
+          "enabled": true
+        }
+      ],
+      "expected": {
+        "outcome": "unknown",
+        "reasons": [
+          "missing metadata: actor_age"
+        ]
+      }
+    },
+    {
       "name": "unicode_ascii_fold_does_not_expand_sharp_s",
       "row": {
         "href": "/v/unicode",
@@ -163,6 +235,56 @@
   ],
   "request_validation_cases": [
     {
+      "name": "age_value_precedes_invalid_page",
+      "request": {
+        "baseline_version": "__CURRENT_BASELINE_VERSION__",
+        "draft_rules": [
+          {
+            "dimension": "age",
+            "mode": "min_age",
+            "value": "151"
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "age rules require an integer from 0 to 150 using ASCII digits [0-9]"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "age_value_precedes_invalid_cohort_size",
+      "request": {
+        "baseline_version": "__CURRENT_BASELINE_VERSION__",
+        "draft_rules": [
+          {
+            "dimension": "age",
+            "mode": "min_age",
+            "value": "151"
+          }
+        ],
+        "cohort_size": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "age rules require an integer from 0 to 150 using ASCII digits [0-9]"
+            }
+          }
+        }
+      }
+    },
+    {
       "name": "reject_missing_baseline",
       "request": {"draft_rules": []},
       "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_baseline", "message": "baseline_version must be a string"}}}}
@@ -185,7 +307,7 @@
     {
       "name": "reject_null_page",
       "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [], "page": null},
-      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_page", "message": "page must be a positive integer"}}}}
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_page", "message": "page must be an integer from 1 to 9007199254740991"}}}}
     },
     {
       "name": "reject_null_page_size",
@@ -234,6 +356,829 @@
       "categories": "[[]]",
       "rules": [{"id": -1, "dimension": "tag", "mode": "exclude", "value": "VR", "enabled": true}],
       "expected": {"outcome": "unknown", "reasons": ["missing metadata: categories"]}
+    }
+  ],
+  "portability_route_cases": [
+    {
+      "name": "nel_plain_actor_plain_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "nel_plain_actor_plain_regex_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "nel_plain_actor_plain_regex_include",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "nel_plain_actor_wrapped_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "nel_plain_actor_wrapped_regex_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "nel_plain_actor_wrapped_regex_include",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "missing required regex include: Alice"
+        ]
+      }
+    },
+    {
+      "name": "nel_wrapped_actor_plain_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "nel_wrapped_actor_plain_regex_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "nel_wrapped_actor_plain_regex_include",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "nel_wrapped_actor_wrapped_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "nel_wrapped_actor_wrapped_regex_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "nel_wrapped_actor_wrapped_regex_include",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "nel_only_tag_include",
+      "actor_name": "Alice",
+      "actor_gender": "female",
+      "actor_link": "/actors/alice",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "tag",
+        "mode": "include",
+        "value": "",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "missing required tag include: "
+        ]
+      }
+    },
+    {
+      "name": "nel_only_tag_regex_include",
+      "actor_name": "Alice",
+      "actor_gender": "female",
+      "actor_link": "/actors/alice",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "tag",
+        "mode": "regex_include",
+        "value": "",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "missing required regex include: "
+        ]
+      }
+    },
+    {
+      "name": "nel_actor_href_relative",
+      "actor_name": "Alice",
+      "actor_gender": "female",
+      "actor_link": "/actors/alice",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/alice",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: /actors/alice"
+        ]
+      }
+    },
+    {
+      "name": "nel_actor_href_absolute",
+      "actor_name": "Alice",
+      "actor_gender": "female",
+      "actor_link": "https://javdb.com/actors/alice",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/alice",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: /actors/alice"
+        ]
+      }
+    },
+    {
+      "name": "bom_plain_actor_plain_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "bom_plain_actor_plain_regex_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "bom_plain_actor_plain_regex_include",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "bom_plain_actor_wrapped_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \t﻿Alice﻿\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "bom_plain_actor_wrapped_regex_exclude",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \t﻿Alice﻿\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "bom_plain_actor_wrapped_regex_include",
+      "actor_name": " \tAlice\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \t﻿Alice﻿\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "missing required regex include: ﻿Alice﻿"
+        ]
+      }
+    },
+    {
+      "name": "bom_wrapped_actor_plain_exclude",
+      "actor_name": " \t﻿Alice﻿\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "﻿Alice﻿",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "bom_wrapped_actor_plain_regex_exclude",
+      "actor_name": " \t﻿Alice﻿\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "﻿Alice﻿",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: Alice"
+        ]
+      }
+    },
+    {
+      "name": "bom_wrapped_actor_plain_regex_include",
+      "actor_name": " \t﻿Alice﻿\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "﻿Alice﻿",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \tAlice\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "bom_wrapped_actor_wrapped_exclude",
+      "actor_name": " \t﻿Alice﻿\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "﻿Alice﻿",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": " \t﻿Alice﻿\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: ﻿Alice﻿"
+        ]
+      }
+    },
+    {
+      "name": "bom_wrapped_actor_wrapped_regex_exclude",
+      "actor_name": " \t﻿Alice﻿\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "﻿Alice﻿",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_exclude",
+        "value": " \t﻿Alice﻿\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: ﻿Alice﻿"
+        ]
+      }
+    },
+    {
+      "name": "bom_wrapped_actor_wrapped_regex_include",
+      "actor_name": " \t﻿Alice﻿\r\n",
+      "actor_gender": " \tfemale\r\n",
+      "actor_link": " \thttps://javdb.com/actors/alice\r\n",
+      "expected_actor": {
+        "name": "﻿Alice﻿",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "regex_include",
+        "value": " \t﻿Alice﻿\r\n",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "bom_only_tag_include",
+      "actor_name": "Alice",
+      "actor_gender": "female",
+      "actor_link": "/actors/alice",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "tag",
+        "mode": "include",
+        "value": "﻿",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "missing required tag include: ﻿"
+        ]
+      }
+    },
+    {
+      "name": "bom_only_tag_regex_include",
+      "actor_name": "Alice",
+      "actor_gender": "female",
+      "actor_link": "/actors/alice",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "female",
+        "href": "/actors/alice"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "tag",
+        "mode": "regex_include",
+        "value": "﻿",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "missing required regex include: ﻿"
+        ]
+      }
+    },
+    {
+      "name": "bom_actor_href_relative",
+      "actor_name": "Alice",
+      "actor_gender": "﻿female﻿",
+      "actor_link": "/actors/﻿alice﻿",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "﻿female﻿",
+        "href": "/actors/﻿alice﻿"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/﻿alice﻿",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: /actors/﻿alice﻿"
+        ]
+      }
+    },
+    {
+      "name": "bom_actor_href_absolute",
+      "actor_name": "Alice",
+      "actor_gender": "﻿female﻿",
+      "actor_link": "https://javdb.com/actors/﻿alice﻿",
+      "expected_actor": {
+        "name": "Alice",
+        "gender": "﻿female﻿",
+        "href": "/actors/﻿alice﻿"
+      },
+      "rule": {
+        "id": -1,
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/﻿alice﻿",
+        "enabled": true
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: /actors/﻿alice﻿"
+        ]
+      }
+    }
+  ],
+  "age_canonical_cases": [
+    {
+      "value": "000",
+      "canonical": "0",
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "actor older than maximum age 0"
+        ]
+      }
+    },
+    {
+      "value": "018",
+      "canonical": "18",
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "actor older than maximum age 18"
+        ]
+      }
+    },
+    {
+      "value": "150",
+      "canonical": "150",
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    }
+  ],
+  "oversized_request_cases": [
+    {
+      "name": "oversized_page_0",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[],\"page\":9007199254740992}",
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_page",
+              "message": "page must be an integer from 1 to 9007199254740991"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "oversized_page_1",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[],\"page\":9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999}",
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_page",
+              "message": "page must be an integer from 1 to 9007199254740991"
+            }
+          }
+        }
+      }
+    },
+    {
+      "name": "oversized_page_2",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[],\"page\":1e400}",
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_page",
+              "message": "page must be an integer from 1 to 9007199254740991"
+            }
+          }
+        }
+      }
     }
   ],
   "conflict_envelopes": {

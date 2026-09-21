@@ -1,8 +1,9 @@
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 import { env } from "cloudflare:test";
 import { app } from "../app";
 import { compareRetainedCohort, listRetainedCohort } from "../services/content-filter-impact";
 import contract from "./fixtures/content-filter-impact-contract.json";
+import * as impactService from "../services/content-filter-impact";
 
 async function login() {
   const response = await app.request(
@@ -79,8 +80,110 @@ async function seedKnownMovie() {
 describe("Content-filter impact comparison", () => {
   beforeAll(seedTables);
 
+  it.each(contract.age_canonical_cases)("age comparison never converts decimal text to Number: $value", (testCase) => {
+    const original = globalThis.Number;
+    const guarded = new Proxy(original, {
+      apply(target, receiver, args) {
+        if (typeof args[0] === "string") throw new Error("numeric age conversion");
+        return Reflect.apply(target, receiver, args);
+      },
+      get(target, property) {
+        if (property === "parseInt") return () => { throw new Error("numeric age conversion"); };
+        return Reflect.get(target, property);
+      },
+    });
+    vi.stubGlobal("Number", guarded);
+    try {
+      const rule = { id: -1, dimension: "age", mode: "max_age", value: testCase.value, enabled: true };
+      expect(impactService.comparisonRuleError(rule)).toBeNull();
+      const row = { ...contract.semantic_cases[0].row,
+        actors: [{ name: "Alice", gender: "female", href: "/actors/alice" }],
+        actor_birthdates: { "/actors/alice": "2000-01-01" },
+      };
+      expect(compareRetainedCohort([row], [], [rule])[0].draft).toEqual(testCase.expected);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it.each(contract.portability_route_cases)("portable route and retained adapter: $name", async (testCase) => {
+    await seedKnownMovie();
+    await env.HISTORY_DB.prepare(
+      "UPDATE MovieHistory SET ActorName=?, ActorGender=?, ActorLink=?",
+    ).bind(testCase.actor_name, testCase.actor_gender, testCase.actor_link).run();
+    const rows = await listRetainedCohort(env.HISTORY_DB, 1);
+    expect(rows[0].actors?.[0]).toEqual(testCase.expected_actor);
+    await env.REPORTS_DB.prepare(
+      "INSERT INTO ContentFilterRule (dimension, mode, value, enabled) VALUES (?, ?, ?, 1)",
+    ).bind(testCase.rule.dimension, testCase.rule.mode, testCase.rule.value).run();
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as { baseline_version: string };
+    const response = await app.request("/api/content-filter/impact", {
+      method: "POST", headers: headers(accessToken, csrfToken),
+      body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [testCase.rule] }),
+    }, env);
+    expect(response.status).toBe(200);
+    const body = await response.json() as Record<string, any>;
+    expect(body.items[0].draft).toEqual(testCase.expected);
+    expect(body.items[0].current).toEqual(testCase.expected);
+  });
+
+  it.each(contract.age_canonical_cases)("canonical age through route without numeric conversion: $value", async (testCase) => {
+    await seedKnownMovie();
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as { baseline_version: string };
+    const evaluate = vi.spyOn(impactService, "compareRetainedCohort");
+    const response = await app.request("/api/content-filter/impact", {
+      method: "POST", headers: headers(accessToken, csrfToken),
+      body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [
+        { dimension: "age", mode: "max_age", value: testCase.value, enabled: true },
+      ] }),
+    }, env);
+    try {
+      expect(response.status).toBe(200);
+      expect(evaluate.mock.calls[0][2][0].value).toBe(testCase.canonical);
+      const body = await response.json() as Record<string, any>;
+      expect(body.items[0].draft).toEqual(testCase.expected);
+    } finally {
+      evaluate.mockRestore();
+    }
+  });
+
+  it.each(contract.oversized_request_cases)("rejects oversized page before cohort access: $name", async (testCase) => {
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as { baseline_version: string };
+    const cohort = vi.spyOn(impactService, "listRetainedCohort").mockRejectedValue(new Error("must validate before cohort access"));
+    try {
+      const response = await app.request("/api/content-filter/impact", {
+        method: "POST", headers: headers(accessToken, csrfToken),
+        body: testCase.raw_request.replace("__CURRENT_BASELINE_VERSION__", baseline.baseline_version),
+      }, env);
+      expect(response.status).toBe(testCase.expected.status);
+      expect(await response.json()).toEqual(testCase.expected.body);
+      expect(cohort).not.toHaveBeenCalled();
+    } finally {
+      cohort.mockRestore();
+    }
+  });
+
+  it("accepts the maximum portable page", async () => {
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as { baseline_version: string };
+    const response = await app.request("/api/content-filter/impact", {
+      method: "POST", headers: headers(accessToken, csrfToken),
+      body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [], page: 9007199254740991 }),
+    }, env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ page: 9007199254740991, items: [] });
+  });
+
   beforeEach(async () => {
     await env.REPORTS_DB.prepare("DELETE FROM ContentFilterRule").run();
+    await env.REPORTS_DB.prepare("DELETE FROM sqlite_sequence WHERE name = 'ContentFilterRule'").run();
     await env.HISTORY_DB.prepare("DELETE FROM MovieMetadata").run();
     await env.HISTORY_DB.prepare("DELETE FROM MovieHistory").run();
     await env.HISTORY_DB.prepare("DELETE FROM ActorMetadata").run();

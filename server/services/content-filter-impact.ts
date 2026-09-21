@@ -1,11 +1,12 @@
 import type { ContentFilterRuleRow } from "./content-filter-service";
+import { canonicalComparisonAge, compareDecimal, portableTrim } from "../../shared/content-filter-comparison";
+export { portableTrim } from "../../shared/content-filter-comparison";
 
 export const BASELINE_IDENTITY = "content-filter-rules";
 export const PORTABLE_REGEX_ERROR = "regex patterns for impact comparison must contain only literal branches separated by '|'";
 export const PORTABLE_REGEX_LENGTH_ERROR = "regex pattern too long (max 200 Unicode code points)";
 export const PORTABLE_AGE_ERROR = "age rules require an integer from 0 to 150 using ASCII digits [0-9]";
 const MAX_PORTABLE_REGEX_CODE_POINTS = 200;
-const MAX_PORTABLE_AGE = 150;
 const REGEX_METACHARACTERS = new Set("\\.^$*+?{}[]()".split(""));
 
 export interface DraftRule {
@@ -117,21 +118,17 @@ interface RawRetainedRow {
 }
 
 function actorPath(value: string | null | undefined): string {
-  const href = (value ?? "").trim();
+  const href = portableTrim(value);
   if (!href) return "";
   if (href.startsWith("http://") || href.startsWith("https://")) {
-    try {
-      return new URL(href).pathname;
-    } catch {
-      return "";
-    }
+    return /^https?:\/\/[^/?#]*(\/[^?#]*)?/.exec(href)?.[1] ?? "";
   }
   return href.startsWith("/") ? href : `/${href}`;
 }
 
 function actorsFromRow(row: RawRetainedRow): Actor[] | null {
-  const name = (row.ActorName ?? "").trim();
-  const gender = (row.ActorGender ?? "").trim();
+  const name = portableTrim(row.ActorName);
+  const gender = portableTrim(row.ActorGender);
   const href = actorPath(row.ActorLink);
   const supporting = jsonObjectList(row.SupportingActors);
   if (name === "N/A" && gender === "N/A" && href === "") return [];
@@ -139,8 +136,8 @@ function actorsFromRow(row: RawRetainedRow): Actor[] | null {
   return [
     { name, gender, href },
     ...supporting.map((actor) => ({
-      name: String(actor.name ?? ""),
-      gender: String(actor.gender ?? ""),
+      name: portableTrim(String(actor.name ?? "")),
+      gender: portableTrim(String(actor.gender ?? "")),
       href: actorPath(String(actor.link ?? actor.href ?? "")),
     })),
   ];
@@ -216,7 +213,7 @@ function missingFields(row: RetainedMovieRow, rules: DraftRule[]): string[] {
     if (rule.dimension === "actor" && row.actors === null) missing.add("actors");
     if (rule.dimension === "gender") {
       if (row.actors === null) missing.add("actors");
-      else if (row.actors.some((actor) => actor.gender.trim() === "")) missing.add("actor_gender");
+      else if (row.actors.some((actor) => portableTrim(actor.gender) === "")) missing.add("actor_gender");
     }
     if (rule.dimension === "release_date" && release === null) missing.add("release_date");
     if (rule.dimension === "age") {
@@ -226,10 +223,6 @@ function missingFields(row: RetainedMovieRow, rules: DraftRule[]): string[] {
     }
   }
   return [...missing].sort();
-}
-
-export function portableTrim(value: string | null | undefined): string {
-  return (value ?? "").replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, "");
 }
 
 function normalized(value: string | null | undefined): string {
@@ -253,10 +246,7 @@ function compileRegex(pattern: string): RegExp | null {
 
 export function comparisonRuleError(rule: DraftRule): string | null {
   const value = portableTrim(rule.value);
-  if (rule.dimension === "age" && (
-    !/^[0-9]{1,3}$/.test(value)
-    || Number(value) > MAX_PORTABLE_AGE
-  )) return PORTABLE_AGE_ERROR;
+  if (rule.dimension === "age" && canonicalComparisonAge(value) === null) return PORTABLE_AGE_ERROR;
   if (!["regex_exclude", "regex_include"].includes(rule.mode)) return null;
   const pattern = value;
   if ([...pattern].length > MAX_PORTABLE_REGEX_CODE_POINTS) return PORTABLE_REGEX_LENGTH_ERROR;
@@ -310,9 +300,10 @@ function evaluateKnown(row: RetainedMovieRow, rules: DraftRule[]): ImpactDecisio
   const release = parseIsoDate(row.release_date);
   const ages = release ? actors.map((actor) => ageAt(row.actor_birthdates[actor.href], release)).filter((age): age is number => age !== null) : [];
   for (const rule of enabled.filter((item) => item.dimension === "age")) {
-    const bound = Number.parseInt(portableTrim(rule.value), 10);
-    if (rule.mode === "min_age" && ages.some((age) => age < bound)) reasons.push(`actor younger than minimum age ${bound}`);
-    if (rule.mode === "max_age" && ages.some((age) => age > bound)) reasons.push(`actor older than maximum age ${bound}`);
+    const bound = canonicalComparisonAge(rule.value);
+    if (bound === null) continue;
+    if (rule.mode === "min_age" && ages.some((age) => compareDecimal(String(age), bound) < 0)) reasons.push(`actor younger than minimum age ${bound}`);
+    if (rule.mode === "max_age" && ages.some((age) => compareDecimal(String(age), bound) > 0)) reasons.push(`actor older than maximum age ${bound}`);
   }
   if (release) {
     for (const rule of enabled.filter((item) => item.dimension === "release_date")) {

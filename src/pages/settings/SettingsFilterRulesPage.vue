@@ -8,6 +8,7 @@ import {
 import { useI18n } from 'vue-i18n'
 import { useCapabilitiesStore } from '@/stores/capabilities'
 import { useAuthStore } from '@/stores/auth'
+import { canonicalComparisonAge, portableTrim } from '../../../shared/content-filter-comparison'
 import {
   listContentFilterRules, addContentFilterRule, setContentFilterRuleEnabled,
   deleteContentFilterRule, compareContentFilterImpact, type ContentFilterRule,
@@ -77,12 +78,12 @@ function isStrictIsoDate(value: string): boolean {
 
 const isDraftValid = computed(() => {
   const key = `${draftDimension.value}:${draftMode.value}`
-  const value = draftValue.value.trim()
+  const value = portableTrim(draftValue.value)
   if (!validRuleModes.has(key)) return false
   if (!valueRequired.has(key)) return value === ''
   if (value === '') return false
   if (key === 'gender:require_lead') return ['female', 'male'].includes(value.toLowerCase())
-  if (draftDimension.value === 'age') return /^\d+$/.test(value)
+  if (draftDimension.value === 'age') return canonicalComparisonAge(value) !== null
   if (draftDimension.value === 'release_date') return isStrictIsoDate(value)
   if (draftMode.value.startsWith('regex_')) {
     return [...value].length <= 200
@@ -122,7 +123,7 @@ function draftRules() {
       id: -1,
       dimension: draftDimension.value,
       mode: draftMode.value,
-      value: draftValue.value.trim(),
+      value: portableTrim(draftValue.value),
       enabled: true,
     },
   ]
