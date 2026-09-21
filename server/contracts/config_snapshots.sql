@@ -1,4 +1,7 @@
 -- Write-Class: diagnostic
+-- Apply with:
+--   wrangler d1 execute javdb-operations --remote \
+--     --file=javdb/migrations/d1/2026_09_22_add_config_snapshots.sql
 -- ADR-061: apply to operations D1 before deploying snapshot consumers.
 CREATE TABLE IF NOT EXISTS ConfigSnapshots (
     job_id TEXT NOT NULL,

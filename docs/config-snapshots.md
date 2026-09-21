@@ -8,7 +8,9 @@ Apply `server/contracts/config_snapshots.sql` to **Operations D1 before deployme
 It is a byte-identical copy of Python's
 `javdb/migrations/d1/2026_09_22_add_config_snapshots.sql`. It creates an insert-only
 `ConfigSnapshots` table keyed by `(job_id, consumer)`, with an UPDATE rejection
-trigger and fixed 90-day retention. Do not replace existing rows or backfill
+trigger and fixed 90-day retention. Its `wrangler d1 execute javdb-operations`
+header is required by the Python admin migration runner, which submits the
+trigger body as one SQLite/D1 statement. Do not replace existing rows or backfill
 historical evidence from current config. The Worker does not create this table
 at request time. Daily cron at 03:17 UTC deletes expired rows; reads independently
 exclude expiry. No deployment or production migration was performed during implementation.
