@@ -69,6 +69,108 @@
           }
         }
       }
+    },
+    {
+      "name": "reject_unicode_age_digits",
+      "rule": {"dimension": "age", "mode": "min_age", "value": "١٨", "enabled": true},
+      "expected": {
+        "status": 422,
+        "body": {"detail": {"error": {
+          "code": "content_filter.invalid_value",
+          "message": "age rules require a non-negative integer value using ASCII digits [0-9]"
+        }}}
+      }
+    },
+    {
+      "name": "reject_regex_over_200_unicode_code_points",
+      "rule": {"dimension": "actor", "mode": "regex_exclude", "value": "__REPEATED_VALUE__", "enabled": true},
+      "repeat_value": {"character": "😀", "count": 201},
+      "expected": {
+        "status": 422,
+        "body": {"detail": {"error": {
+          "code": "content_filter.invalid_value",
+          "message": "regex pattern too long (max 200 Unicode code points)"
+        }}}
+      }
+    },
+    {
+      "name": "reject_regex_metacharacters_before_backend_redos_messages",
+      "rule": {"dimension": "tag", "mode": "regex_exclude", "value": "(a+)+", "enabled": true},
+      "expected": {
+        "status": 422,
+        "body": {"detail": {"error": {
+          "code": "content_filter.invalid_value",
+          "message": "regex patterns for impact comparison must contain only literal branches separated by '|'"
+        }}}
+      }
+    }
+  ],
+  "accepted_rule_cases": [
+    {
+      "name": "accept_astral_regex_with_101_unicode_code_points",
+      "rule": {"dimension": "actor", "mode": "regex_exclude", "value": "__REPEATED_VALUE__", "enabled": true},
+      "repeat_value": {"character": "😀", "count": 101}
+    },
+    {
+      "name": "accept_null_id_and_omitted_rule_defaults",
+      "rule": {"id": null, "dimension": "gender", "mode": "exclude_all_male"}
+    }
+  ],
+  "request_validation_cases": [
+    {
+      "name": "reject_missing_baseline",
+      "request": {"draft_rules": []},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_baseline", "message": "baseline_version must be a string"}}}}
+    },
+    {
+      "name": "reject_missing_draft_rules",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__"},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_draft_rules", "message": "draft_rules must be an array"}}}}
+    },
+    {
+      "name": "reject_null_draft_rules",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": null},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_draft_rules", "message": "draft_rules must be an array"}}}}
+    },
+    {
+      "name": "reject_null_cohort_size",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [], "cohort_size": null},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_cohort_size", "message": "cohort_size must be an integer from 1 to 5000"}}}}
+    },
+    {
+      "name": "reject_null_page",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [], "page": null},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_page", "message": "page must be a positive integer"}}}}
+    },
+    {
+      "name": "reject_null_page_size",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [], "page_size": null},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_page_size", "message": "page_size must be an integer from 1 to 500"}}}}
+    },
+    {
+      "name": "reject_invalid_cohort_version_type",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [], "expected_cohort_version": 7},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_cohort_version", "message": "expected_cohort_version must be a string or null"}}}}
+    },
+    {
+      "name": "reject_null_rule",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [null]},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0] must be an object"}}}}
+    },
+    {
+      "name": "reject_non_integer_rule_id",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [{"id": "draft", "dimension": "tag", "mode": "exclude", "value": "VR"}]},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0].id must be an integer or null"}}}}
+    },
+    {
+      "name": "reject_null_rule_value",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [{"dimension": "tag", "mode": "exclude", "value": null}]},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0].value must be a string"}}}}
+    },
+    {
+      "name": "reject_null_rule_enabled",
+      "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [{"dimension": "gender", "mode": "exclude_all_male", "enabled": null}]},
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0].enabled must be a boolean"}}}}
     }
   ],
   "conflict_envelopes": {

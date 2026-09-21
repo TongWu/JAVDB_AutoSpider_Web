@@ -100,29 +100,40 @@ function validateRuleValue(dimension: string, mode: string, rawValue: string): {
 }
 
 function parseDraftRules(value: unknown): { rules: DraftRule[] } | { code: string; error: string } {
-  if (!Array.isArray(value)) return { code: "content_filter.invalid_value", error: "draft_rules must be an array" };
+  if (!Array.isArray(value)) return { code: "content_filter.invalid_draft_rules", error: "draft_rules must be an array" };
   const rules: DraftRule[] = [];
   for (let index = 0; index < value.length; index += 1) {
     const item = value[index];
-    if (item === null || typeof item !== "object") return { code: "content_filter.invalid_value", error: `draft_rules[${index}] must be an object` };
+    if (item === null || typeof item !== "object" || Array.isArray(item)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}] must be an object` };
     const candidate = item as Record<string, unknown>;
-    const dimension = typeof candidate.dimension === "string" ? candidate.dimension : "";
-    const mode = typeof candidate.mode === "string" ? candidate.mode : "";
+    if (typeof candidate.dimension !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].dimension must be a string` };
+    if (typeof candidate.mode !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].mode must be a string` };
+    const dimension = candidate.dimension;
+    const mode = candidate.mode;
     if (!VALID_RULE_MODES.has(`${dimension}:${mode}`)) return { code: "content_filter.invalid_mode", error: `${dimension} rules do not support mode '${mode}'` };
     if (candidate.value !== undefined && typeof candidate.value !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].value must be a string` };
     if (candidate.enabled !== undefined && typeof candidate.enabled !== "boolean") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].enabled must be a boolean` };
-    if (candidate.id !== undefined && !Number.isInteger(candidate.id)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}].id must be an integer` };
-    const validated = validateRuleValue(dimension, mode, String(candidate.value ?? ""));
+    if (candidate.id !== undefined && candidate.id !== null && !Number.isInteger(candidate.id)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}].id must be an integer or null` };
+    const rawValue = String(candidate.value ?? "");
+    const portableError = comparisonRuleError({
+      id: -1,
+      dimension,
+      mode,
+      value: rawValue,
+      enabled: candidate.enabled === undefined ? true : candidate.enabled,
+    });
+    if (portableError) return { code: "content_filter.invalid_value", error: portableError };
+    const validated = ["regex_exclude", "regex_include"].includes(mode)
+      ? { value: rawValue.trim() }
+      : validateRuleValue(dimension, mode, rawValue);
     if ("error" in validated) return { code: "content_filter.invalid_value", error: validated.error };
     const rule = {
-      id: candidate.id === undefined ? -(index + 1) : candidate.id as number,
+      id: candidate.id === undefined || candidate.id === null ? -(index + 1) : candidate.id as number,
       dimension,
       mode,
       value: validated.value,
       enabled: candidate.enabled === undefined ? true : candidate.enabled,
     };
-    const compatibilityError = comparisonRuleError(rule);
-    if (compatibilityError) return { code: "content_filter.invalid_value", error: compatibilityError };
     rules.push(rule);
   }
   return { rules };
@@ -147,7 +158,7 @@ contentFilterRoutes.post("/impact", async (c) => {
   } catch {
     return c.json(impactErrJson("content_filter.invalid_body", "Request body must be valid JSON"), 422);
   }
-  if (body === null || typeof body !== "object") {
+  if (body === null || typeof body !== "object" || Array.isArray(body)) {
     return c.json(impactErrJson("content_filter.invalid_body", "Request body must be a JSON object"), 422);
   }
   const input = body as Record<string, unknown>;

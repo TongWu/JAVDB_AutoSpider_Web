@@ -2,6 +2,9 @@ import type { ContentFilterRuleRow } from "./content-filter-service";
 
 export const BASELINE_IDENTITY = "content-filter-rules";
 export const PORTABLE_REGEX_ERROR = "regex patterns for impact comparison must contain only literal branches separated by '|'";
+export const PORTABLE_REGEX_LENGTH_ERROR = "regex pattern too long (max 200 Unicode code points)";
+export const PORTABLE_AGE_ERROR = "age rules require a non-negative integer value using ASCII digits [0-9]";
+const MAX_PORTABLE_REGEX_CODE_POINTS = 200;
 const REGEX_METACHARACTERS = new Set("\\.^$*+?{}[]()".split(""));
 
 export interface DraftRule {
@@ -244,8 +247,11 @@ function compileRegex(pattern: string): RegExp | null {
 }
 
 export function comparisonRuleError(rule: DraftRule): string | null {
+  const value = rule.value.trim();
+  if (rule.dimension === "age" && !/^[0-9]+$/.test(value)) return PORTABLE_AGE_ERROR;
   if (!["regex_exclude", "regex_include"].includes(rule.mode)) return null;
-  const pattern = rule.value.trim();
+  const pattern = value;
+  if ([...pattern].length > MAX_PORTABLE_REGEX_CODE_POINTS) return PORTABLE_REGEX_LENGTH_ERROR;
   const branches = pattern.split("|");
   if (
     pattern === ""

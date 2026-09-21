@@ -244,12 +244,16 @@ describe("Content-filter impact comparison", () => {
     const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
     const baseline = await listed.json() as Record<string, unknown>;
     for (const testCase of contract.validation_cases) {
+      const rule = { ...testCase.rule };
+      if ("repeat_value" in testCase) {
+        rule.value = testCase.repeat_value.character.repeat(testCase.repeat_value.count);
+      }
       const response = await app.request(
         "/api/content-filter/impact",
         {
           method: "POST",
           headers: headers(accessToken, csrfToken),
-          body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [testCase.rule] }),
+          body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [rule] }),
         },
         env,
       );
@@ -270,6 +274,37 @@ describe("Content-filter impact comparison", () => {
       env,
     );
     expect(nullPrecondition.status).toBe(200);
+  });
+
+  it("matches shared structural 422 envelopes and accepted default/null rules", async () => {
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as Record<string, unknown>;
+    for (const testCase of contract.request_validation_cases) {
+      const request = JSON.parse(JSON.stringify(testCase.request).replace(
+        "__CURRENT_BASELINE_VERSION__",
+        String(baseline.baseline_version),
+      ));
+      const response = await app.request("/api/content-filter/impact", {
+        method: "POST",
+        headers: headers(accessToken, csrfToken),
+        body: JSON.stringify(request),
+      }, env);
+      expect(response.status, testCase.name).toBe(testCase.expected.status);
+      expect(await response.json(), testCase.name).toEqual(testCase.expected.body);
+    }
+    for (const testCase of contract.accepted_rule_cases) {
+      const rule = { ...testCase.rule };
+      if ("repeat_value" in testCase) {
+        rule.value = testCase.repeat_value.character.repeat(testCase.repeat_value.count);
+      }
+      const response = await app.request("/api/content-filter/impact", {
+        method: "POST",
+        headers: headers(accessToken, csrfToken),
+        body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [rule] }),
+      }, env);
+      expect(response.status, testCase.name).toBe(200);
+    }
   });
 
   it("runs the shared semantic corpus through the portable evaluator", () => {

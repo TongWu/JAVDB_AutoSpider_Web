@@ -58,4 +58,11 @@ describe('OpenAPI contract — content-filter impact conflicts', () => {
       '#/components/schemas/ContentFilterCohortChangedResponse',
     ])
   })
+
+  it('declares the shared domain 422 response', () => {
+    const validation = schema.paths['/api/content-filter/impact']?.post?.responses?.['422']
+    expect(validation?.content?.['application/json']?.schema).toEqual({
+      $ref: '#/components/schemas/ContentFilterValidationErrorResponse',
+    })
+  })
 })

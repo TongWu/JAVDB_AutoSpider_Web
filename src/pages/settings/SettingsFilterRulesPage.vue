@@ -85,7 +85,7 @@ const isDraftValid = computed(() => {
   if (draftDimension.value === 'age') return /^\d+$/.test(value)
   if (draftDimension.value === 'release_date') return isStrictIsoDate(value)
   if (draftMode.value.startsWith('regex_')) {
-    return value.length <= 200
+    return [...value].length <= 200
       && value.split('|').every((branch) => branch.length > 0)
       && !regexMetacharacters.test(value)
       && ![...value].some((char) => {
@@ -143,7 +143,13 @@ async function runComparison(page = 1): Promise<void> {
     })
   } catch (err: unknown) {
     const status = axios.isAxiosError(err) ? err.response?.status : undefined
+    const code = axios.isAxiosError(err)
+      ? err.response?.data?.detail?.error?.code
+      : undefined
     impact.value = null
+    if (code === 'content_filter.baseline_changed') {
+      await fetchRules()
+    }
     impactError.value = status === 409
       ? t('settings.filterRules.impact.concurrentChange')
       : t('settings.filterRules.impact.error')

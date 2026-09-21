@@ -8,20 +8,17 @@ vi.mock('@/api/client', () => ({
   },
 }))
 
-import { compareContentFilterImpact } from '@/api/content-filter'
+import { compareContentFilterImpact, type ContentFilterImpactRequest } from '@/api/content-filter'
 
 describe('content-filter impact API client', () => {
   beforeEach(() => postSpy.mockReset())
 
   it('posts the observed baseline and draft only to the read-only impact route', async () => {
-    const payload = {
+    const payload: ContentFilterImpactRequest = {
       baseline_version: 'sha256:baseline',
       draft_rules: [
-        { id: -1, dimension: 'tag', mode: 'exclude', value: 'VR', enabled: true },
+        { id: null, dimension: 'gender', mode: 'exclude_all_male' },
       ],
-      cohort_size: 500,
-      page: 1,
-      page_size: 100,
     }
     const response = {
       baseline_identity: 'content-filter-rules',

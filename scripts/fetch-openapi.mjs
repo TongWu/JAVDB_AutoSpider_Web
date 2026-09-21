@@ -66,7 +66,7 @@ async function main() {
 
   console.log(`[fetch-openapi] running openapi-typescript ...`)
   execSync(
-    `node node_modules/.bin/openapi-typescript ${OUT_JSON} -o ${OUT_TS}`,
+    `node node_modules/.bin/openapi-typescript ${OUT_JSON} -o ${OUT_TS} --default-non-nullable false`,
     { cwd: ROOT, stdio: 'inherit' },
   )
   console.log(`[fetch-openapi] generated ${OUT_TS}`)
