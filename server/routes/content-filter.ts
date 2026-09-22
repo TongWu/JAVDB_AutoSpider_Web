@@ -168,7 +168,13 @@ contentFilterRoutes.get("/", async (c) => {
 contentFilterRoutes.post("/impact", async (c) => {
   let body: unknown;
   try {
-    body = await c.req.json();
+    // The native reviver exposes the token before binary64 rounding. Preserve
+    // non-integer tokens as non-scalars so ordered validation owns the 422.
+    body = JSON.parse(await c.req.text(), (_key: string, value: unknown, context?: { source: string }) =>
+      typeof value === "number" && !/^-?\d+$/.test(context?.source ?? "")
+        ? Symbol("non-integer JSON number")
+        : value,
+    );
   } catch {
     return c.json(impactErrJson("content_filter.invalid_body", "Request body must be valid JSON"), 422);
   }

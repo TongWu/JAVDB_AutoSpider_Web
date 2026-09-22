@@ -121,6 +121,31 @@ describe("Content-filter impact comparison", () => {
     } finally { baseline.mockRestore(); cohort.mockRestore(); }
   });
 
+  it.each(contract.raw_integer_token_cases)("raw integer tokens before database access: $name", async (testCase) => {
+    await seedKnownMovie();
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const version = await listed.json() as { baseline_version: string };
+    const baseline = vi.spyOn(ruleService, "listRules");
+    const cohort = vi.spyOn(impactService, "listRetainedCohort");
+    try {
+      const response = await app.request("/api/content-filter/impact", {
+        method: "POST", headers: headers(accessToken, csrfToken),
+        body: testCase.raw_request.replace("__CURRENT_BASELINE_VERSION__", version.baseline_version),
+      }, env);
+      expect(response.status).toBe(testCase.expected.status);
+      if (!testCase.accepted) {
+        expect(await response.text()).toBe(testCase.expected.response_text);
+        expect(baseline).not.toHaveBeenCalled();
+        expect(cohort).not.toHaveBeenCalled();
+      } else {
+        expect(await response.json()).toMatchObject({ total: 1 });
+        expect(baseline).toHaveBeenCalledOnce();
+        expect(cohort).toHaveBeenCalledOnce();
+      }
+    } finally { baseline.mockRestore(); cohort.mockRestore(); }
+  });
+
   it.each(contract.draft_id_cases)("portable draft id public route: $name", async (testCase) => {
     await seedKnownMovie();
     const { accessToken, csrfToken } = await login();

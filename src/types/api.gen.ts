@@ -2416,7 +2416,7 @@ export interface components {
             enabled?: boolean;
             /**
              * Id
-             * @description A JSON integer from 1 to 9007199254740991; null or omitted for an unsaved rule.
+             * @description A JSON integer token (no decimal point or exponent) from 1 to 9007199254740991; null or omitted for an unsaved rule.
              */
             id?: number | null;
             /** Mode */
@@ -2471,15 +2471,24 @@ export interface components {
         ContentFilterImpactRequest: {
             /** Baseline Version */
             baseline_version: string;
-            /** Cohort Size */
+            /**
+             * Cohort Size
+             * @description A JSON integer token (no decimal point or exponent).
+             */
             cohort_size?: number;
             /** Draft Rules */
             draft_rules: components["schemas"]["ContentFilterDraftRule"][];
             /** Expected Cohort Version */
             expected_cohort_version?: string | null;
-            /** Page */
+            /**
+             * Page
+             * @description A JSON integer token (no decimal point or exponent).
+             */
             page?: number;
-            /** Page Size */
+            /**
+             * Page Size
+             * @description A JSON integer token (no decimal point or exponent).
+             */
             page_size?: number;
         };
         /** ContentFilterImpactResponse */
