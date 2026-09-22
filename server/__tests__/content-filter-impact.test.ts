@@ -3,6 +3,7 @@ import { env } from "cloudflare:test";
 import { app } from "../app";
 import { compareRetainedCohort, listRetainedCohort } from "../services/content-filter-impact";
 import contract from "./fixtures/content-filter-impact-contract.json";
+import * as ruleService from "../services/content-filter-service";
 import * as impactService from "../services/content-filter-impact";
 
 async function login() {
@@ -79,6 +80,74 @@ async function seedKnownMovie() {
 
 describe("Content-filter impact comparison", () => {
   beforeAll(seedTables);
+
+  it.each(contract.supporting_actor_route_cases)("supporting actor fallback public route: $name", async (testCase) => {
+    await seedKnownMovie();
+    await env.HISTORY_DB.prepare("UPDATE MovieHistory SET SupportingActors=?")
+      .bind(JSON.stringify(testCase.supporting)).run();
+    await env.HISTORY_DB.prepare("INSERT INTO ActorMetadata (actor_href, birthdate, resolved) VALUES (?, ?, 1)")
+      .bind("/actors/bob", "2010-01-01").run();
+    const rows = await listRetainedCohort(env.HISTORY_DB, 1);
+    expect(rows[0].actors).toEqual(testCase.expected_actors);
+    expect(rows[0].actor_birthdates).toEqual(testCase.expected_birthdates);
+    await env.REPORTS_DB.prepare("INSERT INTO ContentFilterRule (dimension, mode, value, enabled) VALUES (?, ?, ?, 1)")
+      .bind(testCase.rule.dimension, testCase.rule.mode, testCase.rule.value).run();
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const baseline = await listed.json() as { baseline_version: string };
+    const response = await app.request("/api/content-filter/impact", {
+      method: "POST", headers: headers(accessToken, csrfToken),
+      body: JSON.stringify({ baseline_version: baseline.baseline_version, draft_rules: [testCase.rule] }),
+    }, env);
+    expect(response.status).toBe(200);
+    const body = await response.json() as Record<string, any>;
+    expect(body.cohort_version).toBe(testCase.expected_cohort_version);
+    expect(body.items[0].current).toEqual(testCase.expected);
+    expect(body.items[0].draft).toEqual(testCase.expected);
+  });
+
+  it.each(contract.precedence_cases)("complete array structure precedes domain: $name", async (testCase) => {
+    const { accessToken, csrfToken } = await login();
+    const baseline = vi.spyOn(ruleService, "listRules").mockRejectedValue(new Error("baseline read"));
+    const cohort = vi.spyOn(impactService, "listRetainedCohort").mockRejectedValue(new Error("cohort read"));
+    try {
+      const response = await app.request("/api/content-filter/impact", {
+        method: "POST", headers: headers(accessToken, csrfToken), body: JSON.stringify(testCase.request),
+      }, env);
+      expect(response.status).toBe(422);
+      expect(await response.text()).toBe(testCase.expected.response_text);
+      expect(baseline).not.toHaveBeenCalled();
+      expect(cohort).not.toHaveBeenCalled();
+    } finally { baseline.mockRestore(); cohort.mockRestore(); }
+  });
+
+  it.each(contract.draft_id_cases)("portable draft id public route: $name", async (testCase) => {
+    await seedKnownMovie();
+    const { accessToken, csrfToken } = await login();
+    const listed = await app.request("/api/content-filter", { headers: headers(accessToken) }, env);
+    const version = await listed.json() as { baseline_version: string };
+    const request = {
+      method: "POST", headers: headers(accessToken, csrfToken),
+      body: testCase.raw_request.replace("__CURRENT_BASELINE_VERSION__", version.baseline_version),
+    };
+    if (testCase.accepted) {
+      const response = await app.request("/api/content-filter/impact", request, env);
+      expect(response.status).toBe(200);
+      const body = await response.json() as Record<string, any>;
+      expect(body.items[0].draft).toEqual({ outcome: "drop", reasons: ["excluded by tag rule: VR"] });
+    } else {
+      const baseline = vi.spyOn(ruleService, "listRules").mockRejectedValue(new Error("baseline read"));
+      const cohort = vi.spyOn(impactService, "listRetainedCohort").mockRejectedValue(new Error("cohort read"));
+      try {
+        const response = await app.request("/api/content-filter/impact", request, env);
+        expect(response.status).toBe(422);
+        expect(await response.text()).toBe(testCase.expected!.response_text);
+        expect(baseline).not.toHaveBeenCalled();
+        expect(cohort).not.toHaveBeenCalled();
+      } finally { baseline.mockRestore(); cohort.mockRestore(); }
+    }
+  });
+
 
   it.each(contract.age_canonical_cases)("age comparison never converts decimal text to Number: $value", (testCase) => {
     const original = globalThis.Number;
@@ -210,7 +279,7 @@ describe("Content-filter impact comparison", () => {
         body: JSON.stringify({
           baseline_version: baseline.baseline_version,
           draft_rules: [{
-            id: -1,
+            id: null,
             dimension: "tag",
             mode: "include",
             value: "VR",

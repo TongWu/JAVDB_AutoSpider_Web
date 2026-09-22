@@ -327,7 +327,7 @@
     {
       "name": "reject_non_integer_rule_id",
       "request": {"baseline_version": "__CURRENT_BASELINE_VERSION__", "draft_rules": [{"id": "draft", "dimension": "tag", "mode": "exclude", "value": "VR"}]},
-      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0].id must be an integer or null"}}}}
+      "expected": {"status": 422, "body": {"detail": {"error": {"code": "content_filter.invalid_value", "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"}}}}
     },
     {
       "name": "reject_null_rule_value",
@@ -370,7 +370,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \tAlice\r\n",
@@ -394,7 +394,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \tAlice\r\n",
@@ -418,7 +418,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \tAlice\r\n",
@@ -440,7 +440,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \tAlice\r\n",
@@ -462,7 +462,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \tAlice\r\n",
@@ -484,7 +484,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \tAlice\r\n",
@@ -508,7 +508,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \tAlice\r\n",
@@ -530,7 +530,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \tAlice\r\n",
@@ -554,7 +554,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \tAlice\r\n",
@@ -576,7 +576,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \tAlice\r\n",
@@ -600,7 +600,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \tAlice\r\n",
@@ -624,7 +624,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \tAlice\r\n",
@@ -646,7 +646,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "tag",
         "mode": "include",
         "value": "",
@@ -670,7 +670,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "tag",
         "mode": "regex_include",
         "value": "",
@@ -694,7 +694,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": "/actors/alice",
@@ -718,7 +718,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": "/actors/alice",
@@ -742,7 +742,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \tAlice\r\n",
@@ -766,7 +766,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \tAlice\r\n",
@@ -790,7 +790,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \tAlice\r\n",
@@ -812,7 +812,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \t﻿Alice﻿\r\n",
@@ -834,7 +834,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \t﻿Alice﻿\r\n",
@@ -856,7 +856,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \t﻿Alice﻿\r\n",
@@ -880,7 +880,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \tAlice\r\n",
@@ -902,7 +902,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \tAlice\r\n",
@@ -926,7 +926,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \tAlice\r\n",
@@ -948,7 +948,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": " \t﻿Alice﻿\r\n",
@@ -972,7 +972,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_exclude",
         "value": " \t﻿Alice﻿\r\n",
@@ -996,7 +996,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "regex_include",
         "value": " \t﻿Alice﻿\r\n",
@@ -1018,7 +1018,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "tag",
         "mode": "include",
         "value": "﻿",
@@ -1042,7 +1042,7 @@
         "href": "/actors/alice"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "tag",
         "mode": "regex_include",
         "value": "﻿",
@@ -1066,7 +1066,7 @@
         "href": "/actors/﻿alice﻿"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": "/actors/﻿alice﻿",
@@ -1090,7 +1090,7 @@
         "href": "/actors/﻿alice﻿"
       },
       "rule": {
-        "id": -1,
+        "id": null,
         "dimension": "actor",
         "mode": "exclude",
         "value": "/actors/﻿alice﻿",
@@ -1201,5 +1201,923 @@
         "cohort_version": "__CURRENT_COHORT_VERSION__"
       }
     }
-  }
+  },
+  "precedence_cases": [
+    {
+      "name": "later_null_over_earlier_mode",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": "bogus",
+            "mode": "bogus",
+            "value": ""
+          },
+          null
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[1] must be an object"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[1] must be an object\"}}}"
+      }
+    },
+    {
+      "name": "later_value_structure_over_earlier_domain",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": "age",
+            "mode": "min_age",
+            "value": "151"
+          },
+          {
+            "dimension": "tag",
+            "mode": "exclude",
+            "value": null
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[1].value must be a string"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[1].value must be a string\"}}}"
+      }
+    },
+    {
+      "name": "later_id_over_earlier_mode",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": "bogus",
+            "mode": "bogus",
+            "value": ""
+          },
+          {
+            "dimension": "tag",
+            "mode": "exclude",
+            "value": "VR",
+            "id": 0
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[1].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[1].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "id_before_other_fields",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "enabled": null,
+            "value": null,
+            "mode": null,
+            "dimension": null,
+            "id": 0
+          },
+          null
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "earlier_structure_before_later_id",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": null,
+            "mode": "exclude"
+          },
+          {
+            "dimension": "tag",
+            "mode": "exclude",
+            "value": "VR",
+            "id": 0
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].dimension must be a string"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].dimension must be a string\"}}}"
+      }
+    },
+    {
+      "name": "mode_structure_before_value",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": "tag",
+            "value": null,
+            "mode": null
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].mode must be a string"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].mode must be a string\"}}}"
+      }
+    },
+    {
+      "name": "value_structure_before_enabled",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": "tag",
+            "mode": "exclude",
+            "value": null,
+            "enabled": null
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].value must be a string"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].value must be a string\"}}}"
+      }
+    },
+    {
+      "name": "enabled_structure_before_later_domain",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": "tag",
+            "mode": "exclude",
+            "value": "VR",
+            "enabled": null
+          },
+          {
+            "dimension": "bogus",
+            "mode": "bogus",
+            "value": ""
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].enabled must be a boolean"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].enabled must be a boolean\"}}}"
+      }
+    },
+    {
+      "name": "earlier_domain_before_later_domain",
+      "request": {
+        "baseline_version": "x",
+        "draft_rules": [
+          {
+            "dimension": "bogus",
+            "mode": "bogus",
+            "value": ""
+          },
+          {
+            "dimension": "age",
+            "mode": "min_age",
+            "value": "151"
+          }
+        ],
+        "page": null
+      },
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_mode",
+              "message": "bogus rules do not support mode 'bogus'"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_mode\",\"message\":\"bogus rules do not support mode 'bogus'\"}}}"
+      }
+    }
+  ],
+  "draft_id_cases": [
+    {
+      "name": "absent",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": true
+    },
+    {
+      "name": "null",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":null,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": true
+    },
+    {
+      "name": "minimum",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":1,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": true
+    },
+    {
+      "name": "maximum",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":9007199254740991,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": true
+    },
+    {
+      "name": "zero",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":0,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "negative",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":-1,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "fractional",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":1.5,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "string",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":\"1\",\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "boolean",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":true,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "object",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":{},\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "array",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":[],\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "oversized",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":9007199254740992,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "huge",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    },
+    {
+      "name": "exponent",
+      "raw_request": "{\"baseline_version\":\"__CURRENT_BASELINE_VERSION__\",\"draft_rules\":[{\"id\":1e400,\"dimension\":\"tag\",\"mode\":\"exclude\",\"value\":\"VR\"}]}",
+      "accepted": false,
+      "expected": {
+        "status": 422,
+        "body": {
+          "detail": {
+            "error": {
+              "code": "content_filter.invalid_value",
+              "message": "draft_rules[0].id must be an integer from 1 to 9007199254740991 or null"
+            }
+          }
+        },
+        "response_text": "{\"detail\":{\"error\":{\"code\":\"content_filter.invalid_value\",\"message\":\"draft_rules[0].id must be an integer from 1 to 9007199254740991 or null\"}}}"
+      }
+    }
+  ],
+  "supporting_actor_route_cases": [
+    {
+      "name": "empty_actor",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": "",
+          "href": " \t/actors/bob\r\n"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01",
+        "/actors/bob": "2010-01-01"
+      },
+      "expected_cohort_version": "sha256:2b8f5c917e828bff79115ff2743452e6682d60a5de7909929db81f97bea03ba9",
+      "rule": {
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/bob"
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: /actors/bob"
+        ]
+      }
+    },
+    {
+      "name": "empty_age",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": "",
+          "href": " \t/actors/bob\r\n"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01",
+        "/actors/bob": "2010-01-01"
+      },
+      "expected_cohort_version": "sha256:2b8f5c917e828bff79115ff2743452e6682d60a5de7909929db81f97bea03ba9",
+      "rule": {
+        "dimension": "age",
+        "mode": "min_age",
+        "value": "18"
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "actor younger than minimum age 18"
+        ]
+      }
+    },
+    {
+      "name": "null_actor",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": null,
+          "href": " \t/actors/bob\r\n"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01",
+        "/actors/bob": "2010-01-01"
+      },
+      "expected_cohort_version": "sha256:2b8f5c917e828bff79115ff2743452e6682d60a5de7909929db81f97bea03ba9",
+      "rule": {
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/bob"
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: /actors/bob"
+        ]
+      }
+    },
+    {
+      "name": "null_age",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": null,
+          "href": " \t/actors/bob\r\n"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01",
+        "/actors/bob": "2010-01-01"
+      },
+      "expected_cohort_version": "sha256:2b8f5c917e828bff79115ff2743452e6682d60a5de7909929db81f97bea03ba9",
+      "rule": {
+        "dimension": "age",
+        "mode": "min_age",
+        "value": "18"
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "actor younger than minimum age 18"
+        ]
+      }
+    },
+    {
+      "name": "present_actor",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": " \thttps://javdb.com/actors/bob\r\n",
+          "href": "/actors/ignored"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01",
+        "/actors/bob": "2010-01-01"
+      },
+      "expected_cohort_version": "sha256:2b8f5c917e828bff79115ff2743452e6682d60a5de7909929db81f97bea03ba9",
+      "rule": {
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/bob"
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "excluded by actor rule: /actors/bob"
+        ]
+      }
+    },
+    {
+      "name": "present_age",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": " \thttps://javdb.com/actors/bob\r\n",
+          "href": "/actors/ignored"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01",
+        "/actors/bob": "2010-01-01"
+      },
+      "expected_cohort_version": "sha256:2b8f5c917e828bff79115ff2743452e6682d60a5de7909929db81f97bea03ba9",
+      "rule": {
+        "dimension": "age",
+        "mode": "min_age",
+        "value": "18"
+      },
+      "expected": {
+        "outcome": "drop",
+        "reasons": [
+          "actor younger than minimum age 18"
+        ]
+      }
+    },
+    {
+      "name": "whitespace_actor",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": " \t\r\n",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": ""
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01"
+      },
+      "expected_cohort_version": "sha256:6c65e9482a25f97e049d9ce7ec224312a1c35c5ab34f3a971f9942264c187bab",
+      "rule": {
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/bob"
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "whitespace_age",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": " \t\r\n",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": ""
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01"
+      },
+      "expected_cohort_version": "sha256:6c65e9482a25f97e049d9ce7ec224312a1c35c5ab34f3a971f9942264c187bab",
+      "rule": {
+        "dimension": "age",
+        "mode": "min_age",
+        "value": "18"
+      },
+      "expected": {
+        "outcome": "unknown",
+        "reasons": [
+          "missing metadata: actor_age"
+        ]
+      }
+    },
+    {
+      "name": "nel_actor",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": "/actors/bob",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "//actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01"
+      },
+      "expected_cohort_version": "sha256:2494fce570bd6fe3d3ddb40ecf0464ff9ad27d494a3d5ea67650636684fc4914",
+      "rule": {
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/bob"
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "nel_age",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": "/actors/bob",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "//actors/bob"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01"
+      },
+      "expected_cohort_version": "sha256:2494fce570bd6fe3d3ddb40ecf0464ff9ad27d494a3d5ea67650636684fc4914",
+      "rule": {
+        "dimension": "age",
+        "mode": "min_age",
+        "value": "18"
+      },
+      "expected": {
+        "outcome": "unknown",
+        "reasons": [
+          "missing metadata: actor_age"
+        ]
+      }
+    },
+    {
+      "name": "bom_actor",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": "﻿/actors/bob﻿",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/﻿/actors/bob﻿"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01"
+      },
+      "expected_cohort_version": "sha256:a2c3162bfdebfe92903bf68daaa55045bccab9274cf1b88a31f0d9793fe1e5fa",
+      "rule": {
+        "dimension": "actor",
+        "mode": "exclude",
+        "value": "/actors/bob"
+      },
+      "expected": {
+        "outcome": "keep",
+        "reasons": []
+      }
+    },
+    {
+      "name": "bom_age",
+      "supporting": [
+        {
+          "name": " \tBob\r\n",
+          "gender": " \tmale\r\n",
+          "link": "﻿/actors/bob﻿",
+          "href": "/actors/bob"
+        }
+      ],
+      "expected_actors": [
+        {
+          "name": "Alice",
+          "gender": "female",
+          "href": "/actors/alice"
+        },
+        {
+          "name": "Bob",
+          "gender": "male",
+          "href": "/﻿/actors/bob﻿"
+        }
+      ],
+      "expected_birthdates": {
+        "/actors/alice": "2000-01-01"
+      },
+      "expected_cohort_version": "sha256:a2c3162bfdebfe92903bf68daaa55045bccab9274cf1b88a31f0d9793fe1e5fa",
+      "rule": {
+        "dimension": "age",
+        "mode": "min_age",
+        "value": "18"
+      },
+      "expected": {
+        "outcome": "unknown",
+        "reasons": [
+          "missing metadata: actor_age"
+        ]
+      }
+    }
+  ]
 }

@@ -77,6 +77,7 @@ function isStrictIsoDate(value: string): boolean {
 }
 
 const isDraftValid = computed(() => {
+  if (rules.value.some((rule) => !Number.isSafeInteger(rule.id) || rule.id < 1)) return false
   const key = `${draftDimension.value}:${draftMode.value}`
   const value = portableTrim(draftValue.value)
   if (!validRuleModes.has(key)) return false
@@ -120,7 +121,7 @@ function draftRules() {
   return [
     ...rules.value.map((rule) => ({ ...rule })),
     {
-      id: -1,
+      id: null,
       dimension: draftDimension.value,
       mode: draftMode.value,
       value: portableTrim(draftValue.value),

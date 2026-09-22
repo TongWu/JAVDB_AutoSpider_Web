@@ -108,19 +108,24 @@ function validateRuleValue(
 
 function parseDraftRules(value: unknown): { rules: DraftRule[] } | { code: string; error: string } {
   if (!Array.isArray(value)) return { code: "content_filter.invalid_draft_rules", error: "draft_rules must be an array" };
-  const rules: DraftRule[] = [];
+  // Validate the complete array before any item's domain or control checks.
+  // Field order mirrors ContentFilterDraftRule's Pydantic declaration.
   for (let index = 0; index < value.length; index += 1) {
     const item = value[index];
     if (item === null || typeof item !== "object" || Array.isArray(item)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}] must be an object` };
     const candidate = item as Record<string, unknown>;
+    if (candidate.id !== undefined && candidate.id !== null && (!Number.isSafeInteger(candidate.id) || Number(candidate.id) < 1)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}].id must be an integer from 1 to 9007199254740991 or null` };
     if (typeof candidate.dimension !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].dimension must be a string` };
     if (typeof candidate.mode !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].mode must be a string` };
+    if (candidate.value !== undefined && typeof candidate.value !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].value must be a string` };
+    if (candidate.enabled !== undefined && typeof candidate.enabled !== "boolean") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].enabled must be a boolean` };
+  }
+  const rules: DraftRule[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const candidate = value[index] as { id?: number | null; dimension: string; mode: string; value?: string; enabled?: boolean };
     const dimension = candidate.dimension;
     const mode = candidate.mode;
     if (!VALID_RULE_MODES.has(`${dimension}:${mode}`)) return { code: "content_filter.invalid_mode", error: `${dimension} rules do not support mode '${mode}'` };
-    if (candidate.value !== undefined && typeof candidate.value !== "string") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].value must be a string` };
-    if (candidate.enabled !== undefined && typeof candidate.enabled !== "boolean") return { code: "content_filter.invalid_value", error: `draft_rules[${index}].enabled must be a boolean` };
-    if (candidate.id !== undefined && candidate.id !== null && !Number.isInteger(candidate.id)) return { code: "content_filter.invalid_value", error: `draft_rules[${index}].id must be an integer or null` };
     const rawValue = portableTrim(String(candidate.value ?? ""));
     const portableError = comparisonRuleError({
       id: -1,

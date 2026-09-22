@@ -138,7 +138,7 @@ function actorsFromRow(row: RawRetainedRow): Actor[] | null {
     ...supporting.map((actor) => ({
       name: portableTrim(String(actor.name ?? "")),
       gender: portableTrim(String(actor.gender ?? "")),
-      href: actorPath(String(actor.link ?? actor.href ?? "")),
+      href: actorPath(String(actor.link || actor.href || "")),
     })),
   ];
 }

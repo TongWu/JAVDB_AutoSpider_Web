@@ -2414,7 +2414,10 @@ export interface components {
             dimension: string;
             /** Enabled */
             enabled?: boolean;
-            /** Id */
+            /**
+             * Id
+             * @description A JSON integer from 1 to 9007199254740991; null or omitted for an unsaved rule.
+             */
             id?: number | null;
             /** Mode */
             mode: string;

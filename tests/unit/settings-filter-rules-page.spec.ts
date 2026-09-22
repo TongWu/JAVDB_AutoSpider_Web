@@ -58,6 +58,7 @@ describe('SettingsFilterRulesPage comparison authorization and validity', () => 
     await button.trigger('click')
     expect(compareImpact).toHaveBeenCalledWith(expect.objectContaining({
       draft_rules: [expect.objectContaining({
+        id: null,
         value: testCase.rule.value.replace(/^[ \t\r\n]+|[ \t\r\n]+$/g, ''),
       })],
     }))
@@ -89,6 +90,28 @@ describe('SettingsFilterRulesPage comparison authorization and validity', () => 
 
   afterEach(() => {
     document.body.innerHTML = ''
+  })
+
+  it.each([1, 9007199254740991, 0, -1, 1.5, 9007199254740992])('validates saved rule ID %s before comparison', async (id) => {
+    listRules.mockResolvedValueOnce({
+      items: [{ id, dimension: 'tag', mode: 'exclude', value: '4K', enabled: true }],
+      total: 1, baseline_identity: 'content-filter-rules', baseline_version: 'sha256:baseline',
+    })
+    const wrapper = mount(SettingsFilterRulesPage, { global: { plugins: [i18n] } })
+    await flushPromises()
+    wrapper.findComponent(NInput).vm.$emit('update:value', 'VR')
+    await flushPromises()
+    const button = findButton(wrapper, 'Compare draft')!
+    if (id === 1 || id === 9007199254740991) {
+      expect(button.attributes('disabled')).toBeUndefined()
+      await button.trigger('click')
+      expect(compareImpact.mock.calls[0][0].draft_rules.map((rule: { id: number | null }) => rule.id)).toEqual([id, null])
+    } else {
+      expect(button.attributes('disabled')).toBeDefined()
+      await button.trigger('click')
+      expect(compareImpact).not.toHaveBeenCalled()
+    }
+    wrapper.unmount()
   })
 
   it('shows read-only draft comparison controls to a non-admin user', async () => {
@@ -178,7 +201,7 @@ describe('SettingsFilterRulesPage comparison authorization and validity', () => 
       baseline_version: 'sha256:new',
       draft_rules: [
         { id: 7, value: '4K' },
-        { id: -1, value: 'VR' },
+        { id: null, value: 'VR' },
       ],
     })
   })
