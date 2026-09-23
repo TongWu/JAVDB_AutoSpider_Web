@@ -3799,6 +3799,20 @@ export interface components {
             /** Secrets */
             secrets: components["schemas"]["SecretItem"][];
         };
+        /** SessionCommitFailedResponse */
+        SessionCommitFailedResponse: {
+            error: components["schemas"]["SessionCommitFailureDetail"];
+        };
+        /** SessionCommitFailureDetail */
+        SessionCommitFailureDetail: {
+            /**
+             * Code
+             * @constant
+             */
+            code: "commit.failed";
+            /** Message */
+            message: string;
+        };
         /** SessionCommitPayload */
         SessionCommitPayload: {
             /**
@@ -9831,6 +9845,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Commit Failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionCommitFailedResponse"];
                 };
             };
         };
