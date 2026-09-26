@@ -171,10 +171,25 @@ describe("Sessions routes", () => {
     expect(res.status).toBe(404);
   });
 
-  it("POST /api/sessions/:id/commit returns 409 for already-committed session", async () => {
-    // sess-001 is seeded with status 'committed'
+  it("replays a lost successful commit response without rerunning pending deletes", async () => {
+    await env.REPORTS_DB.prepare(
+      "INSERT OR REPLACE INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    ).bind("sess-lost-response", "daily", "2026-09-22", "lost.csv", "2026-09-22 01:00:00", "finalizing", "pending").run();
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE IF NOT EXISTS PendingMovieHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)",
+    ).run();
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE IF NOT EXISTS PendingTorrentHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)",
+    ).run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingMovieHistoryWrites (SessionId, VideoCode) VALUES (?, ?)",
+    ).bind("sess-lost-response", "FIRST-001").run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingTorrentHistoryWrites (SessionId, VideoCode) VALUES (?, ?)",
+    ).bind("sess-lost-response", "FIRST-001").run();
+
     const { token, csrfToken, csrfCookie } = await getCsrf();
-    const res = await app.request("/api/sessions/sess-001/commit", {
+    const requestCommit = (force: boolean) => app.request("/api/sessions/sess-lost-response/commit", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -182,9 +197,62 @@ describe("Sessions routes", () => {
         "X-CSRF-Token": csrfToken,
         Cookie: csrfCookie,
       },
-      body: JSON.stringify({}),
+      body: JSON.stringify({ force, drop_pending: true }),
     }, env);
-    expect(res.status).toBe(409);
+
+    const first = await requestCommit(false);
+    expect(first.status).toBe(200);
+    expect(await first.json()).toEqual({
+      session_id: "sess-lost-response",
+      new_state: "committed",
+      pending_dropped: 2,
+    });
+
+    const firstSession = await env.REPORTS_DB.prepare(
+      "SELECT Status, CommittedAt FROM ReportSessions WHERE Id = ?",
+    ).bind("sess-lost-response").first<{ Status: string; CommittedAt: string }>();
+    expect(firstSession?.Status).toBe("committed");
+    expect(firstSession?.CommittedAt).toEqual(expect.any(String));
+
+    // Simulate late/stale rows after the client lost the first 200 response.
+    // The duplicate request must observe committed state and perform no writes.
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingMovieHistoryWrites (SessionId, VideoCode) VALUES (?, ?)",
+    ).bind("sess-lost-response", "LATE-001").run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingTorrentHistoryWrites (SessionId, VideoCode) VALUES (?, ?)",
+    ).bind("sess-lost-response", "LATE-001").run();
+
+    const duplicate = await requestCommit(true);
+    expect(duplicate.status).toBe(200);
+    expect(await duplicate.json()).toEqual({
+      session_id: "sess-lost-response",
+      new_state: "committed",
+      pending_dropped: 0,
+    });
+
+    const sessionAfterDuplicate = await env.REPORTS_DB.prepare(
+      "SELECT Status, CommittedAt FROM ReportSessions WHERE Id = ?",
+    ).bind("sess-lost-response").first<{ Status: string; CommittedAt: string }>();
+    const pendingMovies = await env.HISTORY_DB.prepare(
+      "SELECT COUNT(*) AS count FROM PendingMovieHistoryWrites WHERE SessionId = ?",
+    ).bind("sess-lost-response").first<{ count: number }>();
+    const pendingTorrents = await env.HISTORY_DB.prepare(
+      "SELECT COUNT(*) AS count FROM PendingTorrentHistoryWrites WHERE SessionId = ?",
+    ).bind("sess-lost-response").first<{ count: number }>();
+    expect(sessionAfterDuplicate).toEqual(firstSession);
+    expect(pendingMovies?.count).toBe(1);
+    expect(pendingTorrents?.count).toBe(1);
+
+    await env.HISTORY_DB.prepare(
+      "DELETE FROM PendingMovieHistoryWrites WHERE SessionId = ?",
+    ).bind("sess-lost-response").run();
+    await env.HISTORY_DB.prepare(
+      "DELETE FROM PendingTorrentHistoryWrites WHERE SessionId = ?",
+    ).bind("sess-lost-response").run();
+    await env.REPORTS_DB.prepare(
+      "DELETE FROM ReportSessions WHERE Id = ?",
+    ).bind("sess-lost-response").run();
   });
 
   it("POST /api/sessions/:id/commit with drop_pending deletes pending before updating status", async () => {
@@ -236,6 +304,100 @@ describe("Sessions routes", () => {
       "SELECT COUNT(*) AS cnt FROM PendingTorrentHistoryWrites WHERE SessionId = ?"
     ).bind("sess-pending").first<{ cnt: number }>();
     expect(remainingTorrents?.cnt).toBe(0);
+  });
+
+  it("keeps the session uncommitted when an atomic pending delete fails, then retries safely", async () => {
+    const targetSession = "sess-asymmetric-history";
+    const unrelatedSession = "sess-asymmetric-unrelated";
+
+    await env.REPORTS_DB.prepare(
+      "INSERT OR REPLACE INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode) VALUES (?, ?, ?, ?, ?, ?, ?)",
+    ).bind(targetSession, "daily", "2026-09-22", "asymmetric.csv", "2026-09-22 01:00:00", "finalizing", "pending").run();
+
+    // Reproduce a partially migrated HISTORY_DB: movie pending exists, torrent
+    // pending does not. REPORTS_DB intentionally contains neither pending table.
+    await env.HISTORY_DB.prepare("DROP TABLE IF EXISTS PendingTorrentHistoryWrites").run();
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE IF NOT EXISTS PendingMovieHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)",
+    ).run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingMovieHistoryWrites (SessionId, VideoCode) VALUES (?, ?), (?, ?)",
+    ).bind(targetSession, "TARGET-001", unrelatedSession, "OTHER-001").run();
+
+    const { token, csrfToken, csrfCookie } = await getCsrf();
+    const commit = (sessionId: string) => app.request(`/api/sessions/${sessionId}/commit`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "X-CSRF-Token": csrfToken,
+        Cookie: csrfCookie,
+      },
+      body: JSON.stringify({ drop_pending: true }),
+    }, env);
+
+    const failed = await commit(targetSession);
+    const failedBody = await failed.json();
+
+    const afterFailure = await env.REPORTS_DB.prepare(
+      "SELECT Status, CommittedAt FROM ReportSessions WHERE Id = ?",
+    ).bind(targetSession).first<{ Status: string; CommittedAt: string | null }>();
+
+    const movieRowsAfterFailure = await env.HISTORY_DB.prepare(
+      "SELECT SessionId FROM PendingMovieHistoryWrites ORDER BY SessionId",
+    ).all<{ SessionId: string }>();
+    expect({
+      status: failed.status,
+      body: failedBody,
+      reportSession: afterFailure,
+      historySessions: movieRowsAfterFailure.results,
+    }).toEqual({
+      status: 500,
+      body: {
+        error: {
+          code: "commit.failed",
+          message: "Pending history deletion failed; session was not committed. Repair history storage and retry.",
+        },
+      },
+      reportSession: { Status: "finalizing", CommittedAt: null },
+      historySessions: [
+        { SessionId: targetSession },
+        { SessionId: unrelatedSession },
+      ].sort((a, b) => a.SessionId.localeCompare(b.SessionId)),
+    });
+
+    // Repair the asymmetric schema, stage both target and unrelated torrent
+    // writes, and prove an ordinary retry completes without cross-session loss.
+    await env.HISTORY_DB.prepare(
+      "CREATE TABLE PendingTorrentHistoryWrites (Id INTEGER PRIMARY KEY AUTOINCREMENT, SessionId TEXT NOT NULL, VideoCode TEXT)",
+    ).run();
+    await env.HISTORY_DB.prepare(
+      "INSERT INTO PendingTorrentHistoryWrites (SessionId, VideoCode) VALUES (?, ?), (?, ?)",
+    ).bind(targetSession, "TARGET-001", unrelatedSession, "OTHER-001").run();
+
+    const retried = await commit(targetSession);
+
+    expect(retried.status).toBe(200);
+    expect(await retried.json()).toEqual({
+      session_id: targetSession,
+      new_state: "committed",
+      pending_dropped: 2,
+    });
+
+    const afterRetry = await env.REPORTS_DB.prepare(
+      "SELECT Status, CommittedAt FROM ReportSessions WHERE Id = ?",
+    ).bind(targetSession).first<{ Status: string; CommittedAt: string | null }>();
+    expect(afterRetry?.Status).toBe("committed");
+    expect(afterRetry?.CommittedAt).toEqual(expect.any(String));
+
+    const movieRowsAfterRetry = await env.HISTORY_DB.prepare(
+      "SELECT SessionId FROM PendingMovieHistoryWrites ORDER BY SessionId",
+    ).all<{ SessionId: string }>();
+    const torrentRowsAfterRetry = await env.HISTORY_DB.prepare(
+      "SELECT SessionId FROM PendingTorrentHistoryWrites ORDER BY SessionId",
+    ).all<{ SessionId: string }>();
+    expect(movieRowsAfterRetry.results).toEqual([{ SessionId: unrelatedSession }]);
+    expect(torrentRowsAfterRetry.results).toEqual([{ SessionId: unrelatedSession }]);
   });
 
   // ---------- POST /:session_id/rollback ----------

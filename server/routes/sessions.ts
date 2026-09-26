@@ -193,17 +193,23 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
 
   const currentState = session.Status ?? "in_progress";
 
+  if (currentState === "committed") {
+    return c.json({
+      session_id: sessionId,
+      new_state: "committed",
+      pending_dropped: 0,
+    });
+  }
+
   if (!COMMITTABLE_STATES.has(currentState)) {
-    if (!(currentState === "committed" && body.force)) {
-      throw new HTTPException(409, {
-        message: JSON.stringify({
-          error: {
-            code: "session.invalid_state",
-            detail: `Cannot commit session in state '${currentState}'`,
-          },
-        }),
-      });
-    }
+    throw new HTTPException(409, {
+      message: JSON.stringify({
+        error: {
+          code: "session.invalid_state",
+          detail: `Cannot commit session in state '${currentState}'`,
+        },
+      }),
+    });
   }
 
   let pendingDropped = 0;
@@ -220,9 +226,15 @@ sessionsRoutes.post("/:session_id/commit", requireRole("admin"), async (c) => {
         pendingDropped += r.meta.changes ?? 0;
       }
     } catch (err) {
-      // Only ignore "table doesn't exist" (fresh/test DBs). Rethrow any other
-      // error so we don't commit the session with pending rows left undeleted.
-      if (!(err instanceof Error && /no such table/i.test(err.message))) throw err;
+      throw new HTTPException(500, {
+        message: JSON.stringify({
+          error: {
+            code: "commit.failed",
+            message: "Pending history deletion failed; session was not committed. Repair history storage and retry.",
+          },
+        }),
+        cause: err,
+      });
     }
   }
 
