@@ -53,10 +53,13 @@ test.describe('Journey 6: Settings → Config edit + save round-trip', () => {
     })
 
     // Reload and re-fetch from BE; new value should be opposite of before.
+    // Scope the wait to the editable field: the config evidence panel on this
+    // page also lists AUTO_START, inside a collapsed <details>, so an unscoped
+    // text match can resolve to that hidden table cell.
     await page.reload()
-    await expect(page.locator('text=/AUTO_START|Auto-?start/i').first()).toBeVisible({
-      timeout: 10_000,
-    })
+    await expect(
+      page.locator('.config-field').filter({ hasText: /AUTO_START|Auto-?start/i }).first(),
+    ).toBeVisible({ timeout: 10_000 })
     const after = await fetchConfigValue(request, 'AUTO_START', headers)
     expect(typeof after === 'boolean').toBe(true)
     expect(after).not.toBe(before)
