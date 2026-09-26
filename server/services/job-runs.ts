@@ -1,5 +1,9 @@
+import type { Env } from "../env";
+import type { DispatchConfig } from "./dispatch-config";
+import { captureDispatch } from "./config-snapshots";
 export interface JobRun {
   job_id: string;
+  config_snapshot_status?: "captured" | "snapshot_unavailable";
   workflow: string;
   gh_run_id: number | null;
   status: string;
@@ -21,7 +25,7 @@ function generateJobId(kind: string): string {
   return `${kind}-${date}-${time}-${hex}`;
 }
 
-export function createJobRunsRepo(db: D1Database) {
+export function createJobRunsRepo(db: D1Database, env?: Env, config?: DispatchConfig) {
   return {
     async ensureTable(): Promise<void> {
       await db
@@ -39,14 +43,16 @@ export function createJobRunsRepo(db: D1Database) {
         .run();
     },
 
-    async create(kind: string, workflow: string, inputs?: Record<string, unknown>): Promise<JobRun> {
+    async create(
+      kind: string,
+      workflow: string,
+      inputs?: Record<string, unknown>,
+    ): Promise<JobRun> {
       const jobId = generateJobId(kind);
       const inputsJson = inputs ? JSON.stringify(inputs) : null;
 
       await db
-        .prepare(
-          `INSERT INTO job_runs (job_id, workflow, inputs) VALUES (?, ?, ?)`,
-        )
+        .prepare(`INSERT INTO job_runs (job_id, workflow, inputs) VALUES (?, ?, ?)`)
         .bind(jobId, workflow, inputsJson)
         .run();
 
@@ -56,6 +62,14 @@ export function createJobRunsRepo(db: D1Database) {
         .first<JobRun>();
 
       if (!row) throw new Error(`Failed to retrieve created job: ${jobId}`);
+      if (env) {
+        const evidence = await captureDispatch(env, jobId, config);
+        row.config_snapshot_status = evidence.consumers.some(
+          (c) => c.status === "snapshot_unavailable",
+        )
+          ? "snapshot_unavailable"
+          : "captured";
+      }
       return row;
     },
 
@@ -69,19 +83,14 @@ export function createJobRunsRepo(db: D1Database) {
           .run();
       } else {
         await db
-          .prepare(
-            `UPDATE job_runs SET status = ?, updated_at = datetime('now') WHERE job_id = ?`,
-          )
+          .prepare(`UPDATE job_runs SET status = ?, updated_at = datetime('now') WHERE job_id = ?`)
           .bind(status, jobId)
           .run();
       }
     },
 
     async get(jobId: string): Promise<JobRun | null> {
-      return db
-        .prepare("SELECT * FROM job_runs WHERE job_id = ?")
-        .bind(jobId)
-        .first<JobRun>();
+      return db.prepare("SELECT * FROM job_runs WHERE job_id = ?").bind(jobId).first<JobRun>();
     },
 
     async list(limit = 50): Promise<JobRun[]> {

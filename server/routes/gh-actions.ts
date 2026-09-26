@@ -1,3 +1,5 @@
+import { dispatchJob } from "../services/workflow-launch";
+import { resolveDispatchConfig, isDispatchConfigured } from "../services/dispatch-config";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
@@ -14,8 +16,9 @@ type Tier = "none" | "monitor" | "edit" | "admin";
 const TIER_LEVELS: Record<Tier, number> = { none: 0, monitor: 1, edit: 2, admin: 3 };
 
 function checkTier(env: Env, required: Tier): void {
-  const current = (env.GH_ACTIONS_TIER ?? "none") as Tier;
-  if (TIER_LEVELS[current] < TIER_LEVELS[required] || !env.GH_ACTIONS_TOKEN || !env.GH_ACTIONS_REPO) {
+  const config = resolveDispatchConfig(env);
+  const current = (config.tier || "none") as Tier;
+  if ((TIER_LEVELS[current] ?? 0) < TIER_LEVELS[required] || !isDispatchConfigured(config)) {
     throw new HTTPException(503, {
       message: JSON.stringify({
         error: {
@@ -102,13 +105,8 @@ ghActionsRoutes.post("/runs", requireRole("admin"), async (c) => {
     });
   }
 
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow(body.workflow, body.inputs ?? {}, body.ref ?? "main");
-
-  return c.json({ dispatched: true, workflow: body.workflow }, 201);
+  const job = await dispatchJob(c.env, "workflow", body.workflow, body.inputs ?? {}, body.ref ?? "main");
+  return c.json({ dispatched: true, workflow: body.workflow, job_id: job.job_id, config_snapshot_status: job.config_snapshot_status }, 201);
 });
 
 // GET /runs/:run_id/logs — get logs URL for a run

@@ -1,3 +1,5 @@
+import { dispatchJob } from "../services/workflow-launch";
+import { resolveDispatchConfig, isDispatchConfigured } from "../services/dispatch-config";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
@@ -11,12 +13,7 @@ type TasksEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 export const tasksRoutes = new Hono<TasksEnv>();
 
 function isGhActionsConfigured(env: Env): boolean {
-  return (
-    !!env.GH_ACTIONS_TIER &&
-    env.GH_ACTIONS_TIER !== "none" &&
-    !!env.GH_ACTIONS_TOKEN &&
-    !!env.GH_ACTIONS_REPO
-  );
+  return isDispatchConfigured(resolveDispatchConfig(env));
 }
 
 function requireGhActions(env: Env): void {
@@ -27,7 +24,7 @@ function requireGhActions(env: Env): void {
   }
 }
 
-const TERMINAL_STATUSES = new Set(["completed", "failure", "cancelled"]);
+const TERMINAL_STATUSES = new Set(["completed", "failed", "failure", "cancelled"]);
 
 /**
  * Extract the kind prefix from a job_id (e.g. "daily-20260524-100000-abcd" → "daily").
@@ -87,17 +84,10 @@ tasksRoutes.post("/daily", requireRole("admin"), async (c) => {
     disable_all_filters: body.disable_all_filters ? "true" : "false",
   };
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  const job = await repo.create("daily", "DailyIngestion.yml", inputs);
-
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow("DailyIngestion.yml", inputs);
+  const job = await dispatchJob(c.env, "daily", "DailyIngestion.yml", inputs);
 
   return c.json(
-    { job_id: job.job_id, status: job.status, created_at: job.created_at },
+    { job_id: job.job_id, status: job.status, created_at: job.created_at, config_snapshot_status: job.config_snapshot_status },
     201,
   );
 });
@@ -130,17 +120,10 @@ tasksRoutes.post("/adhoc", requireRole("admin"), async (c) => {
     inputs.end_page = String(body.end_page);
   }
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  const job = await repo.create("adhoc", "AdHocIngestion.yml", inputs);
-
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow("AdHocIngestion.yml", inputs);
+  const job = await dispatchJob(c.env, "adhoc", "AdHocIngestion.yml", inputs);
 
   return c.json(
-    { job_id: job.job_id, status: job.status, created_at: job.created_at },
+    { job_id: job.job_id, status: job.status, created_at: job.created_at, config_snapshot_status: job.config_snapshot_status },
     201,
   );
 });
@@ -156,7 +139,7 @@ tasksRoutes.get("/", async (c) => {
     }
   }
 
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const items = await repo.list(limit);
   return c.json({
     tasks: items.map(mapJobToSummary),
@@ -174,7 +157,7 @@ tasksRoutes.get("/stats", async (c) => {
     .prepare(
       `SELECT
         SUM(CASE WHEN job_id LIKE 'daily-%' AND status = 'completed' THEN 1 ELSE 0 END) AS daily_success,
-        SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('failure','cancelled') THEN 1 ELSE 0 END) AS daily_failed,
+        SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('failed','failure','cancelled') THEN 1 ELSE 0 END) AS daily_failed,
         SUM(CASE WHEN job_id LIKE 'daily-%' AND status IN ('dispatched','in_progress','queued') THEN 1 ELSE 0 END) AS daily_running,
         SUM(CASE WHEN job_id LIKE 'adhoc-%' AND status IN ('dispatched','in_progress','queued') THEN 1 ELSE 0 END) AS adhoc_running
       FROM job_runs WHERE created_at >= datetime('now', '-7 days')`,
@@ -192,7 +175,7 @@ tasksRoutes.get("/stats", async (c) => {
 // GET /:job_id — single job detail
 tasksRoutes.get("/:job_id", async (c) => {
   const jobId = c.req.param("job_id");
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const job = await repo.get(jobId);
   if (!job) {
     return c.json({ error: { code: "job.not_found" } }, 404);
@@ -203,7 +186,7 @@ tasksRoutes.get("/:job_id", async (c) => {
 // GET /:job_id/logs — get logs URL for a job
 tasksRoutes.get("/:job_id/logs", async (c) => {
   const jobId = c.req.param("job_id");
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
+  const repo = createJobRunsRepo(c.env.OPERATIONS_DB, c.env);
   const job = await repo.get(jobId);
   if (!job) {
     return c.json({ error: { code: "job.not_found" } }, 404);

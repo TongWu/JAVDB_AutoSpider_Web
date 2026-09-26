@@ -1624,5 +1624,23 @@
         "extraReasons": "Additional reasons"
       }
     }
+  },
+  "configSnapshots": {
+    "title": "Configuration evidence",
+    "explanation": "Snapshots retain partial job-start observations for 90 days. Digests cover redacted evidence and do not prove secret equality.",
+    "unavailable": "snapshot_unavailable — configuration evidence could not be read.",
+    "refresh": "Refresh current observations",
+    "jobId": "Job ID",
+    "lookup": "Read historical snapshot",
+    "current": "Current observations (not persisted)",
+    "partial": "Direct imports, later dynamic changes and external consumers are unobservable.",
+    "field": "Field",
+    "value": "Value / presence",
+    "source": "Source",
+    "present": "Present (redacted)",
+    "absent": "Absent (redacted)",
+    "currentRefreshed": "Current consumer evidence refreshed.",
+    "historyLoaded": "Historical evidence loaded for {jobId}.",
+    "fieldsFor": "Configuration fields for {consumer}"
   }
 }

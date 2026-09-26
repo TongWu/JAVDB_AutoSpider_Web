@@ -1,12 +1,12 @@
+import { dispatchJob } from "../services/workflow-launch";
+import { resolveDispatchConfig, isDispatchConfigured } from "../services/dispatch-config";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import type { Env } from "../env";
 import type { JwtPayload } from "../services/jwt";
 import { requireRole } from "../middleware/auth";
-import { createGhClient } from "../services/gh-client";
 import { cursorEncode, cursorDecode } from "../services/cursor";
 import { validateWorkflowInputs } from "../services/workflow-registry";
-import { createJobRunsRepo } from "../services/job-runs";
 import { REPORT_SESSION_COLUMNS } from "../contract/sql-contract.gen";
 
 export { REPORT_SESSION_COLUMNS };
@@ -141,12 +141,7 @@ sessionsRoutes.get("/:session_id", async (c) => {
 // ---------- helpers for commit / rollback ----------
 
 function isGhActionsConfigured(env: Env): boolean {
-  return (
-    !!env.GH_ACTIONS_TIER &&
-    env.GH_ACTIONS_TIER !== "none" &&
-    !!env.GH_ACTIONS_TOKEN &&
-    !!env.GH_ACTIONS_REPO
-  );
+  return isDispatchConfigured(resolveDispatchConfig(env));
 }
 
 const COMMITTABLE_STATES = new Set(["in_progress", "finalizing"]);
@@ -316,19 +311,13 @@ sessionsRoutes.post("/:session_id/rollback", requireRole("admin"), async (c) => 
     });
   }
 
-  const gh = createGhClient({
-    token: c.env.GH_ACTIONS_TOKEN!,
-    repo: c.env.GH_ACTIONS_REPO!,
-  });
-  await gh.dispatchWorkflow("RollbackD1.yml", inputs);
-
-  const repo = createJobRunsRepo(c.env.OPERATIONS_DB);
-  const job = await repo.create("rollback", "RollbackD1.yml", inputs);
+  const job = await dispatchJob(c.env, "rollback", "RollbackD1.yml", inputs);
 
   return c.json({
     session_id: sessionId,
     dry_run: inputs.dry_run === "true",
     job_id: job.job_id,
+    config_snapshot_status: job.config_snapshot_status,
     actions: [{ type: "dispatched", workflow: "RollbackD1.yml", inputs }],
     summary: { dispatched: true },
   });

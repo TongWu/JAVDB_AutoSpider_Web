@@ -24,6 +24,8 @@ const FE_CONSUMED: Array<[keyof PathItem, string]> = [
   ['post', '/api/auth/logout'],
   ['get', '/api/capabilities'],
   ['get', '/api/health'],
+  ['get', '/api/config/consumers'],
+  ['get', '/api/config/job-snapshots/{job_id}'],
   // ADR-024 Phase 2 torrent quality review surface (read + assist).
   ['get', '/api/quality/evaluations'],
   ['get', '/api/quality/evidence/{info_hash}'],

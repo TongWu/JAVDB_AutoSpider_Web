@@ -9,6 +9,7 @@ import {
   useMessage,
 } from 'naive-ui'
 import ConfigSection from '@/components/settings/ConfigSection.vue'
+import ConfigSnapshots from '@/components/settings/ConfigSnapshots.vue'
 import { useConfigStore } from '@/stores/config'
 import { extractErrorMessage } from '@/api/errors'
 
@@ -43,6 +44,7 @@ function onDiscard(): void {
 
 <template>
   <div class="settings-config-page">
+    <ConfigSnapshots />
     <NAlert
       v-if="config.error && config.meta.length === 0"
       type="error"
