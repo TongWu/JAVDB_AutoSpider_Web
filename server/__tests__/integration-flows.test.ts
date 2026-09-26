@@ -37,6 +37,13 @@ function postHeaders(token: string, csrf: string, csrfCookie: string): Record<st
 // Seeding helpers
 // ---------------------------------------------------------------------------
 
+// Session days are relative to now: the runs trend filters on
+// datetime('now', '-N days'), so fixed calendar dates age out of its window.
+const NOW = Date.now();
+const daysAgo = (n: number) => new Date(NOW - n * 86_400_000).toISOString().slice(0, 10);
+const SESS1_DAY = daysAgo(6);
+const SESS2_DAY = daysAgo(4);
+
 async function seedHistoryDb(db: D1Database) {
   await db.prepare(
     `CREATE TABLE IF NOT EXISTS MovieHistory (
@@ -155,13 +162,13 @@ async function seedReportsDb(db: D1Database) {
   await db.prepare(
     `INSERT INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode, RunId, RunAttempt, CommittedAt)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind("int-sess-1", "daily", "2026-05-20", "report-int1.csv", "2026-05-20 09:00:00", "committed", "pending", "run-int-1", 1, "2026-05-20 09:05:00").run();
+  ).bind("int-sess-1", "daily", SESS1_DAY, "report-int1.csv", `${SESS1_DAY} 09:00:00`, "committed", "pending", "run-int-1", 1, `${SESS1_DAY} 09:05:00`).run();
 
   // In-progress session (for commit test)
   await db.prepare(
     `INSERT INTO ReportSessions (Id, ReportType, ReportDate, CsvFilename, DateTimeCreated, Status, WriteMode, RunId, RunAttempt)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind("int-sess-2", "adhoc", "2026-05-22", "report-int2.csv", "2026-05-22 09:00:00", "in_progress", "pending", "run-int-2", 1).run();
+  ).bind("int-sess-2", "adhoc", SESS2_DAY, "report-int2.csv", `${SESS2_DAY} 09:00:00`, "in_progress", "pending", "run-int-2", 1).run();
 }
 
 async function seedOperationsDb(db: D1Database) {
