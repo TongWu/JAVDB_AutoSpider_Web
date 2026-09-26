@@ -107,6 +107,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/config/consumers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Config Consumers */
+        get: operations["get_config_consumers_api_config_consumers_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/config/job-snapshots/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Config Job Snapshots */
+        get: operations["get_config_job_snapshots_api_config_job_snapshots__job_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/config/meta": {
         parameters: {
             query?: never;
@@ -2280,12 +2314,16 @@ export interface components {
         };
         /** CleanupStaleResponse */
         CleanupStaleResponse: {
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Details */
             details: {
                 [key: string]: unknown;
             }[];
             /** Dry Run */
             dry_run: boolean;
+            /** Job Id */
+            job_id?: string | null;
             /** Sessions Cleaned */
             sessions_cleaned: number;
             /** Sessions Failed */
@@ -2293,12 +2331,92 @@ export interface components {
             /** Sessions Found */
             sessions_found: number;
         };
+        /** ConfigConsumer */
+        ConfigConsumer: {
+            /**
+             * Consumer
+             * @enum {string}
+             */
+            consumer: "api_process" | "cli_accessor" | "launched_job";
+            /** Digest */
+            digest: string | null;
+            /** Reason */
+            reason: ("not_observed_in_this_process" | "capture_failed" | "writes_forbidden" | "observation_failed" | "no_retained_evidence" | "storage_unavailable" | "invalid_evidence") | null;
+            snapshot: components["schemas"]["ConfigSnapshot"] | null;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "observed" | "captured" | "unobservable" | "snapshot_unavailable";
+        };
+        /** ConfigConsumersResponse */
+        ConfigConsumersResponse: {
+            /** Consumers */
+            consumers: components["schemas"]["ConfigConsumer"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+        };
+        /** ConfigJobSnapshotsResponse */
+        ConfigJobSnapshotsResponse: {
+            /** Consumers */
+            consumers: components["schemas"]["ConfigConsumer"][];
+            /** Job Id */
+            job_id: string;
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+        };
         /**
          * ConfigResponse
          * @description GET /api/config returns the masked runtime config dict verbatim.
          */
         ConfigResponse: {
             [key: string]: unknown;
+        };
+        /** ConfigSnapshot */
+        ConfigSnapshot: {
+            /** Captured At */
+            captured_at: string;
+            /**
+             * Consumer
+             * @enum {string}
+             */
+            consumer: "api_process" | "cli_accessor" | "launched_job";
+            /** Fields */
+            fields: components["schemas"]["ConfigSnapshotField"][];
+            /**
+             * Schema Version
+             * @default 1
+             * @constant
+             */
+            schema_version: 1;
+            /** Scope */
+            scope: string;
+            /** Unobservable */
+            unobservable: string[];
+        };
+        /** ConfigSnapshotField */
+        ConfigSnapshotField: {
+            /** Key */
+            key: string;
+            /** Present */
+            present: boolean;
+            /** Sensitive */
+            sensitive: boolean;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "default" | "config_module" | "override_store" | "derived" | "launch_options" | "environment" | "unknown";
+            /** Value */
+            value?: boolean | number | string | null;
         };
         /**
          * ConsumptionRecentItem
@@ -2578,8 +2696,15 @@ export interface components {
         };
         /** DispatchResponse */
         DispatchResponse: {
+            /**
+             * Config Snapshot Status
+             * @enum {string}
+             */
+            config_snapshot_status: "captured" | "snapshot_unavailable";
             /** Dispatched */
             dispatched: boolean;
+            /** Job Id */
+            job_id: string;
         };
         /** EmailHistoryItem */
         EmailHistoryItem: {
@@ -3227,14 +3352,20 @@ export interface components {
         OnboardingTestResponse: {
             /** Component */
             component: string;
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Details */
             details?: {
                 [key: string]: unknown;
             } | null;
+            /** Job Id */
+            job_id?: string | null;
             /** Message */
             message: string;
             /** Ok */
-            ok: boolean;
+            ok?: boolean | null;
+            /** Status */
+            status?: ("dispatched" | "unavailable") | null;
         };
         /** OpsAlertEventListResponse */
         OpsAlertEventListResponse: {
@@ -3593,6 +3724,8 @@ export interface components {
         };
         /** QbFilterSmallResponse */
         QbFilterSmallResponse: {
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Details */
             details: {
                 [key: string]: unknown;
@@ -3601,6 +3734,8 @@ export interface components {
             dry_run: boolean;
             /** Filtered Count */
             filtered_count: number;
+            /** Job Id */
+            job_id?: string | null;
             /** Torrents Scanned */
             torrents_scanned: number;
         };
@@ -3691,8 +3826,12 @@ export interface components {
         };
         /** RcloneRunResponse */
         RcloneRunResponse: {
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Dry Run */
             dry_run: boolean;
+            /** Job Id */
+            job_id?: string | null;
             /** Phase Results */
             phase_results: {
                 [key: string]: unknown;
@@ -3799,6 +3938,20 @@ export interface components {
             /** Secrets */
             secrets: components["schemas"]["SecretItem"][];
         };
+        /** SessionCommitFailedResponse */
+        SessionCommitFailedResponse: {
+            error: components["schemas"]["SessionCommitFailureDetail"];
+        };
+        /** SessionCommitFailureDetail */
+        SessionCommitFailureDetail: {
+            /**
+             * Code
+             * @constant
+             */
+            code: "commit.failed";
+            /** Message */
+            message: string;
+        };
         /** SessionCommitPayload */
         SessionCommitPayload: {
             /**
@@ -3889,8 +4042,12 @@ export interface components {
             actions: {
                 [key: string]: unknown;
             }[];
+            /** Config Snapshot Status */
+            config_snapshot_status?: ("captured" | "snapshot_unavailable") | null;
             /** Dry Run */
             dry_run: boolean;
+            /** Job Id */
+            job_id?: string | null;
             /** Session Id */
             session_id: string;
             /** Summary */
@@ -4017,6 +4174,11 @@ export interface components {
         SpiderJobSubmitResponse: {
             /** Cli Args */
             cli_args: string[];
+            /**
+             * Config Snapshot Status
+             * @enum {string}
+             */
+            config_snapshot_status: "captured" | "snapshot_unavailable";
             /** Job Id */
             job_id: string;
             /** Status */
@@ -4224,6 +4386,11 @@ export interface components {
          * @description Returned by POST /api/tasks/daily and POST /api/tasks/adhoc.
          */
         TriggerTaskResponse: {
+            /**
+             * Config Snapshot Status
+             * @enum {string}
+             */
+            config_snapshot_status: "captured" | "snapshot_unavailable";
             /** Created At */
             created_at: string;
             /** Job Id */
@@ -4703,6 +4870,101 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StatusOkResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_config_consumers_api_config_consumers_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigConsumersResponse"];
+                };
+            };
+            /** @description Unauthorized */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+            /** @description Forbidden */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        detail: string;
+                    };
+                };
+            };
+        };
+    };
+    get_config_job_snapshots_api_config_job_snapshots__job_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConfigJobSnapshotsResponse"];
                 };
             };
             /** @description Unauthorized */
@@ -9831,6 +10093,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+            /** @description Commit Failed */
+            500: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SessionCommitFailedResponse"];
                 };
             };
         };
