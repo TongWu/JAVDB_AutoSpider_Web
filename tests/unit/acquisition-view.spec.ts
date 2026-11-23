@@ -6,7 +6,7 @@ import { createI18n } from 'vue-i18n'
 
 vi.mock('@/api/library', () => ({
   getAcquisitionSummary: vi.fn(async () => ({
-    queued: 5, downloading: 3, completed: 100, stalled: 1, failed: 2, total: 111,
+    queued: 5, downloading: 3, completed: 100, stalled: 1, failed: 2, offloaded: 0, total: 111,
   })),
   getAcquisitionRecent: vi.fn(async () => [
     {
@@ -34,7 +34,7 @@ const i18n = createI18n({
         allStates: 'All states', funnel: 'Funnel', trend: 'Trend', recent: 'Recent',
         comingSoon: 'Coming soon',
         kpi: { queued: 'Queued', downloading: 'Downloading', completed: 'Completed', stalled: 'Stalled', failed: 'Failed' },
-        state: { queued: 'Queued', downloading: 'Downloading', completed: 'Completed', in_library: 'In library', stalled: 'Stalled', failed: 'Failed' },
+        state: { queued: 'Queued', downloading: 'Downloading', completed: 'Completed', in_library: 'In library', stalled: 'Stalled', failed: 'Failed', offloaded: 'Offloaded to PikPak' },
         col: { videoCode: 'Code', category: 'Category', state: 'State', queuedAt: 'Queued', completedAt: 'Completed', lastSeenAt: 'Last seen' },
       },
     },

@@ -1428,7 +1428,8 @@
       "downloading": "Downloading",
       "completed": "Completed",
       "stalled": "Stalled",
-      "failed": "Failed"
+      "failed": "Failed",
+      "offloaded": "Offloaded to PikPak"
     },
     "state": {
       "queued": "Queued",
@@ -1436,7 +1437,8 @@
       "completed": "Completed",
       "in_library": "In library",
       "stalled": "Stalled",
-      "failed": "Failed"
+      "failed": "Failed",
+      "offloaded": "Offloaded to PikPak"
     },
     "col": {
       "videoCode": "Code",

@@ -29,12 +29,12 @@ const stateFilter = ref<string | null>(null)
 // Monotonic token so out-of-order `recent` responses are dropped (newest filter wins).
 let recentSeq = 0
 
-const KPI_KEYS = ['queued', 'downloading', 'completed', 'stalled', 'failed'] as const
+const KPI_KEYS = ['queued', 'downloading', 'completed', 'stalled', 'failed', 'offloaded'] as const
 const FUNNEL_KEYS = ['queued', 'downloading', 'completed'] as const
 
 // "All states" is the clearable placeholder (matches SessionFilters.vue); options are string-valued.
 const stateOptions = computed<SelectOption[]>(() =>
-  ['queued', 'downloading', 'completed', 'in_library', 'stalled', 'failed'].map((s) => ({
+  ['queued', 'downloading', 'completed', 'in_library', 'stalled', 'failed', 'offloaded'].map((s) => ({
     label: t(`library.state.${s}`, s),
     value: s,
   })),
@@ -48,7 +48,7 @@ function stateTagType(state: string): 'default' | 'info' | 'success' | 'warning'
   return (
     {
       queued: 'default', downloading: 'info', completed: 'success',
-      in_library: 'success', stalled: 'warning', failed: 'error',
+      in_library: 'success', stalled: 'warning', failed: 'error', offloaded: 'info',
     } as const
   )[state] ?? 'default'
 }
