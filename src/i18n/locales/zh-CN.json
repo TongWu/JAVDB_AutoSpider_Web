@@ -1428,7 +1428,8 @@
       "downloading": "下载中",
       "completed": "已完成",
       "stalled": "已停滞",
-      "failed": "失败"
+      "failed": "失败",
+      "offloaded": "已转存 PikPak"
     },
     "state": {
       "queued": "排队中",
@@ -1436,7 +1437,8 @@
       "completed": "已完成",
       "in_library": "已入库",
       "stalled": "已停滞",
-      "failed": "失败"
+      "failed": "失败",
+      "offloaded": "已转存 PikPak"
     },
     "col": {
       "videoCode": "番号",

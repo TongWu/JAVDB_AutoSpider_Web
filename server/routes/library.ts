@@ -9,8 +9,9 @@ type LibEnv = { Bindings: Env; Variables: { user: JwtPayload } };
 export const libraryRoutes = new Hono<LibEnv>();
 
 // in_library is Phase-2-gated but a valid enum value — accept it.
+// offloaded = moved to PikPak and deleted from qB (BFR-052).
 const ACQUISITION_STATES = [
-  "queued", "downloading", "completed", "in_library", "stalled", "failed",
+  "queued", "downloading", "completed", "in_library", "stalled", "failed", "offloaded",
 ];
 const PERIOD_DAYS: Record<string, number> = { "7d": 7, "30d": 30, "90d": 90 };
 
@@ -27,6 +28,7 @@ export function buildAcquisitionSummaryQuery(): {
     "COALESCE(SUM(CASE WHEN state='completed' THEN 1 ELSE 0 END), 0) AS completed, " +
     "COALESCE(SUM(CASE WHEN state='stalled' THEN 1 ELSE 0 END), 0) AS stalled, " +
     "COALESCE(SUM(CASE WHEN state='failed' THEN 1 ELSE 0 END), 0) AS failed, " +
+    "COALESCE(SUM(CASE WHEN state='offloaded' THEN 1 ELSE 0 END), 0) AS offloaded, " +
     "COUNT(*) AS total " +
     "FROM AcquisitionOutcome";
   return { sql, bindings: [] };
@@ -89,11 +91,11 @@ libraryRoutes.get("/acquisition/summary", async (c) => {
     .bind(...bindings)
     .first<{
       queued: number; downloading: number; completed: number;
-      stalled: number; failed: number; total: number;
+      stalled: number; failed: number; offloaded: number; total: number;
     }>();
   // in_library is Phase-2-gated: rows count toward total (COUNT(*)) but have no named bucket.
   return c.json(
-    row ?? { queued: 0, downloading: 0, completed: 0, stalled: 0, failed: 0, total: 0 },
+    row ?? { queued: 0, downloading: 0, completed: 0, stalled: 0, failed: 0, offloaded: 0, total: 0 },
   );
 });
 

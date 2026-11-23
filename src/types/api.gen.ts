@@ -2066,6 +2066,8 @@ export interface components {
             downloading: number;
             /** Failed */
             failed: number;
+            /** Offloaded */
+            offloaded: number;
             /** Queued */
             queued: number;
             /** Stalled */

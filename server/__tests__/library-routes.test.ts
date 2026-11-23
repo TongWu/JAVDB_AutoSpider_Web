@@ -73,6 +73,7 @@ describe("Library acquisition routes", () => {
     expect(body.queued).toBe(1);
     expect(body.completed).toBe(1);
     expect(body.stalled).toBe(1);
+    expect(body.offloaded).toBe(0);
     expect(body.total).toBe(3);
   });
 

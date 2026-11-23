@@ -1428,7 +1428,8 @@
       "downloading": "ダウンロード中",
       "completed": "完了",
       "stalled": "停滞中",
-      "failed": "失敗"
+      "failed": "失敗",
+      "offloaded": "PikPak へ移動済み"
     },
     "state": {
       "queued": "待機中",
@@ -1436,7 +1437,8 @@
       "completed": "完了",
       "in_library": "ライブラリ済み",
       "stalled": "停滞中",
-      "failed": "失敗"
+      "failed": "失敗",
+      "offloaded": "PikPak へ移動済み"
     },
     "col": {
       "videoCode": "番号",
